@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (9-2020-q2-update)
+# Toolchain: GNU Tools for STM32 (10.3-2021.10)
 ################################################################################
 
 -include ../makefile.init
@@ -43,14 +43,14 @@ BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ART
 EXECUTABLES += \
 newseqen.elf \
 
+MAP_FILES += \
+newseqen.map \
+
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
 newseqen.list \
-
-OBJCOPY_BIN += \
-newseqen.bin \
 
 
 # All Target
@@ -60,7 +60,7 @@ all: main-build
 main-build: newseqen.elf secondary-outputs
 
 # Tool invocations
-newseqen.elf: $(OBJS) $(USER_OBJS) C:\Users\bobon\Documents\GitHub\newseqen\STM32F411CEYX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+newseqen.elf newseqen.map: $(OBJS) $(USER_OBJS) C:\Users\bobon\Documents\GitHub\newseqen\STM32F411CEYX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	arm-none-eabi-gcc -o "newseqen.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\bobon\Documents\GitHub\newseqen\STM32F411CEYX_FLASH.ld" --specs=nosys.specs -Wl,-Map="newseqen.map" -Wl,--gc-sections -static -L"C:\Users\bobon\Documents\GitHub\newseqen\build" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
@@ -75,17 +75,12 @@ newseqen.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-newseqen.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "newseqen.bin"
-	@echo 'Finished building: $@'
-	@echo ' '
-
 # Other Targets
 clean:
-	-$(RM) default.size.stdout newseqen.bin newseqen.elf newseqen.list
+	-$(RM) default.size.stdout newseqen.elf newseqen.list newseqen.map
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'

@@ -119,7 +119,7 @@ const uint16_t disp_lut [18] [16]= {							 // menu look up using char
 		{'G',64,64,64,64,64,64,64,264,64,64,64,64,64,64,64},	// lfo gain
 
 
-		{'F','B' ,64, 278, 279, 280,64, 64,265,64,64,270,64,64,64,64},   // feedback
+		{'F','B' ,'>', 278, 279, 280,'<', 64,265,64,64,270,64,64,64,64},   // feedback
 
 
 
@@ -143,6 +143,24 @@ const uint16_t disp_lut [18] [16]= {							 // menu look up using char
 
 
 };
+
+uint8_t enc2_lut[129]={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
+		19,21,23,
+		32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,
+		51,52,
+		66,68,70,72,74,76,78,
+		82,84,86,88,90,92,94,
+		102,118,121,121,121,121,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+
+};
+
+
+
+
 
 int _write(int file, char *ptr, int len)
 {
@@ -614,6 +632,10 @@ uint16_t gfx_counter[6]={0,0,0,0,0}; // just upcounter for gfx ram bytes
 uint8_t gfx_skip=1;  // important
 uint8_t gfx_blink=0; // blinker counter
 uint16_t lcd_out3; //for feedback
+uint8_t disp_multi[9]={8,1,8,1,1,1,1,1};   // display row potSource multiplier for different resolutions , for faster input
+uint8_t disp_stepper=1; // display these chars before moving onto next cursor position
+
+
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 
@@ -704,13 +726,13 @@ HAL_I2C_Mem_Read(&hi2c2, 160, (2<<6), 2,&potSource2,64,1000);
 HAL_I2C_Mem_Read(&hi2c2, 160, (3<<6), 2,&potSource3,64,1000);
 
 for(i=0;i<1024;i++){
-//	gfx_ram[i]=gfx_char[((i>>5)&7)+((i>>8)<<3)]; // test input fill  8*128 v+h
+//	gfx_ram[i]=gfx_char[((i>>5)&7)+((i>>8)<<3)]; // test input fill  8*128 v+h just normal characters
 	gfx_ram[i&63] [i>>6]  =gfx_char[8+(i&7)+(((i>>3)*8)&63)];
 //gfx_ram[i&63] [i>>6]  =250;
 }
 
 for(i=0;i<64;i++){
-	potSource[i+64]=potSource2[i];
+	potSource[i+64]=potSource2[i];  //load up from eeprom
 }
 
 for(i=0;i<64;i++){
@@ -734,12 +756,12 @@ tempo_lut[i]=tempo_hold;
 isrMask=571; // def tempo 571=180bpm , 20 ms /isrcount
 
 noteTiming=24;
-for (i=0;i<320;i++)	{	// write C into whole section,useful
+for (i=0;i<320;i++)	{	// write C into whole section,useful ornot
 	spell[i]=67;
 
 }
 
-for (n=0;n<64;n++)	{
+for (n=0;n<128;n++)	{ //fills up gfx ram or not
 
 	//menuSelect=n*2;menuSelectX=i;displayBuffer();
 init_b=n;
@@ -765,6 +787,7 @@ firstbarLoop=0;
 	  loop_counter++ ;
 	  loop_counter2++;//
 	  // if (menu_page<320) lcd_feedback();  //curious no issues with lcd without this  , maybe spell writing
+	 {analoginputloopb();}   // about 1 sec
 	  if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour
 
 	  	mem_buf=potSource[mem_count];
@@ -776,13 +799,27 @@ firstbarLoop=0;
 
 	  }
 
-	  displayBuffer();
-	  analoginputloopb(); // no delay
+	  if (!(loop_counter2 & 2047))	 { uint8_t enc2_tempc=enc2_dir;  //hold enc till finished , this to clean up characters for now ,works ok
+
+		  for (i=0;i<128;i++) {
+		enc2_dir=i;
+		displayBuffer();
+		  }
+enc2_dir=enc2_tempc;
+displayBuffer();
+	  }
+	// if (!(loop_counter2 & 1023)) {enc2_dir=i; displayBuffer(); //needs to be before display update or scroll breaks
+//	  if ((gfx_skip==18) && (!(gfx_counter[0]&7))) displayBuffer(); // doesn't need to be fast
+
+	  if (gfx_skip==18) displayBuffer(); // doesn't need to be fast
+
+
+	  //  analoginputloopb(); // no delay, maybe some
 	//  for (i=0;i<7;i++) {display_init();}
 	  if (init<6)
 {
 	  for (i=0;i<6;i++) {display_init();}  //1-2ms ?  change length if flickering ,maybe initial data
-} else display_update();
+} else {display_update(); }
 
 	  ///////////////////////////////////////////////////////////////////////////////
 
@@ -1045,11 +1082,11 @@ static void MX_TIM2_Init(void)
   sConfig.IC1Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 2;
+  sConfig.IC1Filter = 1;
   sConfig.IC2Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 2;
+  sConfig.IC2Filter = 1;
   if (HAL_TIM_Encoder_Init(&htim2, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -1153,11 +1190,11 @@ static void MX_TIM4_Init(void)
   sConfig.IC1Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 2;
+  sConfig.IC1Filter = 3;
   sConfig.IC2Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 2;
+  sConfig.IC2Filter = 3;
   if (HAL_TIM_Encoder_Init(&htim4, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -1352,13 +1389,19 @@ uint16_t menu_holder;
 		if (menu_holder>127)	counterVarB=menu_holder-128; //  points to actual potvalues location from dsip_lut when value is higher than 127 , works ok problem with menu display
 				enc_dir=potSource[counterVarB];
 
-	enc_temp=(TIM2->CNT)>>1;  // read counter tim2
-	enc2_temp=(TIM4->CNT)>>1;  // read counter tim4
-	if  (enc_temp>enc_tempB)	 enc_dir++;   // start settle timer , will do 2 times per turn always
-	if (enc_temp<enc_tempB)	 enc_dir--;
+	enc_temp=(TIM2->CNT);  // read counter tim2 ,change divider not a good solution ?
+	enc2_temp=(TIM4->CNT);  // read counter tim4
+	if  (enc_temp>enc_tempB)	 enc_dir=enc_dir-(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite
+	if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite
+	//if (enc_temp<enc_tempB)	 enc_dir++;
 
-			if (enc_dir>160) enc_dir=160;
+
+
+
+	if (enc_dir>160) enc_dir=160;
 			if (enc_dir<0) enc_dir=0;
+			//if (enc2_temp<16) enc_dir=(enc_dir<<2) & 127; // faster for notes on first row
+
 			potSource[counterVarB]=enc_dir;
 					enc_dir=0;
 			enc_tempB=enc_temp;
@@ -1369,15 +1412,20 @@ uint16_t menu_holder;
 			if  (enc2_temp>enc2_tempB)	 enc2_dir++;   // start settle timer , will do 2 times per turn always
 			if (enc2_temp<enc2_tempB)	 enc2_dir--;
 
-					if (enc2_dir>126) enc2_dir=126;
+
+			if (enc2_dir>126) enc2_dir=126;
 					if (enc2_dir>63) menu_page[1]=1; else menu_page[1]=0;
 					if (enc2_dir<0) enc2_dir=0;
-
+					//enc2_dir=enc2_lut[enc2_dir]; // jump to stored position
 							//enc2_dir=0;
 					enc2_tempB=enc2_temp;
 
 
-potValues[counterVarB]=(potSource[counterVarB]>>4) & 15 ;  // reduce values for now ,use original for others
+potValues[counterVarB]=(potSource[counterVarB]>>4) & 15 ;  // reduce values for now ,use original for others , slow count
+
+//potValues[counterVarB]=potSource[counterVarB] & 15 ;  // reduce values for now ,use original for others
+
+
 
 }
 void display_init(void){
@@ -1451,14 +1499,14 @@ void display_gfx(void){   // new display driver , all gfx based
 
 }
 
-void display_update(void){				//spi display updater code , all gfx , works pretty ok
+void display_update(void){				//spi display updater code , all gfx , works pretty ok n doesn't need to be running always 18x 128 ,constant scaning
 
 	uint8_t spi_store[5];
 
-switch (gfx_skip) { // 1-17  one line
+switch (gfx_skip) { // 1-17  one row
 
 
-case 1 : {spi_hold=((gfx_counter[0])&31)+384;gfx_counter[4]=(gfx_counter[0]>>5);  gfx_counter[0]=(gfx_counter[0]+1)&63 ;gfx_skip++;break ;}
+case 1 : {spi_hold=((gfx_counter[0])&31)+384;gfx_counter[4]=(gfx_counter[0]>>5);  gfx_counter[0]=(gfx_counter[0]+1)&63 ;gfx_skip++;break ;}  // count up positions
 case 2  : {	spi_hold=384+(gfx_counter[4]*8);gfx_skip++;break ;  }
 case 3   : gfx_counter[3]=0; gfx_skip++;break;
 case 18 : gfx_counter[2]=(gfx_counter[2]+1) &63; gfx_counter[3]=0;gfx_skip=1;break;
@@ -1467,7 +1515,7 @@ default :  gfx_counter[3]=(gfx_counter[3]+1)&15;gfx_skip++;break;
 }
 
 
-if ((gfx_skip==2) || (gfx_skip==3) || (gfx_skip==1)) spi_hold=spi_hold; else spi_hold=gfx_ram[gfx_counter[2]] [gfx_counter[3]] ;
+if ((gfx_skip==2) || (gfx_skip==3) || (gfx_skip==1)) spi_hold=spi_hold; else spi_hold=gfx_ram[gfx_counter[2]] [gfx_counter[3]] ; // write command or data
 
 
 
@@ -1488,7 +1536,7 @@ if ((gfx_skip==2) || (gfx_skip==3) || (gfx_skip==1)) spi_hold=spi_hold; else spi
 
 
 
-void displayBuffer (void){        //  only 1 char per round for now ,works good
+/* void displayBuffer (void){        //  only 1 char per round for now ,works good ,change
 
 //uint8_t count_lut[44]={48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89};
 //uint16_t lcd_menuB;  // select upper or lower
@@ -1499,7 +1547,9 @@ uint16_t store_x;
 
 
 store_c= disp_lut [(init_b+(cursor_menu[2]&128))>>4]  [init_y] ;  //gets potvalues pointer from menus ,works
-if (init_b==enc2_dir) lcd_out3=potSource[store_c-128];
+if (init_b==enc2_dir) lcd_out3=potSource[store_c-128];   // feedback line output change to whatever
+//if (init_b==enc2_dir) lcd_out3=potValues[store_c-128];   // feedback line output change to whatever
+
 //if (store_c<64) store_c=64; // just in case , causes issues with char
 
 	 if (store_c==64) store_c=47;
@@ -1514,10 +1564,66 @@ if ((seq_pos&1) && (init_b==enc2_dir)) {if (store_c) {  store_c=0;} else store_c
 store_x=(store_c*8);
 
 for (d_count=0;d_count<8;d_count++){
-					gfx_ram[d_count+init_x] [init_y] = gfx_char[d_count+store_x]; //write character to ram
+					gfx_ram[d_count+init_x] [init_y] = gfx_char[d_count+store_x]; //write character to ram ,should be elsewhere
 }
 
 	if (init_b==119) init_b=0; else init_b++;   // character position  dont need
+
+	// if(store_c>239) {lcd_feedback(); }
+
+}
+*/
+void displayBuffer (void){        //  only cursor , maybe cycle a set of position inc blink before moving cursor
+
+//uint8_t count_lut[44]={48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89};
+//uint16_t lcd_menuB;  // select upper or lower
+
+
+	switch(disp_stepper){
+	//case 1:init_b=enc2_lut[enc2_dir] ;break;
+	case 1:init_b=enc2_dir;break;
+	case 3:init_b=115 ;break;
+	case 4:init_b=116 ;break;
+	case 5:init_b=117 ;break;
+
+
+	default :break;
+	}
+	uint8_t d_count;
+uint8_t init_x=((init_b>>4)<<3);
+uint8_t init_y=init_b&15;
+uint16_t store_x;
+
+
+
+store_c= disp_lut [init_b>>4]  [init_y] ;  //gets potvalues pointer from menus ,works
+if (disp_stepper==1) lcd_out3=potSource[store_c-128];
+
+
+//if (init_b==enc2_dir) lcd_out3=potSource[store_c-128];   // feedback line output change to whatever
+//if (init_b==enc2_dir) lcd_out3=potValues[store_c-128];   // feedback line output change to whatever
+
+//if (store_c<64) store_c=64; // just in case , causes issues with char
+
+	 if (store_c==64) store_c=47;
+	if ((store_c>127)&& (store_c<255))  {store_c= potValues[store_c&127]+48;}		// sets data or stored
+	if (store_c>254){store_c= potValues[store_c-128]+48;}
+
+store_c=store_c-47; store_c = store_c &127;	spell[init_b] = store_c ;  // spell no longer ?
+//if ((seq_pos&1) && (store_c) && (init_b==enc2_dir)) store_c=0; // blinker ok for now ,slow might need other separate code for this
+//if (seq_pos&1)  {if (store_c) {  store_c=0;} else store_c=48;}
+if (disp_stepper==1) {  store_c=1;}
+//lcd_out3=potSource[store_c-128]; // just feedback
+store_x=(store_c*8);
+
+for (d_count=0;d_count<8;d_count++){
+					gfx_ram[d_count+init_x] [init_y] = gfx_char[d_count+store_x]; //write character to ram ,should be elsewhere
+}
+
+if (disp_stepper==5) disp_stepper=1; else disp_stepper++;
+
+
+//	if (init_b==119) init_b=0; else init_b++;   // character position  dont need
 
 	// if(store_c>239) {lcd_feedback(); }
 
