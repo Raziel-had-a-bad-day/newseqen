@@ -60,8 +60,8 @@ all: main-build
 main-build: newseqen.elf secondary-outputs
 
 # Tool invocations
-newseqen.elf newseqen.map: $(OBJS) $(USER_OBJS) C:\Users\bobon\Documents\GitHub\newseqen\STM32F411CEYX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "newseqen.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\bobon\Documents\GitHub\newseqen\STM32F411CEYX_FLASH.ld" --specs=nosys.specs -Wl,-Map="newseqen.map" -Wl,--gc-sections -static -L"C:\Users\bobon\Documents\GitHub\newseqen\build" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+newseqen.elf newseqen.map: $(OBJS) $(USER_OBJS) C:\Users\Bobon\Documents\GitHub\newseqen\STM32F411CEYX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "newseqen.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Bobon\Documents\GitHub\newseqen\STM32F411CEYX_FLASH.ld" --specs=nosys.specs -Wl,-Map="newseqen.map" -Wl,--gc-sections -static -L"C:\Users\Bobon\Documents\GitHub\newseqen\build" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

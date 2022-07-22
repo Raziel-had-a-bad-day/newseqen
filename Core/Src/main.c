@@ -1581,8 +1581,8 @@ void displayBuffer (void){        //  only cursor , maybe cycle a set of positio
 
 	switch(disp_stepper){
 	//case 1:init_b=enc2_lut[enc2_dir] ;break;
-	case 1:init_b=enc2_dir;break;
-	case 3:init_b=115 ;break;
+	case 1:init_b=enc2_dir;break; // cursor position
+	case 3:init_b=115 ;break; // bottom info line
 	case 4:init_b=116 ;break;
 	case 5:init_b=117 ;break;
 
@@ -1609,17 +1609,22 @@ if (disp_stepper==1) lcd_out3=potSource[store_c-128];
 	if ((store_c>127)&& (store_c<255))  {store_c= potValues[store_c&127]+48;}		// sets data or stored
 	if (store_c>254){store_c= potValues[store_c-128]+48;}
 
-store_c=store_c-47; store_c = store_c &127;	spell[init_b] = store_c ;  // spell no longer ?
+store_c=store_c-47; store_c = store_c &127;	spell[init_b] = store_c ;  // spell no longer ?, store_c changes
 //if ((seq_pos&1) && (store_c) && (init_b==enc2_dir)) store_c=0; // blinker ok for now ,slow might need other separate code for this
 //if (seq_pos&1)  {if (store_c) {  store_c=0;} else store_c=48;}
-if (disp_stepper==1) {  store_c=1;}
+if   (disp_stepper==1)      {  store_c=1;}
 //lcd_out3=potSource[store_c-128]; // just feedback
 store_x=(store_c*8);
 
-for (d_count=0;d_count<8;d_count++){
-					gfx_ram[d_count+init_x] [init_y] = gfx_char[d_count+store_x]; //write character to ram ,should be elsewhere
+for (d_count=0;d_count<7;d_count++){
+					gfx_ram[d_count+init_x] [init_y] = gfx_char[d_count+store_x]^255; //write character to ram ,should be elsewhere
 }
 
+
+
+
+
+gfx_ram[7+init_x] [init_y] = 255; // last line is blank between rows
 if (disp_stepper==5) disp_stepper=1; else disp_stepper++;
 
 
