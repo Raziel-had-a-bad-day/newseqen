@@ -787,7 +787,7 @@ firstbarLoop=0;
 	  loop_counter++ ;
 	  loop_counter2++;//
 	  // if (menu_page<320) lcd_feedback();  //curious no issues with lcd without this  , maybe spell writing
-	 {analoginputloopb();}   // about 1 sec
+if 	((loop_counter2&7)==7)      {analoginputloopb();} // this is ok , plenty quick
 	  if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour
 
 	  	mem_buf=potSource[mem_count];
@@ -1389,8 +1389,8 @@ uint16_t menu_holder;
 		if (menu_holder>127)	counterVarB=menu_holder-128; //  points to actual potvalues location from dsip_lut when value is higher than 127 , works ok problem with menu display
 				enc_dir=potSource[counterVarB];
 
-	enc_temp=(TIM2->CNT);  // read counter tim2 ,change divider not a good solution ?
-	enc2_temp=(TIM4->CNT);  // read counter tim4
+	enc_temp=(TIM2->CNT)>>1;  // read counter tim2 ,divider ok
+	enc2_temp=(TIM4->CNT)>>1;  // read counter tim4
 	if  (enc_temp>enc_tempB)	 enc_dir=enc_dir-(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite
 	if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite
 	//if (enc_temp<enc_tempB)	 enc_dir++;
