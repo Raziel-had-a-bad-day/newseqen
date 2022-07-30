@@ -123,7 +123,7 @@ const uint16_t disp_lut [18] [16]= {							 // menu look up using char
 
 
 
-		{84 ,121, 112, 101, 78, 111, 116, 64,240,241,242,243,244,245,246,247},	//feedback
+	//	{84 ,121, 112, 101, 78, 111, 116, 64,240,241,242,243,244,245,246,247},	//feedback
 
 				{176,177,178,64,179,180,181,64,182,183,184,64,185,186,187,64},						//p4 tone mods
 
@@ -137,7 +137,7 @@ const uint16_t disp_lut [18] [16]= {							 // menu look up using char
 		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
 		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},					//p6
 		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64}			//p8
+		{64,64,64,64,64,64,64,64,64,64,64,64,'E','n','d',64}			//p8
 
 
 
@@ -349,7 +349,7 @@ void adsr(void);
 void display_gfx(void);
 void SPI_command(void);
 void display_update(void);
-
+void display_fill(void);
 //void velocityLFO(void);
 uint8_t seq_pos; // sequencer position linked to isrCount for now but maybe change
 
@@ -634,7 +634,10 @@ uint8_t gfx_blink=0; // blinker counter
 uint16_t lcd_out3; //for feedback
 uint8_t disp_multi[9]={8,1,8,1,1,1,1,1};   // display row potSource multiplier for different resolutions , for faster input
 uint8_t disp_stepper=1; // display these chars before moving onto next cursor position
-
+uint8_t disp_end; // end of spi sequence per whole page
+uint8_t loop_counter3;
+uint8_t enc2_tempc; //enc2 holder
+uint8_t disp_refresh;  // full screen refresh
 
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
@@ -761,13 +764,9 @@ for (i=0;i<320;i++)	{	// write C into whole section,useful ornot
 
 }
 
-for (n=0;n<128;n++)	{ //fills up gfx ram or not
+display_fill();
 
-	//menuSelect=n*2;menuSelectX=i;displayBuffer();
-init_b=n;
 
-displayBuffer();
-}
 
 menuSelect=0;
 // fill up sample
@@ -786,40 +785,36 @@ firstbarLoop=0;
     /* USER CODE BEGIN 3 */
 	  loop_counter++ ;
 	  loop_counter2++;//
+
 	  // if (menu_page<320) lcd_feedback();  //curious no issues with lcd without this  , maybe spell writing
-if 	((loop_counter2&7)==7)      {analoginputloopb();} // this is ok , plenty quick
-	  if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour
+if 	((loop_counter2&7)==6)      {analoginputloopb();} // this is ok , plenty quick
+if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour
 
-	  	mem_buf=potSource[mem_count];
-	  	// read values from stored
-	  	HAL_I2C_Mem_Write(&hi2c2, 160, ((1+(mem_count>>6))<<6)+(mem_count&63), 2, &mem_buf, 1, 1000);
-	  	HAL_Delay(5);
-	  	if (mem_count==255) mem_count=0; else mem_count++;  // write to first
-	  	loop_counter2=0; //reset
+	mem_buf=potSource[mem_count];
+	// read values from stored
+	HAL_I2C_Mem_Write(&hi2c2, 160, ((1+(mem_count>>6))<<6)+(mem_count&63), 2, &mem_buf, 1, 1000);
+	HAL_Delay(5);
+	if (mem_count==255) mem_count=0; else mem_count++;  // write to first
+	loop_counter2=0; //reset
+
+}
+
+
+	  if (disp_end==1)	 {  // displaybuffer after each full screen update on spi
+
+		  { if (loop_counter3)  enc2_tempc=enc2_dir; else enc2_dir=enc2_tempc; }    //hold enc till finished , this to clean up characters for now ,works ok
+		  loop_counter3=!loop_counter3;  //blinker flips on each full page refresh
+
+		  for (i=0;i<5;i++) {   displayBuffer();}
+		  enc2_dir=enc2_tempc;
 
 	  }
 
-	  if (!(loop_counter2 & 2047))	 { uint8_t enc2_tempc=enc2_dir;  //hold enc till finished , this to clean up characters for now ,works ok
 
-		  for (i=0;i<128;i++) {
-		enc2_dir=i;
-		displayBuffer();
-		  }
-enc2_dir=enc2_tempc;
-displayBuffer();
-	  }
-	// if (!(loop_counter2 & 1023)) {enc2_dir=i; displayBuffer(); //needs to be before display update or scroll breaks
-//	  if ((gfx_skip==18) && (!(gfx_counter[0]&7))) displayBuffer(); // doesn't need to be fast
-
-	  if (gfx_skip==18) displayBuffer(); // doesn't need to be fast
-
-
-	  //  analoginputloopb(); // no delay, maybe some
-	//  for (i=0;i<7;i++) {display_init();}
 	  if (init<6)
 {
 	  for (i=0;i<6;i++) {display_init();}  //1-2ms ?  change length if flickering ,maybe initial data
-} else {display_update(); }
+} else {display_update(); }  // send spi line data every loop cycle , self contained, single 8pixel line 18*256steps, maybe syncronise
 
 	  ///////////////////////////////////////////////////////////////////////////////
 
@@ -1412,10 +1407,10 @@ uint16_t menu_holder;
 			if  (enc2_temp>enc2_tempB)	 enc2_dir++;   // start settle timer , will do 2 times per turn always
 			if (enc2_temp<enc2_tempB)	 enc2_dir--;
 
+			if (enc2_dir>127) menu_page[1]=127; else menu_page[1]=0;
+			if (enc2_dir>255) {menu_page[1]=0;display_fill();}
 
-			if (enc2_dir>126) enc2_dir=126;
-					if (enc2_dir>63) menu_page[1]=1; else menu_page[1]=0;
-					if (enc2_dir<0) enc2_dir=0;
+					if (enc2_dir<0) {menu_page[1]=127;display_fill();}
 					//enc2_dir=enc2_lut[enc2_dir]; // jump to stored position
 							//enc2_dir=0;
 					enc2_tempB=enc2_temp;
@@ -1529,11 +1524,20 @@ if ((gfx_skip==2) || (gfx_skip==3) || (gfx_skip==1)) spi_hold=spi_hold; else spi
 			HAL_SPI_Transmit(&hspi2, (uint8_t *)spi_store, 3, 100);  // working good ,blocking
 
 
-
+disp_end=gfx_skip+gfx_counter[2]+gfx_counter[3];
 
 
 }
+void display_fill(void)  {     // full update of gfx memory
+loop_counter3=1;
+for (n=0;n<512;n++)	{ //fills up gfx ram or not
 
+enc2_dir=(n>>2)+menu_page[1];
+
+displayBuffer();
+}
+enc2_dir=menu_page[1]*2;  // end clean
+}
 
 
 /* void displayBuffer (void){        //  only 1 char per round for now ,works good ,change
@@ -1579,12 +1583,12 @@ void displayBuffer (void){        //  only cursor , maybe cycle a set of positio
 //uint16_t lcd_menuB;  // select upper or lower
 
 
-	switch(disp_stepper){
+	switch(disp_stepper){   // various cursor positions that always updated
 	//case 1:init_b=enc2_lut[enc2_dir] ;break;
-	case 1:init_b=enc2_dir;break; // cursor position
-	case 3:init_b=115 ;break; // bottom info line
-	case 4:init_b=116 ;break;
-	case 5:init_b=117 ;break;
+	case 0:init_b=enc2_dir;break; // cursor position
+	case 1:init_b=115 ;break; // bottom info line
+	case 2:init_b=116 ;break;
+	case 3:init_b=117 ;break;
 
 
 	default :break;
@@ -1597,7 +1601,7 @@ uint16_t store_x;
 
 
 store_c= disp_lut [init_b>>4]  [init_y] ;  //gets potvalues pointer from menus ,works
-if (disp_stepper==1) lcd_out3=potSource[store_c-128];
+if (disp_stepper==0) lcd_out3=potSource[store_c-128];
 
 
 //if (init_b==enc2_dir) lcd_out3=potSource[store_c-128];   // feedback line output change to whatever
@@ -1612,20 +1616,22 @@ if (disp_stepper==1) lcd_out3=potSource[store_c-128];
 store_c=store_c-47; store_c = store_c &127;	spell[init_b] = store_c ;  // spell no longer ?, store_c changes
 //if ((seq_pos&1) && (store_c) && (init_b==enc2_dir)) store_c=0; // blinker ok for now ,slow might need other separate code for this
 //if (seq_pos&1)  {if (store_c) {  store_c=0;} else store_c=48;}
-if   (disp_stepper==1)      {  store_c=1;}
+ // if   (disp_stepper==1)      {  store_c=1;}
 //lcd_out3=potSource[store_c-128]; // just feedback
 store_x=(store_c*8);
 
-for (d_count=0;d_count<7;d_count++){
-					gfx_ram[d_count+init_x] [init_y] = gfx_char[d_count+store_x]^255; //write character to ram ,should be elsewhere
+
+if (( !loop_counter3) && (disp_stepper==0))
+	for (d_count=0;d_count<7;d_count++){
+						gfx_ram[d_count+(init_x&63)] [init_y&15] = gfx_char[d_count+store_x]^127; //write character to ram ,should be elsewhere
+	}
+else for (d_count=0;d_count<7;d_count++){
+	gfx_ram[d_count+(init_x&63)] [init_y&15] = gfx_char[d_count+store_x]; //write character to ram ,should be elsewhere
 }
 
 
-
-
-
-gfx_ram[7+init_x] [init_y] = 255; // last line is blank between rows
-if (disp_stepper==5) disp_stepper=1; else disp_stepper++;
+gfx_ram[7+init_x] [init_y] = 0; // last line is blank between rows
+if (disp_stepper==3) disp_stepper=0; else disp_stepper++;
 
 
 //	if (init_b==119) init_b=0; else init_b++;   // character position  dont need
