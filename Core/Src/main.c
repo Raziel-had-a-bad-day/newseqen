@@ -514,7 +514,7 @@ int16_t lfo_out[10];
 uint16_t tempo_lut[162]; // tempo look up 40-200bpm
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////GFX
 uint8_t gfx_ram[64][16] ; //holds data for lcd 64*256bit , display 16kbyte/sec so 8fps , maybe use dma for memory transfers
-uint8_t gfx_char[1024]={   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  0x00,     // 8*5 fonts vert aligned
+uint8_t gfx_char[1024]={   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  0x00,     // 8*5 fonts vert aligned  , maybe play with other fonts too
 	     0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E,  0x00,
 	     0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E,  0x00,
 	     0x0E, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1F,  0x00,
@@ -598,6 +598,10 @@ uint8_t gfx_char[1024]={   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  0x00,     
 	      }; //various alphabet and other characters,for now 5*8 , 26*8 bytes+others , will update
 
 //uint8_t gfx_char[2048]={};
+uint8_t gfx_char1[512] =  {
+		0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x10,0x10,0x10,0x10,0x10,0x20,0x10,0x20,0x6c,0x24,0x48,0x20,0x20,0x20,0x20,0x20,0x20,0x24,0x7e,0x24,0x48,0xc3,0xbc,0x48,0x20,0x08,0x3e,0x48,0x3c,0x12,0x7c,0x10,0x20,0x60,0xc2,0x94,0x68,0x10,0x2c,0x52,0x0c,0x20,0x30,0x48,0x50,0x66,0xc2,0x94,0xc2,0x88,0x76,0x20,0x18,0x08,0x10,0x20,0x20,0x20,0x20,0x20,0x10,0x20,0x20,0x40,0x40,0x20,0x20,0x10,0x40,0x20,0x20,0x10,0x10,0x20,0x20,0x40,0x20,0x10,0x7c,0x38,0x28,0x20,0x20,0x20,0x20,0x10,0x10,0x7c,0x10,0x10,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x30,0x10,0x20,0x20,0x20,0x20,0x7c,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x10,0x10,0x20,0x20,0x02,0x04,0x08,0x10,0x20,0x40,0x20,0x38,0x44,0xc2,0x8a,0xc2,0x92,0xc2,0xa2,0x44,0x38,0x20,0x10,0x30,0x10,0x10,0x10,0x10,0x38,0x20,0x7c,0xc2,0x82,0x02,0x0c,0x30,0x42,0xc3,0xbe,0x20,0xc3,0xbe,0xc2,0x84,0x08,0x1c,0x02,0xc2,0x82,0x7c,0x20,0x18,0x28,0x48,0xc2,0x88,0xc3,0xbe,0x08,0x1c,0x20,0xc3,0xbe,0xc2,0x82,0xc2,0x80,0xc3,0xbc,0x02,0xc2,0x82,0x7c,0x20,0x18,0x20,0x40,0xc3,0xbc,0xc2,0x82,0xc2,0x82,0x7c,0x20,0xc3,0xbe,0xc2,0x82,0x04,0x08,0x10,0x10,0x10,0x20,0x7c,0xc2,0x82,0xc2,0x82,0x7c,0xc2,0x82,0xc2,0x82,0x7c,0x20,0x7c,0xc2,0x82,0xc2,0x82,0x7e,0x04,0x08,0x30,0x20,0x20,0x10,0x10,0x20,0x20,0x10,0x10,0x20,0x20,0x08,0x08,0x20,0x20,0x18,0x08,0x10,0x04,0x08,0x10,0x20,0x10,0x08,0x04,0x20,0x20,0x20,0x7c,0x20,0x7c,0x20,0x20,0x20,0x20,0x10,0x08,0x04,0x08,0x10,0x20,0x20,0x7c,0xc2,0x82,0x02,0x1c,0x20,0x10,0x10,0x20,0x1c,0x22,0x4e,0x52,0x4e,0x20,0x1c,0x20,0x18,0x18,0x24,0x24,0x7e,0x42,0xe7,0xa0,0xbc,0x42,0x42,0x7c,0x42,0x42,0xc3,0xbc,0x20,0x3c,0x42,0xc2,0x80,0xc2,0x80,0xc2,0x80,0x42,0x3c,0x20,0xc3,0xb8,0x44,0x42,0x42,0x42,0x44,0xc3,0xb8,0x20,0xc3,0xbe,0x42,0x48,0x78,0x48,0x42,0xc3,0xbe,0x20,0xc3,0xbe,0x42,0x48,0x78,0x48,0x40
+
+}; //font pack 1
 uint16_t adsr_countup[11];  //holds isr count on notes , 
 	float adsr_level[11]; //float for vol envelope  ,ps 20 21
 
@@ -726,7 +730,7 @@ for (i=0;i<161;i++) {
 tempo_hold=(i+180)*0.0166666666;
 
 tempo_hold=	1/tempo_hold;
-tempo_hold=	tempo_hold*2187.6;	
+tempo_hold=	tempo_hold*2187.6*4;      // change for the sake of note length
 
 tempo_lut[i]=tempo_hold;
 }
@@ -740,6 +744,14 @@ for (i=0;i<320;i++)	{	// write C into whole section,useful ornot
 
 display_fill();
 // build display, enc_lut2, works good
+
+for (i=0;i<512;i++)	{gfx_char[i]=gfx_char[i];
+
+
+}    //font replace
+
+
+
 
 uint8_t lut_temp2=0;
 uint8_t lut_temp3=0;
@@ -797,7 +809,7 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 	  if (init<6)
 {
 	  for (i=0;i<6;i++) {display_init();}  //1-2ms ?  change length if flickering ,maybe initial data
-} else {display_update(); }  // send spi line data every loop cycle , self contained, single 8pixel line 18*256steps, maybe syncronise
+} else {display_update(); }  // send spi line data every loop cycle , self contained, single 8pixel line 18*256steps
 
 	  ///////////////////////////////////////////////////////////////////////////////
 
@@ -1488,7 +1500,7 @@ switch (gfx_skip) { // 1-17  one row
 case 1 : {spi_hold=((gfx_counter[0])&31)+384;gfx_counter[4]=(gfx_counter[0]>>5);  gfx_counter[0]=(gfx_counter[0]+1)&63 ;gfx_skip++;break ;}  // count up positions
 case 2  : {	spi_hold=384+(gfx_counter[4]*8);gfx_skip++;break ;  }
 case 3   : gfx_counter[3]=0; gfx_skip++;break;
-case 18 : gfx_counter[2]=(gfx_counter[2]+1) &63; gfx_counter[3]=0;gfx_skip=1;break;
+//case 18 : gfx_counter[2]=(gfx_counter[2]+1) &63; gfx_counter[3]=0;gfx_skip=1;break;  //not ideal
 default :  gfx_counter[3]=(gfx_counter[3]+1)&15;gfx_skip++;break;
 
 }
@@ -1496,7 +1508,7 @@ default :  gfx_counter[3]=(gfx_counter[3]+1)&15;gfx_skip++;break;
 
 if ((gfx_skip==2) || (gfx_skip==3) || (gfx_skip==1)) spi_hold=spi_hold; else spi_hold=gfx_ram[gfx_counter[2]] [gfx_counter[3]] ; // write command or data
 
-
+if (gfx_skip==19)  {gfx_counter[2]=(gfx_counter[2]+1) &63; gfx_counter[3]=0;gfx_skip=1;}   // fixed last doubled char
 
 		if (spi_hold>>8) spi_byte=248; else {spi_byte=250;}  //start with msb ,dont forget flip around at end, 250 =data ,248= command if below 8bit
 
@@ -1508,7 +1520,7 @@ if ((gfx_skip==2) || (gfx_skip==3) || (gfx_skip==1)) spi_hold=spi_hold; else spi
 			HAL_SPI_Transmit(&hspi2, (uint8_t *)spi_store, 3, 100);  // working good ,blocking
 
 
-disp_end=gfx_skip+gfx_counter[2]+gfx_counter[3];
+disp_end=gfx_skip+gfx_counter[2]+gfx_counter[3];			// vsynch for displaybuffer
 
 
 }
@@ -1566,7 +1578,8 @@ void displayBuffer (void){        //  in a constant state of flux
 	if (disp_stepper==0) init_b=enc2_dir; else init_b=111+disp_stepper;  // fetch values for last line or cursor
 
 	uint8_t d_count;
-uint8_t init_x=((init_b>>4)<<3);
+uint8_t init_x=((init_b>>4)<<3);    // normal x8 , try other 64 x16
+uint8_t init_x2=init_x&63;
 uint8_t init_y=init_b&15;
 uint16_t store_x;
  // use this to set feedback pointer for now
@@ -1594,19 +1607,19 @@ if (disp_stepper==0) {lcd_out3=potSource[store_c-128]; feedback_pointer=(enc2_di
 
 store_c=store_c-47; store_c = store_c &127;	  // spell no longer ?, store_c changes
 
-store_x=(store_c*8);  // i line characters
+store_x=(store_c*8);  // i line characters , might shrink it nad use extr for other  visuals
 
 
 if (( !loop_counter3) && (disp_stepper==0))     // blinker for cursor character only
 	for (d_count=0;d_count<7;d_count++){
-						gfx_ram[d_count+(init_x&63)] [init_y&15] = gfx_char[d_count+store_x]^127; //write character to ram ,should be elsewhere
+						gfx_ram[d_count+init_x2] [init_y] = gfx_char[d_count+store_x]^127; //write character to ram ,should be elsewhere
 	}
 else for (d_count=0;d_count<7;d_count++){
-	gfx_ram[d_count+(init_x&63)] [init_y&15] = gfx_char[d_count+store_x]; //write character to ram ,should be elsewhere
+	gfx_ram[d_count+init_x2] [init_y] = gfx_char[d_count+store_x]; //write character to ram ,should be elsewhere
 }
 
 
-gfx_ram[7+init_x] [init_y] = 0; // last line is blank between rows
+gfx_ram[7+init_x2] [init_y] = 0; // last line is blank between rows
 if (disp_stepper==15) disp_stepper=0; else disp_stepper++;
 
 }
@@ -1645,14 +1658,14 @@ sample_pointB=sample_pointD;
 unsigned short tempo_start=0;  // enabled when i=isrMask;
 static unsigned short tempo_end=0;   // last count before note start
 uint16_t i_total;
-uint16_t tempo_mod=tempo_lut[potSource[109]];  // set tempo,speed from lut 40-200bpm
+uint16_t tempo_mod=tempo_lut[potSource[109]];  // set tempo,speed from lut 40-200bpm  ,changed to 4x for note lenght
 
 uint8_t l;			// 35.002khz(0.02857ms) sample, 1 sample is temp count (16x=0.00045712) , *16=1 note ,at 300 (437bpm),(1/(0.00002857*tempo count*16)=1beat in s
 float freq_temp;	// (1/(bpm/60)) /0.00045712=tempo count ie 1093.8 for 120bpm
 float freq2_temp;
 float freq_adder;
 float tempo_sync=16384/((tempo_mod*16)/512) ; // 8000 at slowest 15.625 updates to lfo at 1 note 16384/15.625=1048.576+ per update  at setting 80 
-tempo_sync=tempo_sync/80;
+tempo_sync=tempo_sync/20;  // changed from 80
 
 
 for (l=0;l<10;l++){   //current lfo setup
@@ -1695,6 +1708,8 @@ note_holdA=0;
 
 int32_t filter_Accu;
 
+uint8_t note_patterns[8]={1,4,2,2,1,4,2,1,4,2,1,4,4};   // creating beats
+uint8_t note_lenght=5-note_patterns[seq_pos&7] ; // note length modifier , higher faster
 //tempo_mod=tempo_mod-63+(lfo_out[1]>>7);
 //if (tempo_mod<450) tempo_mod=((tempo_mod-200)>>1) +200; // more res lower
 uint8_t note_plain;
@@ -1718,17 +1733,17 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 
 	note_plain=potValues[seq_pos & 7 ];
 potValues[i&255]=potSource[i&255]>>4; //just to update values 
-	if (tempo_count>=tempo_mod) { next_isr=(next_isr+1) & 4095;tempo_count=0;adsr();  }  else {tempo_count++; }  //trigger next note , actual next step for isrCount(future)  8ms,trying to fix slow down here  8000 too  much, adsr clears note info
+	if (tempo_count>=tempo_mod) { next_isr=(next_isr+note_lenght) & 4095;tempo_count=0;adsr();  }  else {tempo_count++; }  //trigger next note , actual next step for isrCount(future)  8ms,trying to fix slow down here  8000 too  much, adsr clears note info
 // tempo_count is about 1000-400 
 	tempo_start=0;
-	if ((next_isr>>4) != seq_pos) { 					// next note step 140ms
-		seq_pos=next_isr>>4; // seq pos =256 max , isr = 1/16 of a note
+	if ((next_isr>>4) != (seq_pos)) { 					// next note step 140ms
+		seq_pos=(next_isr>>4); // seq pos =256 max , isr = 1/16 of a note, note lenght is 1-4
 		tempo_start=1;
 
 }
 
 
-	if(tempo_start  )    // this helps alot to slow down,only on note change 16xisr maybe clear everythign before hand  and sample and hold and zero means no change
+	if(tempo_start  )    // Calculates only on note change, gotta change seq_pos somehow
 	{
 	//printf("\n");//	ITM_SendChar( 65 );   //  Send ASCII code 65 = ’A’
 	//printf("%d" ,note_channel[10]);
