@@ -504,13 +504,16 @@ uint8_t seq_loop[7]; //loop positions
 //new stuff///////////////////////////////////////////////////////////////////////////////////////////////////////
 float filter_accus[15];  // hold floats for filter
 float filter_hold[5];  //holds some feedback related stuff
-float freq_point[4]; // multiplier coeff
+float freq_point[4] ; // multiplier coeff holder temp
+float freq_pointer[4] [9];  // multiplier coeff holder
+
+
 uint16_t lfo_value[5]={0,0,0,0}; //  lfo value hold
 int16_t lfo_output[5]; // lfo out 0-2047 normally
 
 
-uint16_t lfo_accu[10]; //holds last lfo value , simple 0-255 upcount for now,will change;
-int16_t lfo_out[10];
+float  lfo_accu[10]  [10]; //holds last lfo value , simple 0-255 upcount for now,will change; 10x8
+uint16_t  lfo_out[10] [10];   //8x10 values for lfo
 uint16_t tempo_lut[162]; // tempo look up 40-200bpm
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////GFX
 uint8_t gfx_ram[64][16] ; //holds data for lcd 64*256bit , display 16kbyte/sec so 8fps , maybe use dma for memory transfers
@@ -1664,37 +1667,15 @@ uint8_t l;			// 35.002khz(0.02857ms) sample, 1 sample is temp count (16x=0.00045
 float freq_temp;	// (1/(bpm/60)) /0.00045712=tempo count ie 1093.8 for 120bpm
 float freq2_temp;
 float freq_adder;
-float tempo_sync=16384/((tempo_mod*16)/512) ; // 8000 at slowest 15.625 updates to lfo at 1 note 16384/15.625=1048.576+ per update  at setting 80 
-tempo_sync=tempo_sync/20;  // changed from 80
+float tempo_sync=16384/((tempo_mod*4)/512) ; // 8000 at slowest 15.625 updates to lfo at 1 note 16384/15.625=1048.576+ per update  at setting 80
+tempo_sync=tempo_sync/80;  //
 
 
-for (l=0;l<10;l++){   //current lfo setup
-	
-	
-	freq_temp=potSource[130+l];
-	freq2_temp=freq_temp*tempo_sync; //correction to one note per cycle 
-	//freq2_temp=freq_temp;
-	freq_temp=lfo_accu[l]+ freq2_temp;// get lfo value plus rate , will try to get related to tempo for easier sync , at potS 80?/8192/8notes/ 1 bar 
-	// temp0*16isr*8notes=(1/tempo)*128		@80 rate is 1 bar/8note?  @ tempo*128 count ie@300 temp : 38400tempo countis at freq_temp=8192 freq_temp+1=4.6
-
-if ((tempo_count<50) && ((next_isr&15)==15)) freq_temp=0;   // trying retrigger
-if (freq_temp>16384) lfo_accu[l]=freq_temp-16384; else lfo_accu[l]=freq_temp; // write back value
-freq_temp=lfo_accu[l]; // 0-255 limit + above zero
-freq_temp=freq_temp*0.000383495;  // 0-255 , chang this for depth
-freq2_temp =arm_sin_f32(freq_temp); // seems to be working
-freq_temp=freq2_temp*potSource[140+l]*51;
-lfo_out[l]=freq_temp+8195; // all ok
-
-} // lfo gen : 0=f1 , 1=tempo,2=pitch
-
-
-	freq_point[0]=lfo_out[0]*0.00006435; //sine seem to overload at fully open but only with filter engaged 
-freq_point[2]=lfo_out[3]*0.00006435;; // filter lfos
 	//potSource[150]=(freq_point[0])*100; //0-2
 
 //float lcd_out2;
 
-
+//lcd_out3=(lfo_accu[0][0]-8195) *0.01; // still goes to 15
 
 //lcd_out3=adc_values[2]; // 3 digit read out , works ok
 //lcd_out3=lcd_out3+180;
@@ -1705,8 +1686,6 @@ potSource[152]=(lcd_out3%10)*16;
 
 unsigned short  sine_zero;  // zero cross
 note_holdA=0;
-
-int32_t filter_Accu;
 
 uint8_t note_patterns[8]={1,4,2,2,1,4,2,1,4,2,1,4,4};   // creating beats
 uint8_t note_lenght=5-note_patterns[seq_pos&7] ; // note length modifier , higher faster
@@ -1721,16 +1700,16 @@ uint8_t cross_fade[2];
 uint8_t fader[17]={0,1,5,11,19,28,39,51,64,76,88,99,108,116,122,126,127}; // sine curve for cross fade
 adc_values[2]=adc_values[1];   // this temp until pot 3 is fixed
 if(adc_values[2]&16)	{cross_fade[1]=127-fader[adc_values[2]&15]; cross_fade[2]=127;}  else {cross_fade[2]=fader[adc_values[2]&15]; cross_fade[1]=127;} //calculate crossfader
-
+uint8_t i_frac;  // divide i/64
 // doing lfo calc here as it is slow only for now
 
 
 ///////////////////////////////////////////////////////////////
 
-for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,works fine
+for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,works fine, too much scope
 
 	i_total=i+sample_pointB;
-
+i_frac=i>>6;
 	note_plain=potValues[seq_pos & 7 ];
 potValues[i&255]=potSource[i&255]>>4; //just to update values 
 	if (tempo_count>=tempo_mod) { next_isr=(next_isr+note_lenght) & 4095;tempo_count=0;adsr();  }  else {tempo_count++; }  //trigger next note , actual next step for isrCount(future)  8ms,trying to fix slow down here  8000 too  much, adsr clears note info
@@ -1767,18 +1746,21 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	if (note_channel[3]) note_channel[3]=note_channel[3]+potValues[73]; // stay at zero for off
 	//note_channel[3]=(note_channel[3]-4)+(lfo_out[2]>>11);
 	
-	if (((seq_pos&7)==0) && (adsr_toggle[6]==2))		{adsr_retrigger[6]=1; } else adsr_retrigger[6]=0; // nothing
+	if (((seq_pos&7)==0) && (adsr_toggle[6]==2))		{adsr_retrigger[6]=1; } else adsr_retrigger[6]=0; // delete
 
 
 	note_channel[5]=potValues[80+(seq_pos&15)];  // sample
 
 
-	if ((note_channel[5]) && (adsr_toggle[5]==2)) {note_holdB=note_channel[5]; one_shot=0;}  // grab note when on ,one shot also
+	if ((note_channel[5]) && (adsr_toggle[5]==2)) {note_holdB=note_channel[5]; one_shot=0;}  // grab note when on ,one shot also , also delete
 
 	
 	note_holdB=potValues[80+seq_loop[2]]+(potValues[74]);  // 
 	
-	note_holdB=(note_holdB-4)+(lfo_out[2]>>11);
+	note_holdB=(note_holdB-4)+(lfo_out[2][i_frac]>>11);  //no go with float
+
+
+
 	note_holdB=MajorNote[note_holdB];
 
 	sine_adder=sine_lut[note_holdB];	//sets freq ,1.0594  * 16536 =17518  ,
@@ -1799,68 +1781,131 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	}
 
  
-	}
+	} // end of note calcualte
 
   // calc freq 1/isr or 1/16 per note ,need for pitch bend and so on , change depending on decay
 
-	// every step   1,110,928   >>20  ,per note
+// lfo section
+
+	if ((i&63)==0) {   // calculate lfo maybe 8 times for now , seems to fill up
+freq_temp=0;
+freq2_temp=0;
+//uint8_t i_frac2=(i_frac+7)&7;  //previous value can change shape  , not  bad effect
+
+		for (l=0;l<10;l++){   //current lfo setup , messy
+
+			freq_temp=potSource[130+l];
+			freq2_temp=freq_temp*tempo_sync ; //correction to one note per cycle ,fixed
+
+			freq_temp=lfo_accu[l][i_frac]+ freq2_temp;// get lfo value plus rate , will try to get related to tempo for easier sync , at potS 80?/8192/8notes/ 1 bar
+
+
+//			if ((tempo_count<50) && ((next_isr&15)==15)) freq_temp=0;   // trying retrigger
+		if (freq_temp>16384) lfo_accu[l][i_frac]=freq_temp-16384; else lfo_accu[l][i_frac]=freq_temp; // write back value
+		freq_temp=lfo_accu[l][i_frac]; // 0-255 limit + above zero
+		freq_temp=freq_temp*0.000383495;  // 0-255 , chang this for depth
+		freq2_temp =arm_sin_f32(freq_temp); // seems to be working ok till here , not doing right here now
+		freq_temp=freq2_temp*potSource[140+l]*51;   // not working  proper something with angles i think
+
+		lfo_out[l] [i_frac]=freq_temp+8195; // ok now
+
+		} // lfo gen : 0=f1 , 1=tempo,2=pitch
+
+
+			freq_pointer[0] [i_frac]=lfo_out [0][i_frac]*0.00006435; // problem was selecting accu instead of out , good now
+		freq_pointer[2] [i_frac] =lfo_out [3][i_frac]*0.00006435;; // filter lfos
+
+	}
+
+
+
+}  // end of note  i loop
+ //make sure it's finished
+
+// filter loop
+int32_t play_holder1[512];    // data banks
+int32_t play_holder2[512];
+
+
+for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators
+	i_total=i+sample_pointB;
+i_frac=i>>6;
+// every step   1,110,928   >>20  ,per note
 // New oscillators , sync, trigger input , waveshape ,zero cross
-		sample_accus[0] = sample_accus[0] + note_tuned[0]; //careful with signed bit shift,better compare
+	sample_accus[0] = sample_accus[0] + note_tuned[0]; //careful with signed bit shift,better compare
 
-		if (sample_accus[0]>524287) sample_accus[0] =-sample_accus[0] ; // faster >  than &  ,strange
-
-
-
-		sample_accus[1] = sample_accus[1] + note_tuned[1];  // normal adder full volume
-			//	if (!(note_channel[0]))   sample_accus[1] =0;  // turn off with vel now , maybe use mask
-				if (sample_accus[1]>524287) sample_accus[1] =-sample_accus[1] ; // faster >  than &  ,strange
-
-				sample_accus[2] = sample_accus[2] + note_tuned[2];
-				//		if (!(note_channel[0]))   sample_accus[2] =0;  // turn off with vel now , maybe use mask
-						if (sample_accus[2]>524287) sample_accus[2] =-sample_accus[2] ; // faster >  than &  ,strange
-
-						sample_accus[3] = sample_accus[3] + note_tuned[3]; // bouncing somewhere
-						//sample_accus[3] = sample_accus[3] +4000;
-						//	if (!(note_channel[0]))   sample_accus[3] =0;  // turn off with vel now , maybe use mask
-								if (sample_accus[3]>524287) sample_accus[3] =-sample_accus[3] ; // faster >  than &  ,strange
-
-								sample_accus[4] = sample_accus[4] + note_tuned[4];
-									//	if (!(note_channel[4]))   sample_accus[4] =0;  // turn off with vel now , maybe use mask
-										if (sample_accus[4]>524287) sample_accus[4] =-sample_accus[4] ; // faster >  than &  ,strange
-
-										sample_Accu[2] = 0;sample_Accu[0] =0;sample_Accu[3] =0; //all zeroed
-										//if (sample_accus[2]<0) sample_Accu[2]=+sample_accus[2]; else sample_Accu[2]=sample_accus[2]; // convert to triangle ?
-										sample_Accu[0]=sample_accus[2]>>7; // needs cut a bit
-							
-								sample_Accu[0] = ((sine_out+sample_Accu[0])*cross_fade[1]);   // sine input
-								
-										//if (sample_accus[3]<0) sample_Accu[3]=+sample_accus[3]; else sample_Accu[3]=sample_accus[3]; // convert to triangle
-										sample_Accu[3]=sample_accus[3];
-										sample_Accu[2] = (sample_Accu[3]*cross_fade[2]);			//27b, 2 out f2  might do a crossfade here using pot 3
-
-										//	sample_Accu[5] = sample_Accu[4]+ (sample_accus[4]*4);			// drum and envelope
-
-		//	sample_Accu=sample_Accu-(1<<21);
+	if (sample_accus[0]>524287) sample_accus[0] =-sample_accus[0] ; // faster >  than &  ,strange
 
 
-	if (sine_counterB==0) 	sine_temp2=sine_adder;
 
-		sine_counterB=sine_counterB+sine_temp2 ;  // sine up counter per cycle , however sine adder nees to wait
-		if (sine_counterB>>7) sine_zero=0; else sine_zero=1;
+	sample_accus[1] = sample_accus[1] + note_tuned[1];  // normal adder full volume
+		//	if (!(note_channel[0]))   sample_accus[1] =0;  // turn off with vel now , maybe use mask
+			if (sample_accus[1]>524287) sample_accus[1] =-sample_accus[1] ; // faster >  than &  ,strange
+
+			sample_accus[2] = sample_accus[2] + note_tuned[2];
+			//		if (!(note_channel[0]))   sample_accus[2] =0;  // turn off with vel now , maybe use mask
+					if (sample_accus[2]>524287) sample_accus[2] =-sample_accus[2] ; // faster >  than &  ,strange
+
+					sample_accus[3] = sample_accus[3] + note_tuned[3]; // bouncing somewhere
+					//sample_accus[3] = sample_accus[3] +4000;
+					//	if (!(note_channel[0]))   sample_accus[3] =0;  // turn off with vel now , maybe use mask
+							if (sample_accus[3]>524287) sample_accus[3] =-sample_accus[3] ; // faster >  than &  ,strange
+
+							sample_accus[4] = sample_accus[4] + note_tuned[4];
+								//	if (!(note_channel[4]))   sample_accus[4] =0;  // turn off with vel now , maybe use mask
+									if (sample_accus[4]>524287) sample_accus[4] =-sample_accus[4] ; // faster >  than &  ,strange
+
+									sample_Accu[2] = 0;sample_Accu[0] =0;sample_Accu[3] =0; //all zeroed
+									//if (sample_accus[2]<0) sample_Accu[2]=+sample_accus[2]; else sample_Accu[2]=sample_accus[2]; // convert to triangle ?
+									sample_Accu[0]=sample_accus[2]>>7; // needs cut a bit
+
+							sample_Accu[0] = ((sine_out+sample_Accu[0])*cross_fade[1]);   // sine input
+
+									//if (sample_accus[3]<0) sample_Accu[3]=+sample_accus[3]; else sample_Accu[3]=sample_accus[3]; // convert to triangle
+									sample_Accu[3]=sample_accus[3];
+									sample_Accu[2] = (sample_Accu[3]*cross_fade[2]);			//27b, 2 out f2  might do a crossfade here using pot 3
+
+									//	sample_Accu[5] = sample_Accu[4]+ (sample_accus[4]*4);			// drum and envelope
+
+	//	sample_Accu=sample_Accu-(1<<21);
+
+
+if (sine_counterB==0) 	sine_temp2=sine_adder;
+
+	sine_counterB=sine_counterB+sine_temp2 ;  // sine up counter per cycle , however sine adder nees to wait
+	if (sine_counterB>>7) sine_zero=0; else sine_zero=1;
 
 if (sine_counterB>(sine_length<<5)) sine_counterB=0; //fixed for now
-	sine_count(); // calc sine
+sine_count(); // calc sine
+play_holder1[i]=sample_Accu[0];  // write to bank
+play_holder2[i]=sample_Accu[2];
+
+
+} // end of osc , doing some sound
+
+
+int32_t filter_Accu;
+int32_t feedback_out=filter_out[3];
+for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators , filters and final out
+	i_total=i+sample_pointB;
+i_frac=i>>6;
 
 // filter 1
 
 
-int32_t feedback_out=filter_out[3];
 //if (feedback_out>0xFFFF) feedback_out=0xFFFF; else if (feedback_out<-65535) feedback_out=-65535;  // limiter to 16 bits
 
-sample_Accu[1]=sample_Accu[0];  // sine input
+sample_Accu[1]=play_holder1[i];  // sine input
+freq_point[0]=freq_pointer[0] [i_frac];; // load up coeffs
+//freq_point[1]=freq_pointer[1] [i_frac];
+freq_point[2]=freq_pointer[2] [i_frac];  // ok , array was too short
+//freq_point[3]=freq_pointer[3] [i_frac];
+//freq_point[0]=0.5;  //was ok with this
+	//	freq_point[2]=0.5;
 
 
-		if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;// just in case
+
+if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;// just in case
 		//freq_point[0]=0.50;
 		freq_point[1]=1-freq_point[0];
 		//filter_accus[1]=sample_Accu[1];
@@ -1876,7 +1921,7 @@ sample_Accu[1]=sample_Accu[0];  // sine input
 		//sample_Accu[0] =sample_Accu[1];
 
 		//filter 2
-		sample_Accu[3]=(sample_Accu[2]>>5); // this one is louder than sine
+		sample_Accu[3]=play_holder2[i] >>5; // this one is louder than sine
 
 
 				if (freq_point[2]>1) freq_point[2]=1;
@@ -1884,7 +1929,7 @@ sample_Accu[1]=sample_Accu[0];  // sine input
 				freq_point[3]=1-freq_point[2];
 				filter_accus[6]=sample_Accu[3];
 					filter_accus[6]= filter_accus[6]*adsr_level[3]; // add adsr envelope
-				
+
 				filter_accus[7]=(filter_accus[6]*freq_point[2])+(filter_accus[7]*freq_point[3]);
 				filter_accus[8]=(filter_accus[7]*freq_point[2])+(filter_accus[8]*freq_point[3]);
 				filter_accus[9]=(filter_accus[8]*freq_point[2])+(filter_accus[9]*freq_point[3]);
@@ -1892,7 +1937,7 @@ sample_Accu[1]=sample_Accu[0];  // sine input
 				filter_hold[1]=(filter_accus[10]+filter_accus[12])*0.5; //half sample
 				sample_Accu[2] =filter_accus[10]; //out
 				filter_accus[12]=filter_accus[10]; //write back new value
-				
+
 
 filter_Accu=0;
 filter_Accu=(sample_Accu[0]+sample_Accu[2])>>8; //filter + drum out
@@ -1906,8 +1951,10 @@ filter_Accu=(sample_Accu[0]+sample_Accu[2])>>8; //filter + drum out
  play_sample[i_total]=(filter_Accu>>6)+1023;   // final output disable for now
 	//play_sample[i_total]=(sample_Accu[4])+1023;
 
-}
- //make sure it's finished
+
+} // end of filer
+
+
 bank_write=0;
 }
 
@@ -2085,9 +2132,6 @@ sine_frac=sine_counterB & 31;  // grab last 5 bits, actual position for linear i
 			sine_out=(sine_tempA+sine_tempB);   // add back to start value
 
 			//sine_tempA=sine_tempA; //needs
-
-
-
 
 			//sine_out=sine_tempA;
 
