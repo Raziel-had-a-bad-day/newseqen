@@ -113,11 +113,18 @@ const uint16_t disp_lut [18] [16]= {							 // menu look up using char
 
 	//	{84 ,121, 112, 101, 78, 111, 116, 64,240,241,242,243,244,245,246,247},	//feedback
 
-				{176,177,178,64,179,180,181,64,182,183,184,64,185,186,187,64},						//p4 tone mods
+		//		{176,177,178,64,179,180,181,64,182,183,184,64,185,186,187,64},						//p4 tone mods
 
 			//	{98 ,97, 114, 64, 80, 105, 116, 99, 104,64,200,201,202,203,64,64}, //p5  bug with 66?
 
-		{192,64,193,64,194,64,195,64,196,64,197,64,198,64,199,64},					// keychange
+		//{192,64,193,64,194,64,195,64,196,64,197,64,198,64,199,64},					// keychange
+				{'L','F','O','1','=',384,385,386,387,388,389,390,391,64,64,64},
+				{'L','F','O','2','=',392,393,394,395,396,397,398,399,64,64,64},
+				{'L','F','O','3','=',400,401,402,403,404,405,406,407,64,64,64},
+				{'L','F','O','4','=',408,409,410,411,412,413,414,415,64,64,64},
+				{'L','F','O','5','=',416,417,418,419,420,421,422,423,64,64,64},
+				{'L','F','O','6','=',424,425,426,427,428,429,430,431,64,64,64},
+
 				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},					//p6 empty
 
 		{237,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},							// unsure
@@ -149,7 +156,7 @@ int _write(int file, char *ptr, int len)
 }
 
 const char menuList[129] = "_Notes_1_NotePtchNotes_2_AttkDcayLFOspeedLFOdepthLFO_gainkeepgoinNext page_LFOSSWITCHESREPEAT__KEY#____Time____NTE2_____________";   // top menu
-
+const char menuList2 [129] = "_LPF_1___LPF_2___PITCH_1_PITCH_2_PITCH_3_EMPTY___NotePtchNotes_2_AttkDcayLFOspeedLFOdepthLFO_gainkeepgoinNext page_LFOSWI_______";   // lfo target list, etc
 const char mainNote[29] = "_CDEFGABCDEF>_1234567890+>_x" ; //note string values 7 notes and flat and sharp which are double length ? 11=1  20=0 21-
 
 // const char mainNoteLow[] = "cdefgab_^: " ; // note string for off values
@@ -428,9 +435,14 @@ uint8_t sample_lpbuf[512]; // sample average buff
 
 
 uint8_t adsr_counter[11]; // hold count from 0-31 max 10+10+10 =ADR,  +1 on posedge then stop when above count value
-const uint16_t adsr_lut[41]= {0,1,2,3,4,5,6,8,9,10,12,14,17,20,24,28,32,37,42,47,53,59,65,72,79,86,96,104,114,128,144,178,228,342,409,455,512,585,682,819,1024}; //count up 1=10 , /9 for output
+//const uint16_t adsr_lut[41]= {0,1,2,3,4,5,6,8,9,10,12,14,17,20,24,28,32,37,42,47,53,59,65,72,79,86,96,104,114,128,144,178,228,342,409,455,512,585,682,819,1024}; //count up 1=10 , /9 for output
+float adsr_lut[256];   // hold an envelope
+uint8_t adsr_temp; // just a pointer for adsr
 
-uint8_t adsr_step;
+
+
+
+				  uint8_t adsr_step;
 uint8_t adsr_up; //up counter for adsr
 uint16_t adsr_isr; // holds adsr isrCount
 uint8_t adsr_test=0;   // select if enable upcount
@@ -506,11 +518,12 @@ float filter_accus[15];  // hold floats for filter
 float filter_hold[5];  //holds some feedback related stuff
 float freq_point[4] ; // multiplier coeff holder temp
 float freq_pointer[4] [9];  // multiplier coeff holder
-
+uint8_t i_frac;  // divide i/64
+uint8_t seq_store;  // just an seq_pos holder for adsr
 
 uint16_t lfo_value[5]={0,0,0,0}; //  lfo value hold
 int16_t lfo_output[5]; // lfo out 0-2047 normally
-
+uint16_t trigger_counter;
 
 float  lfo_accu[10]  [10]; //holds last lfo value , simple 0-255 upcount for now,will change; 10x8
 uint16_t  lfo_out[10] [10];   //8x10 values for lfo
@@ -605,10 +618,11 @@ uint8_t gfx_char1[512] =  {
 		0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x10,0x10,0x10,0x10,0x10,0x20,0x10,0x20,0x6c,0x24,0x48,0x20,0x20,0x20,0x20,0x20,0x20,0x24,0x7e,0x24,0x48,0xc3,0xbc,0x48,0x20,0x08,0x3e,0x48,0x3c,0x12,0x7c,0x10,0x20,0x60,0xc2,0x94,0x68,0x10,0x2c,0x52,0x0c,0x20,0x30,0x48,0x50,0x66,0xc2,0x94,0xc2,0x88,0x76,0x20,0x18,0x08,0x10,0x20,0x20,0x20,0x20,0x20,0x10,0x20,0x20,0x40,0x40,0x20,0x20,0x10,0x40,0x20,0x20,0x10,0x10,0x20,0x20,0x40,0x20,0x10,0x7c,0x38,0x28,0x20,0x20,0x20,0x20,0x10,0x10,0x7c,0x10,0x10,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x30,0x10,0x20,0x20,0x20,0x20,0x7c,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x10,0x10,0x20,0x20,0x02,0x04,0x08,0x10,0x20,0x40,0x20,0x38,0x44,0xc2,0x8a,0xc2,0x92,0xc2,0xa2,0x44,0x38,0x20,0x10,0x30,0x10,0x10,0x10,0x10,0x38,0x20,0x7c,0xc2,0x82,0x02,0x0c,0x30,0x42,0xc3,0xbe,0x20,0xc3,0xbe,0xc2,0x84,0x08,0x1c,0x02,0xc2,0x82,0x7c,0x20,0x18,0x28,0x48,0xc2,0x88,0xc3,0xbe,0x08,0x1c,0x20,0xc3,0xbe,0xc2,0x82,0xc2,0x80,0xc3,0xbc,0x02,0xc2,0x82,0x7c,0x20,0x18,0x20,0x40,0xc3,0xbc,0xc2,0x82,0xc2,0x82,0x7c,0x20,0xc3,0xbe,0xc2,0x82,0x04,0x08,0x10,0x10,0x10,0x20,0x7c,0xc2,0x82,0xc2,0x82,0x7c,0xc2,0x82,0xc2,0x82,0x7c,0x20,0x7c,0xc2,0x82,0xc2,0x82,0x7e,0x04,0x08,0x30,0x20,0x20,0x10,0x10,0x20,0x20,0x10,0x10,0x20,0x20,0x08,0x08,0x20,0x20,0x18,0x08,0x10,0x04,0x08,0x10,0x20,0x10,0x08,0x04,0x20,0x20,0x20,0x7c,0x20,0x7c,0x20,0x20,0x20,0x20,0x10,0x08,0x04,0x08,0x10,0x20,0x20,0x7c,0xc2,0x82,0x02,0x1c,0x20,0x10,0x10,0x20,0x1c,0x22,0x4e,0x52,0x4e,0x20,0x1c,0x20,0x18,0x18,0x24,0x24,0x7e,0x42,0xe7,0xa0,0xbc,0x42,0x42,0x7c,0x42,0x42,0xc3,0xbc,0x20,0x3c,0x42,0xc2,0x80,0xc2,0x80,0xc2,0x80,0x42,0x3c,0x20,0xc3,0xb8,0x44,0x42,0x42,0x42,0x44,0xc3,0xb8,0x20,0xc3,0xbe,0x42,0x48,0x78,0x48,0x42,0xc3,0xbe,0x20,0xc3,0xbe,0x42,0x48,0x78,0x48,0x40
 
 }; //font pack 1
-uint16_t adsr_countup[11];  //holds isr count on notes , 
-	float adsr_level[11]; //float for vol envelope  ,ps 20 21
-
-
+float  adsr_countup[11];  //holds isr count on notes ,
+	float adsr_level[11]  ; //float for vol envelope  ,ps 20 21
+	float as_attack=0; // for now all of them from this only , speed , 0-16  // rarely read
+	float as_sustain=0;  // length and level this is ok is running 1/16 ish
+	float adsr_att;
 uint16_t gfx_counter[6]={0,0,0,0,0}; // just upcounter for gfx ram bytes
 uint8_t gfx_skip=1;  // important
 uint8_t gfx_blink=0; // blinker counter
@@ -752,7 +766,6 @@ for (i=0;i<512;i++)	{gfx_char[i]=gfx_char[i];
 
 
 }    //font replace
-
 
 
 
@@ -1380,7 +1393,11 @@ uint16_t menu_holder;
 
 
 		if (menu_holder>127)	counterVarB=menu_holder-128; //  points to actual potvalues location from dsip_lut when value is higher than 127 , works ok problem with menu display
-				enc_dir=potSource[counterVarB];
+		if (menu_holder>383)	counterVarB=256;		//fix second page issue later
+
+
+		enc_dir=potSource[counterVarB];
+
 
 	enc_temp=(TIM2->CNT)>>1;  // read counter tim2 ,divider ok
 	enc2_temp=(TIM4->CNT)>>1;  // read counter tim4
@@ -1585,7 +1602,8 @@ uint8_t init_x=((init_b>>4)<<3);    // normal x8 , try other 64 x16
 uint8_t init_x2=init_x&63;
 uint8_t init_y=init_b&15;
 uint16_t store_x;
- // use this to set feedback pointer for now
+uint8_t lfotarget_menu[10]={0,40,16,8,40,40,48,56,64,72,0};  // keep lfo target list here for now *8
+// use this to set feedback pointer for now
 // just to point the lfo number
 
 
@@ -1603,14 +1621,14 @@ if (disp_stepper==0) {lcd_out3=potSource[store_c-128]; feedback_pointer=(enc2_di
 
 
 
-
-	 if (store_c==64) store_c=47;
-	if ((store_c>127)&& (store_c<255))  {store_c= potValues[store_c&127]+48;}		// sets data or stored
-	if (store_c>254){store_c= potValues[store_c-128]+48;}
-
+	// all this can be simplified
+	 if (store_c==64) store_c=47;  //EMPTY SPACE
+	if ((store_c>127)&& (store_c<255))  {store_c= potValues[store_c&127]+48;}		// NORMAL POTVALUES
+	if ((store_c>254)	&& (store_c<384)) 											{store_c= potValues[store_c-128]+48;}  // POTVALUES 128-254
+	if (store_c>383)		{store_c=store_c-384;			store_c= menuList2		[     (lfotarget_menu[   ((store_c>>3))  ])	+(store_c&7)]						; } // VARIABLE MENU ITEMS CHAR LUT
 store_c=store_c-47; store_c = store_c &127;	  // spell no longer ?, store_c changes
 
-store_x=(store_c*8);  // i line characters , might shrink it nad use extr for other  visuals
+store_x=(store_c*8);  // i line characters , might shrink it and use extr for other  visuals
 
 
 if (( !loop_counter3) && (disp_stepper==0))     // blinker for cursor character only
@@ -1669,13 +1687,13 @@ float freq2_temp;
 float freq_adder;
 float tempo_sync=16384/((tempo_mod*4)/512) ; // 8000 at slowest 15.625 updates to lfo at 1 note 16384/15.625=1048.576+ per update  at setting 80
 tempo_sync=tempo_sync/80;  //
-
-
+uint32_t  note_toggler[17];  //records note position on 0-512   using a bit
+for (i=0;i<16;i++) {  note_toggler[i]=0; }
 	//potSource[150]=(freq_point[0])*100; //0-2
 
 //float lcd_out2;
 
-//lcd_out3=(lfo_accu[0][0]-8195) *0.01; // still goes to 15
+//lcd_out3=trigger_counter; // still goes to 15
 
 //lcd_out3=adc_values[2]; // 3 digit read out , works ok
 //lcd_out3=lcd_out3+180;
@@ -1700,8 +1718,30 @@ uint8_t cross_fade[2];
 uint8_t fader[17]={0,1,5,11,19,28,39,51,64,76,88,99,108,116,122,126,127}; // sine curve for cross fade
 adc_values[2]=adc_values[1];   // this temp until pot 3 is fixed
 if(adc_values[2]&16)	{cross_fade[1]=127-fader[adc_values[2]&15]; cross_fade[2]=127;}  else {cross_fade[2]=fader[adc_values[2]&15]; cross_fade[1]=127;} //calculate crossfader
-uint8_t i_frac;  // divide i/64
+
 // doing lfo calc here as it is slow only for now
+////////////////////adsr/////////////////////////////////////////
+if	 (adsr_temp==0) {		adsr_att=(161-potSource[20] ) *0.02 ; // for now all of them from this only , speed , 0-16  // rarely read
+as_sustain=((161-potSource[21])*0.01);  // length and level this is ok is running 1/16 ish				as_attack=as_attack-as_sustain;
+adsr_att=adsr_att*adsr_att;
+as_sustain=as_sustain*as_sustain;
+
+adsr_temp=1;
+as_attack=0;
+}
+
+float lut_temp;
+
+for (i=0;i<256;i++) {
+
+	if     (as_attack<1000)    																		{as_attack=as_attack+adsr_att;					lut_temp=as_attack; } //0-1000
+	 if  ((as_attack<1500)  && (as_attack>999))  										{as_attack=as_attack+adsr_att;					lut_temp=1500-(as_attack-500);  }  // 1000-500
+	 if ((as_attack>1499)   && 		(as_attack<2000)) 																{		lut_temp=500; 	as_attack=as_attack+as_sustain;}
+	if ((as_attack>1999)  &&  (as_attack<2500)	)																							{as_attack=as_attack+as_sustain	;	lut_temp=2500-as_attack; } //500-0;
+	if (as_attack>3000)   																																			{lut_temp=1; as_attack=4000; }
+
+adsr_lut[i]= lut_temp*0.001;
+}
 
 
 ///////////////////////////////////////////////////////////////
@@ -1709,20 +1749,20 @@ uint8_t i_frac;  // divide i/64
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,works fine, too much scope
 
 	i_total=i+sample_pointB;
-i_frac=i>>6;
+	i_frac=i>>6;
 	note_plain=potValues[seq_pos & 7 ];
 potValues[i&255]=potSource[i&255]>>4; //just to update values 
-	if (tempo_count>=tempo_mod) { next_isr=(next_isr+note_lenght) & 4095;tempo_count=0;adsr();  }  else {tempo_count++; }  //trigger next note , actual next step for isrCount(future)  8ms,trying to fix slow down here  8000 too  much, adsr clears note info
+	if (tempo_count>=tempo_mod) { next_isr=(next_isr+1)& 4095;tempo_count=0;  }  else {tempo_count++; }  //trigger next note , actual next step for isrCount(future)  8ms,trying to fix slow down here  8000 too  much, adsr clears note info
 // tempo_count is about 1000-400 
 	tempo_start=0;
 	if ((next_isr>>4) != (seq_pos)) { 					// next note step 140ms
 		seq_pos=(next_isr>>4); // seq pos =256 max , isr = 1/16 of a note, note lenght is 1-4
 		tempo_start=1;
-
+note_toggler[i>>5]=1<<(i&31   )   ; // record note triggers or seq_changes position
 }
 
 
-	if(tempo_start  )    // Calculates only on note change, gotta change seq_pos somehow
+	if(tempo_start  )    // Calculates only on note change, gotta change seq_pos somehow  , only activates when change in seq pos
 	{
 	//printf("\n");//	ITM_SendChar( 65 );   //  Send ASCII code 65 = ’A’
 	//printf("%d" ,note_channel[10]);
@@ -1743,10 +1783,16 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 
 		note_channel[2]=potValues[80+seq_loop[2]]+potValues[72];  //loop 8 notes from pos and x times
 		note_channel[3]=potValues[seq_loop[3]];  //loop 8 notes from pos and x times ,might disable normal adsr completely
-	if (note_channel[3]) note_channel[3]=note_channel[3]+potValues[73]; // stay at zero for off
+	if (note_channel[3]) 		{note_channel[3]=note_channel[3]+potValues[73];	adsr_retrigger[3]=1; } // stay at zero for off
+//	if ((note_channel[3]) && (adsr_retrigger[3]==1))		adsr_retrigger[3]=0;   // while note on , turn of trigger
+//	if ((note_channel[3]) && (adsr_retrigger[3]==0))	  adsr_retrigger[3]=1;
+
+//	if (!note_channel[3]) 	adsr_retrigger[3]=0;  // end note
+
+
 	//note_channel[3]=(note_channel[3]-4)+(lfo_out[2]>>11);
 	
-	if (((seq_pos&7)==0) && (adsr_toggle[6]==2))		{adsr_retrigger[6]=1; } else adsr_retrigger[6]=0; // delete
+	//if (((seq_pos&7)==0) && (adsr_toggle[6]==2))		{adsr_retrigger[6]=1; } else adsr_retrigger[6]=0; // delete
 
 
 	note_channel[5]=potValues[80+(seq_pos&15)];  // sample
@@ -1767,20 +1813,22 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	sine_adder= (sine_adder*1200)>>10;  // modify different sample size , just need single cycle length and thats it
 		mask_result =0;
 
-
+/*
 		sample_Accu[0]=0; // reset to 0 mani sample hold
 		sample_Accu[1]=0; // reset to 0 mani sample hold
 		sample_Accu[2]=0; // reset to 0 mani sample hold
 		sample_Accu[3]=0; // reset to 0 mani sample hold
 		sample_Accu[4]=0; // reset to 0 mani sample hold
 		sample_Accu[5]=0; // reset to 0 mani sample hold
-	for (mask_i=0;mask_i<5;mask_i++)	{							// calc detune , slow ,also creates notes
+*/
 
-		if (note_channel[mask_i]) {tune_Accu=sample_Noteadd[MajorNote[note_channel[mask_i]]];   note_tuned[mask_i]=(tune_Accu);}
+		for (mask_i=0;mask_i<5;mask_i++)	{							// calc detune , slow ,also creates notes
+
+		if (note_channel[mask_i]) {tune_Accu=sample_Noteadd[MajorNote[note_channel[mask_i]]];   note_tuned[mask_i]=(tune_Accu);       } // relies on note channel clear , not good , clear not channel straight after
 		
 	}
 
- 
+
 	} // end of note calcualte
 
   // calc freq 1/isr or 1/16 per note ,need for pitch bend and so on , change depending on decay
@@ -1790,6 +1838,7 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	if ((i&63)==0) {   // calculate lfo maybe 8 times for now , seems to fill up
 freq_temp=0;
 freq2_temp=0;
+
 //uint8_t i_frac2=(i_frac+7)&7;  //previous value can change shape  , not  bad effect
 
 		for (l=0;l<10;l++){   //current lfo setup , messy
@@ -1829,7 +1878,7 @@ int32_t play_holder2[512];
 
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators
 	i_total=i+sample_pointB;
-i_frac=i>>6;
+	i_frac=(i>>6);
 // every step   1,110,928   >>20  ,per note
 // New oscillators , sync, trigger input , waveshape ,zero cross
 	sample_accus[0] = sample_accus[0] + note_tuned[0]; //careful with signed bit shift,better compare
@@ -1885,13 +1934,15 @@ play_holder2[i]=sample_Accu[2];
 
 
 int32_t filter_Accu;
+
+
 int32_t feedback_out=filter_out[3];
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators , filters and final out
 	i_total=i+sample_pointB;
-i_frac=i>>6;
+i_frac=(i>>6);
 
 // filter 1
-
+if (		(note_toggler[i>>5]	)==(1<<(i&31)	)) 				{adsr_temp =0;  trigger_counter++; trigger_counter=trigger_counter&1023  ;}
 
 //if (feedback_out>0xFFFF) feedback_out=0xFFFF; else if (feedback_out<-65535) feedback_out=-65535;  // limiter to 16 bits
 
@@ -1904,12 +1955,16 @@ freq_point[2]=freq_pointer[2] [i_frac];  // ok , array was too short
 	//	freq_point[2]=0.5;
 
 
+adsr_level[3] = adsr_lut	[i>>1];
+
 
 if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;// just in case
 		//freq_point[0]=0.50;
 		freq_point[1]=1-freq_point[0];
 		//filter_accus[1]=sample_Accu[1];
-		filter_accus[1]=sample_Accu[1]+((filter_hold[0])*0.5);
+		filter_accus[1]=sample_Accu[1]+((filter_hold[0])*0.5); // saw
+	//	filter_accus[1]=	filter_accus[1]*adsr_level[3][i_frac];
+		filter_accus[1]=	filter_accus[1]*adsr_level[3];
 
 		filter_accus[2]=(filter_accus[1]*freq_point[0])+(filter_accus[2]*freq_point[1]);
 		filter_accus[3]=(filter_accus[2]*freq_point[0])+(filter_accus[3]*freq_point[1]);
@@ -1921,14 +1976,14 @@ if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;
 		//sample_Accu[0] =sample_Accu[1];
 
 		//filter 2
-		sample_Accu[3]=play_holder2[i] >>5; // this one is louder than sine
+		sample_Accu[3]=play_holder2[i] >>5; // sine
 
 
 				if (freq_point[2]>1) freq_point[2]=1;
 
 				freq_point[3]=1-freq_point[2];
 				filter_accus[6]=sample_Accu[3];
-					filter_accus[6]= filter_accus[6]*adsr_level[3]; // add adsr envelope
+				filter_accus[6]= filter_accus[6]*adsr_level[3]; // add adsr envelope
 
 				filter_accus[7]=(filter_accus[6]*freq_point[2])+(filter_accus[7]*freq_point[3]);
 				filter_accus[8]=(filter_accus[7]*freq_point[2])+(filter_accus[8]*freq_point[3]);
@@ -1994,97 +2049,31 @@ if (lfo_output[n_count]>2047) lfo_output[n_count]=2047; else if (lfo_output[n_co
 potSource[28]=lfo_output[0]>>6;
 
 }
-void adsr(void){
+void adsr(void){						// pretty terrible now .better just write a lut
 	float note_attack;  //attack length 50/50 , just a default shape that is maybe interpolated , store values for both and position, time in isr 
 	float note_sustain; //sustaing lenght and height 80/20 / 0-160 0-1-sustain-0  160 is 160 steps(10 notes) 80+80  0+(1/(attack/2))*(attack/2) 1-(1/(attack/2))*(attack/2)+sustain level 1/160*sustain at (1/sustain)*time
 	//uint16_t adsr_countup[11];  //holds isr count on notes , 
 	//float adsr_level[11]; //float for vol envelope  ,ps 20 21
 	uint8_t ad;//counter    0-160-160-160 maybe change 1/10 dunno 
-	float as_attack=potSource[20]*0.1; // for now all of them from this only
-	float as_sustain=potSource[21];
-	uint16_t as_temp; 
-	
-	
-	
-for (ad=0;ad<10;ad++){							// envelope generator ,needs to be faster 
-	as_temp =adsr_countup[ad]; //grab counter
-	
-	if (note_channel[ad]) {as_temp=1;note_channel[ad]=0; } // reset on note & 1 isr length ,retrigger also clear not for later
-	if (as_temp) {
-	if (as_temp<(as_attack))    note_attack=(1/as_attack)*as_temp; //count up attack ok 
-	if (as_temp>=(as_attack))    note_attack=1-((1/as_attack)*(as_temp-as_attack)); //count down attack
-	if(note_attack<0) note_attack=0; // stop at 0
-	note_sustain=as_sustain*0.00625;
-	if ((as_temp>=(as_attack)) && (note_sustain>note_attack)) note_attack=note_sustain; // change over to sustain level
-	
-	if (as_temp>=(as_attack+(as_sustain*0.2))) {note_attack= 0;  as_temp=0; }else as_temp++; // no roll off for now just straight to 0 , shortened , also stops 
-	
-	adsr_level[ad]=note_attack;
-	
-	adsr_countup[ad]=as_temp; //write back new value
-	} 
 
-}	
+
+	//as_attack=(as_attack*as_attack)*0.01;    //  0-250 log
+
+	// as_attack=adsr_level[3][i_frac] ;
+
+
+//	 if 	(adsr_level[3][i_frac]>1) adsr_level[3][i_frac]=1;
+	//	if 	(adsr_level[3][i_frac]<0) adsr_level[3][i_frac]=0.01;
+
+
+
+
+
 }
 
 
-/*
-void adsr(void){   //might start using this for lfos or dump the lot
-	adsr_retrigger[6]=1; //for filter
-	adsr_retrigger[7]=1; //for filter 2
-	//adsr_retrigger[5]=1;  //kick
-
-	uint8_t mask_i;
 
 
-	uint8_t note_plain=potValues[seq_pos & 7 ];
-
-			// 16*64 max
-		if (!(next_isr	& ((1<<potValues[97]))) ) {note_channel[16]=1023;adsr_toggle[6]=0; }  // filter 2, retrigger on every note  on 0 duration nothing else
-		//if (!(next_isr	& 16 )) {note_channel[16]=1023;adsr_toggle[6]=0; }  // filter 2, retrigger on every note  on 0 duration nothing else
-
-	///	if (!(next_isr	& adsr_lut[potSource[97]]) ) {note_channel[16]=1023;adsr_toggle[6]=0; }  // filter 2, retrigger on every note  on short duration
-
-
-
-		if (!(next_isr	& ((1<<potValues[99]))))  {note_channel[17]=1023;adsr_toggle[7]=0; }  // filter 2, retrigger on every note  on short duration
-
-
-			if (!(next_isr	& ((8<<potValues[105])-1)))  {note_channel[10]=1023;adsr_toggle[0]=2; }   // retrigger for notes , needs however next note ?!
-				if (!(next_isr	& ((8<<potValues[106])-1)))  {note_channel[11]=1023;adsr_toggle[1]=2; } //might just skip the lot or just a very long retrigger ,doesnt change with notelenght
-				if (!(next_isr	& ((8<<potValues[107])-1)))  {note_channel[12]=1023;adsr_toggle[2]=2; }
-				if (!(next_isr	& ((8	<<potValues[108])-1)))  {note_channel[13]=1023;adsr_toggle[3]=2; }
-
-
-
-	for (mask_i=0;mask_i<10;mask_i++){   // retrigger
-		if ((adsr_toggle[mask_i]==2) && adsr_retrigger[mask_i])   {adsr_toggle[mask_i]=0;  adsr_retrigger[mask_i]=0;  }  // reset adsr
-	}
-
-
-	for (adsr_up=0;adsr_up<10;adsr_up++) {   //calc adsr  done per next_isr tick ie 16*note  , note_channel[10+ can never be 0 or problem
-
-
-if  ((note_channel[10+adsr_up]<2047) && (adsr_toggle[0+adsr_up]==0))  note_channel[10+adsr_up]=note_channel[10+adsr_up] + adsr_lut[potSource[16+(adsr_up*2)]];  //attack
-if  ((note_channel[10+adsr_up]>1023) && (adsr_toggle[0+adsr_up]==1))  note_channel[10+adsr_up]=note_channel[10+adsr_up] - adsr_lut[potSource[17+(adsr_up*2)]];	// decay
-if  ((note_channel[10+adsr_up]>=2047) && (adsr_toggle[0+adsr_up]==0))	{adsr_toggle[0+adsr_up]=1;note_channel[10+adsr_up]=2047;}
-if  ((note_channel[10+adsr_up]<=1023) && (adsr_toggle[0+adsr_up]==1))	{adsr_toggle[0+adsr_up]=2; note_channel[10+adsr_up]=1023;}
-
-}
-
-//	printf("%d",note_channel[17]);
-//	printf("\n");
-
-// for (mask_i=0;mask_i<5;mask_i++)				// calculate velocities from mask now: on/off , has to be fast  , might disable
-			 {  mask_calc(potValues[(mask_i*2)+32], potValues[(mask_i*2)+33]); // this is ok
-					//note_channel[20+mask_i]=mask_result; // store mask output
-					note_vol[mask_i] =mask_result * (potSource[8 + mask_i]);
-					note_channel[20+mask_i] =((note_channel[mask_i+10]-1023)*note_vol[mask_i])>>8;  // * note_vol[t_ac] )>>8;
-
-			 }  // set vel per channel
-*/
-
-//
 
 void mask_calc(uint8_t mask_select,uint8_t mask_speed){    //calculate mask output from lfos
 uint8_t mask_temp;
