@@ -91,7 +91,7 @@ const uint16_t sample_Noteadd[50]= { 2059, 2181, 2311, 2448, 2594, 2748, 2912, 3
 const uint16_t freq_lut[]={4186,4434,4698,4978,5274,5587,5919,6271,6644,7039,7458,7902,8371,8869,9397,9955,10547,11175,11839,12543,13289,14079,14916,15803,16743,17739,
 		18794,19911,21095,22350,23679,25087,26578,28160,29834,31608,33488,35479,37589,39824,42192,44701,47359,50175,53158,56319,59668,63216};  // freq lookup x64  64hz_>987hz , C2-C6 Note 1-48
 //const uint8_t disp_lut [18] [16]= {                    // menu look up
-const uint16_t disp_lut [18] [16]= {							 // menu look up using char
+const uint16_t disp_lut [26] [16]= {							 // menu look up using char
 
 
 
@@ -118,28 +118,30 @@ const uint16_t disp_lut [18] [16]= {							 // menu look up using char
 			//	{98 ,97, 114, 64, 80, 105, 116, 99, 104,64,200,201,202,203,64,64}, //p5  bug with 66?
 
 		//{192,64,193,64,194,64,195,64,196,64,197,64,198,64,199,64},					// keychange
-				{'L','F','O','1','=',384,385,386,387,388,389,390,391,64,64,64},
-				{'L','F','O','2','=',392,393,394,395,396,397,398,399,64,64,64},
-				{'L','F','O','3','=',400,401,402,403,404,405,406,407,64,64,64},
-				{'L','F','O','4','=',408,409,410,411,412,413,414,415,64,64,64},
-				{'L','F','O','5','=',416,417,418,419,420,421,422,423,64,64,64},
-				{'L','F','O','6','=',424,425,426,427,428,429,430,431,64,64,64},
+				{'L','F','O','1','=',512,513,514,515,516,517,518,519,64,64,64},
+				{'L','F','O','2','=',520,521,522,523,524,525,526,527,64,64,64},
+				{'L','F','O','3','=',528,529,530,531,532,533,534,535,64,64,64},
+				{'L','F','O','4','=',536,537,538,539,540,541,542,543,64,64,64},
+				{'L','F','O','5','=',544,545,546,547,548,549,550,551,64,64,64},
+				{'L','F','O','6','=',552,553,554,555,556,557,558,559,64,64,64},
 
 				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},					//p6 empty
-
-		{237,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},							// unsure
-
+				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
+				{'s','t','a','r','t',64,64,64,64,64,64,64,64,64,64,64},
+				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
+				{64,64,274,64,275,64,64,64,64,64,64,64,64,64,64,64},
 		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
 		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},					//p6
-		{64,281,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-		{64,64,64,64,64,64,64,64,64,64,64,64,'E','n','d',64}			//p8
-
-
+		{64,64,64,64,64,64,64,64,64,64,64,64,'E','n','d',64},
+		{64,64,64,64,64,64,64,64,64,64,64,64,'E','n','d',64},			//p8
+		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
+		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
+				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64}
 
 
 };
 
-uint8_t enc2_lut[129];   // lut to skip cells ,filled in on main
+uint16_t enc2_lut[180];   // lut to skip cells ,filled in on main
 uint16_t feedback_line[17]={'F','o','o','d','b','a','c','k','g','_' ,'k',64, 278, 279, 280,64}; // this is variable , last display line for info
 uint8_t feedback_pointer;  // pointer for feedback item start position , maybe bit search for less menu data ,dunno
 
@@ -498,10 +500,10 @@ uint8_t samp_temp=0;
 uint32_t bsrr_long;
 uint32_t bsrr_longB;
 uint8_t seq_spi;
-uint8_t init_b;
+uint16_t init_b;  //  needs to above 256 for ore pages
 uint32_t bsrr_seq[49]; // holds bits for one byte spi
 uint8_t bsrr_counter;
-uint8_t cursor_menu[3]; // holds cursor position
+uint16_t cursor_menu[3]; // holds cursor position
 uint8_t spi_toggle; // toggle between command a data for writing characters
 uint8_t cursor_blink=0; // blink position  blink 1 or 2 or off
 uint16_t lfo_base[3]; // new lfo multi
@@ -510,7 +512,7 @@ uint8_t mem_count; //just count mem address
 uint32_t loop_counter2; //long counter
 uint8_t buffer[4];
 uint8_t mem_buf;
-uint8_t menu_page[3]; // switch between pages, keep track when flipping
+uint16_t menu_page[3]; // switch between pages, keep track when flipping
 uint8_t seq_loop[7]; //loop positions
 
 //new stuff///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -627,11 +629,11 @@ uint16_t gfx_counter[6]={0,0,0,0,0}; // just upcounter for gfx ram bytes
 uint8_t gfx_skip=1;  // important
 uint8_t gfx_blink=0; // blinker counter
 uint16_t lcd_out3; //for feedback
-uint8_t disp_multi[9]={8,1,8,1,1,1,1,1};   // display row potSource multiplier for different resolutions , for faster input
+uint8_t disp_multi[30]={8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1};   // display row potSource multiplier for different resolutions , for faster input
 uint8_t disp_stepper=1; // display these chars before moving onto next cursor position
 uint8_t disp_end; // end of spi sequence per whole page
 uint8_t loop_counter3;
-uint8_t enc2_tempc; //enc2 holder
+uint16_t enc2_tempc; //enc2 holder duh
 uint8_t disp_refresh;  // full screen refresh
 
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
@@ -747,8 +749,8 @@ for (i=0;i<161;i++) {
 tempo_hold=(i+180)*0.0166666666;
 
 tempo_hold=	1/tempo_hold;
-tempo_hold=	tempo_hold*2187.6*4;      // change for the sake of note length
-
+//tempo_hold=	tempo_hold*2187.6*4;      // change for the sake of note length
+tempo_hold=	tempo_hold*2187.6*1;      // change for the sake of note length
 tempo_lut[i]=tempo_hold;
 }
 isrMask=571; // def tempo 571=180bpm , 20 ms /isrcount
@@ -769,9 +771,9 @@ for (i=0;i<512;i++)	{gfx_char[i]=gfx_char[i];
 
 
 
-uint8_t lut_temp2=0;
-uint8_t lut_temp3=0;
-for (i=0;i<256;i++){
+uint16_t lut_temp2=0;
+uint16_t lut_temp3=0;
+for (i=0;i<416;i++){					// get a few more pages
 
 	if (disp_lut [i>>4] [i&15] <95) lut_temp2=lut_temp2+1;
 
@@ -822,7 +824,7 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 	  }
 
 
-	  if (init<6)
+	  if (init<6)				// after 6 its done for good
 {
 	  for (i=0;i<6;i++) {display_init();}  //1-2ms ?  change length if flickering ,maybe initial data
 } else {display_update(); }  // send spi line data every loop cycle , self contained, single 8pixel line 18*256steps
@@ -1190,17 +1192,17 @@ static void MX_TIM4_Init(void)
   htim4.Init.Prescaler = 0;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim4.Init.Period = 65535;
-  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
   sConfig.IC1Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 3;
+  sConfig.IC1Filter = 1;
   sConfig.IC2Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 8;
+  sConfig.IC2Filter = 1;
   if (HAL_TIM_Encoder_Init(&htim4, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -1393,7 +1395,7 @@ uint16_t menu_holder;
 
 
 		if (menu_holder>127)	counterVarB=menu_holder-128; //  points to actual potvalues location from dsip_lut when value is higher than 127 , works ok problem with menu display
-		if (menu_holder>383)	counterVarB=256;		//fix second page issue later
+		if (menu_holder>511)	counterVarB=menu_holder-384;		//max potvalue address is 142 , fix second page issue later
 
 
 		enc_dir=potSource[counterVarB];
@@ -1401,35 +1403,38 @@ uint16_t menu_holder;
 
 	enc_temp=(TIM2->CNT)>>1;  // read counter tim2 ,divider ok
 	enc2_temp=(TIM4->CNT)>>1;  // read counter tim4
-	enc2_temp=enc2_temp&255; // fix overflow ?
+	enc2_temp=enc2_temp&511; // fix overflow ?
 	if  (enc_temp>enc_tempB)	 enc_dir=enc_dir-(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite
-	if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite
+	if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite , step multiplier
 	//if (enc_temp<enc_tempB)	 enc_dir++;
 
-
-enc2_temp=enc2_lut[enc2_temp];  // force alternative values for , seems to work ok
+  enc2_temp=enc2_lut[enc2_temp];  // force alternative values for skip  , seems to work ok , disable temporarily
 
 	if (enc_dir>160) enc_dir=160;
 			if (enc_dir<0) enc_dir=0;
 			//if (enc2_temp<16) enc_dir=(enc_dir<<2) & 127; // faster for notes on first row
 
-			potSource[counterVarB]=enc_dir;
+			potSource[counterVarB]=enc_dir;       // enter data into potsource
 					enc_dir=0;
 			enc_tempB=enc_temp;
-
-
-
 
 			//if  (enc2_temp>enc2_tempB)	 enc2_dir++;   // start settle timer , will do 2 times per turn always
 			//if (enc2_temp<enc2_tempB)	 enc2_dir--;
 			enc2_dir=enc2_temp; //temp to try source data
-			if (enc2_dir>127) menu_page[1]=127; else menu_page[1]=0;
+		//	if (enc2_dir>127) menu_page[1]=127; else if (enc2_dir>255)   menu_page[1]=255;				else menu_page[1]=0;
+		//	menu_page[1]= (enc2_dir >>7) <<7;
+			menu_page[1]=enc2_dir&384;
+
+
 			//if (enc2_dir>255) {menu_page[1]=0;display_fill();}
 
-					if ((enc2_temp>127) && (enc2_tempB<=127)) display_fill();
+					if ((enc2_temp>127) && (enc2_tempB<=127)) display_fill();    // need to optimize
 					if ((enc2_temp<=127) && (enc2_tempB>127)) display_fill();
+					if ((enc2_temp>255) && (enc2_tempB<=255)) display_fill();
+					if ((enc2_temp<=255) && (enc2_tempB>255)) display_fill();
 
-			enc2_tempB=enc2_temp; // to effective as counter not getting reset
+
+					enc2_tempB=enc2_temp; // to effective as counter not getting reset
 
 
 potValues[counterVarB]=(potSource[counterVarB]>>4) & 15 ;  // reduce values for now ,use original for others , slow count
@@ -1447,11 +1452,11 @@ void display_init(void){
 		 uint16_t disp[]={  304,268,257,262,308,310,310,51,51,52,53,54,55,56,57,58,0};  // this should work for gd
 		  if (spi_send==0){         // sets data byte
 
-if ((enc2_dir>63) && (menu_page[2]==0))  {init=4;menu_page[2]=1;}  //restart page draw for second page , might need home pos init
+/*if ((enc2_dir>63) && (menu_page[2]==0))  {init=4;menu_page[2]=1;}  //restart page draw for second page , might need home pos init
 if  ((init==76) && (menu_page[2]==1)) menu_page[2]=2; //after drawing second page and finish
 if ((enc2_dir<63) && (menu_page[2]==2))  {init=4;menu_page[2]=0;}
-
-switch(init){     //Remember every line advances +char on display
+*/
+switch(init){     //Remember every line advances +char on display ,,all this is mostly unneeded
 
 case 77: spi_hold=384+(init_b>>1);init=init+((init_b&1)*2);break; // no delay ,jump to either blink sets
 
@@ -1470,7 +1475,7 @@ default : init_b=init-6;displayBuffer ();spi_hold=spell[init_b];break; //initial
 
 if (init<6)	{HAL_Delay(30);spi_hold=disp[init] ;  init_b=cursor_menu[2]; } //delay needs to go
 
-init++;
+init++;   // after 6 it quits the rest is not needed
 spi_send=1;SPI_command();spi_send=0;spi_enable=0;
 		  }
 /////////////////////////////////////////////////////////////////////////////
@@ -1548,99 +1553,65 @@ void display_fill(void)  {     // full update of gfx memory
 loop_counter3=1;
 for (n=0;n<2048;n++)	{ //fills up gfx ram or not
 
-enc2_dir=(n>>4)+menu_page[1];
+enc2_dir=(n>>4)+menu_page[1]; 												// 0-128         +      0,127,255
 
 displayBuffer();
 }
-enc2_dir=menu_page[1]*2;  // end clean
+//enc2_dir=menu_page[1];  // end clean
 }
 
 
-/* void displayBuffer (void){        //  only 1 char per round for now ,works good ,change
 
-//uint8_t count_lut[44]={48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102,103,104,105,106,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89};
-//uint16_t lcd_menuB;  // select upper or lower
-uint8_t d_count;
-uint8_t init_x=((init_b>>4)<<3);
-uint8_t init_y=init_b&15;
-uint16_t store_x;
-
-
-store_c= disp_lut [(init_b+(cursor_menu[2]&128))>>4]  [init_y] ;  //gets potvalues pointer from menus ,works
-if (init_b==enc2_dir) lcd_out3=potSource[store_c-128];   // feedback line output change to whatever
-//if (init_b==enc2_dir) lcd_out3=potValues[store_c-128];   // feedback line output change to whatever
-
-//if (store_c<64) store_c=64; // just in case , causes issues with char
-
-	 if (store_c==64) store_c=47;
-	if ((store_c>127)&& (store_c<255))  {store_c= potValues[store_c&127]+48;}		// sets data or stored
-	if (store_c>254){store_c= potValues[store_c-128]+48;}
-
-store_c=store_c-47; store_c = store_c &127;	spell[init_b] = store_c ;  // spell no longer ?
-//if ((seq_pos&1) && (store_c) && (init_b==enc2_dir)) store_c=0; // blinker ok for now ,slow might need other separate code for this 
-if ((seq_pos&1) && (init_b==enc2_dir)) {if (store_c) {  store_c=0;} else store_c=48;} 
-
-
-store_x=(store_c*8);
-
-for (d_count=0;d_count<8;d_count++){
-					gfx_ram[d_count+init_x] [init_y] = gfx_char[d_count+store_x]; //write character to ram ,should be elsewhere
-}
-
-	if (init_b==119) init_b=0; else init_b++;   // character position  dont need
-
-	// if(store_c>239) {lcd_feedback(); }
-
-}
-*/
 void displayBuffer (void){        //  in a constant state of flux
 
 	if (disp_stepper==0) init_b=enc2_dir; else init_b=111+disp_stepper;  // fetch values for last line or cursor
 
 	uint8_t d_count;
-uint8_t init_x=((init_b>>4)<<3);    // normal x8 , try other 64 x16
-uint8_t init_x2=init_x&63;
+uint16_t init_x=((init_b>>4)<<3);    // normal x8 , try other 64 x16
+uint8_t init_x2=init_x&63;  // 0-64  character address in gfx
 uint8_t init_y=init_b&15;
 uint16_t store_x;
-uint8_t lfotarget_menu[10]={0,40,16,8,40,40,48,56,64,72,0};  // keep lfo target list here for now *8
+uint8_t lfotarget_menu[17]={0,40,16,8,40,40,48,56,64,72,0,0,0,0,0,0,0,0,0,0};  // keep lfo target list here for now *8
 // use this to set feedback pointer for now
 // just to point the lfo number
 
+//if (enc2_dir<128){
+	if (disp_stepper==0) { store_c= disp_lut [init_b>>4]  [init_y] ; feedback_pointer=((enc2_dir>>4)<<3)&127; feedback_line[10]=((enc2_dir&15)>>1)+48; }
+if  ((disp_stepper<9) && (disp_stepper))
 
-
-if (disp_stepper==0) store_c= disp_lut [init_b>>4]  [init_y] ;  else if (disp_stepper<9)
-
-{	feedback_line[disp_stepper]=menuList[disp_stepper+feedback_pointer];  // feedback data
+{	feedback_line[disp_stepper]=menuList[disp_stepper+feedback_pointer];  // feedback data info
 	store_c=feedback_line[disp_stepper];//gets potvalues pointer from menus or feedback line
 }
-else store_c=feedback_line[disp_stepper];
+if (disp_stepper>8) store_c=feedback_line[disp_stepper];  /// just the lcd out  values
 
 
-if (disp_stepper==0) {lcd_out3=potSource[store_c-128]; feedback_pointer=(enc2_dir>>4)<<3; feedback_line[10]=((enc2_dir&15)>>1)+48; }    // feedback related
+
 
 
 
 
 	// all this can be simplified
 	 if (store_c==64) store_c=47;  //EMPTY SPACE
-	if ((store_c>127)&& (store_c<255))  {store_c= potValues[store_c&127]+48;}		// NORMAL POTVALUES
-	if ((store_c>254)	&& (store_c<384)) 											{store_c= potValues[store_c-128]+48;}  // POTVALUES 128-254
-	if (store_c>383)		{store_c=store_c-384;			store_c= menuList2		[     (lfotarget_menu[   ((store_c>>3))  ])	+(store_c&7)]						; } // VARIABLE MENU ITEMS CHAR LUT
-store_c=store_c-47; store_c = store_c &127;	  // spell no longer ?, store_c changes
+	if ((store_c>127)&& (store_c<255))  {lcd_out3=potSource[store_c-128] ;     store_c= potValues[store_c&127]+48;															}		// NORMAL POTVALUES
+	if ((store_c>254)	&& (store_c<384)) 											{lcd_out3=potSource[store_c-128] ;store_c= potValues[store_c-128]+48;}  // POTVALUES 128-254
+//	if ((store_c>127)	&& (store_c<384)) 	{store_c= potValues[store_c&127]+48;}		// NORMAL POTVALUES
+	if (store_c>511)		{store_c=store_c&127;			store_c= menuList2		[     (lfotarget_menu[   ((store_c>>3))  ])	+(store_c&7)]						; } // VARIABLE MENU ITEMS CHAR LUT
+
+	store_c=store_c-47; store_c = store_c &127;	  // spell no longer ?, store_c changes		STARTS FROM 0
 
 store_x=(store_c*8);  // i line characters , might shrink it and use extr for other  visuals
 
 
 if (( !loop_counter3) && (disp_stepper==0))     // blinker for cursor character only
 	for (d_count=0;d_count<7;d_count++){
-						gfx_ram[d_count+init_x2] [init_y] = gfx_char[d_count+store_x]^127; //write character to ram ,should be elsewhere
+						gfx_ram[d_count+init_x2] [init_y] = gfx_char[d_count+store_x]^127; //write character to ram ,should be elsewhere , blank is correct
 	}
 else for (d_count=0;d_count<7;d_count++){
-	gfx_ram[d_count+init_x2] [init_y] = gfx_char[d_count+store_x]; //write character to ram ,should be elsewhere
+	gfx_ram[d_count+init_x2] [init_y] = gfx_char[d_count+store_x]; //write character to ram ,should be elsewhere , seems affected by later stufff
 }
 
 
-gfx_ram[7+init_x2] [init_y] = 0; // last line is blank between rows
+gfx_ram[7+init_x2] [init_y] = 0; // last line is blank between rows or whatever
 if (disp_stepper==15) disp_stepper=0; else disp_stepper++;
 
 }
@@ -1685,15 +1656,16 @@ uint8_t l;			// 35.002khz(0.02857ms) sample, 1 sample is temp count (16x=0.00045
 float freq_temp;	// (1/(bpm/60)) /0.00045712=tempo count ie 1093.8 for 120bpm
 float freq2_temp;
 float freq_adder;
-float tempo_sync=16384/((tempo_mod*4)/512) ; // 8000 at slowest 15.625 updates to lfo at 1 note 16384/15.625=1048.576+ per update  at setting 80
-tempo_sync=tempo_sync/80;  //
-uint32_t  note_toggler[17];  //records note position on 0-512   using a bit
+float tempo_sync=16384/((tempo_mod*16)/512) ; // 8000 at slowest 15.625 updates to lfo at 1 note 16384/15.625=1048.576+ per update  at setting 80
+tempo_sync=tempo_sync/80;  // bit weird her , this is adsr !
+
+uint32_t  note_toggler[17]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  //records note position on 0-512   using a bit
 for (i=0;i<16;i++) {  note_toggler[i]=0; }
 	//potSource[150]=(freq_point[0])*100; //0-2
 
 //float lcd_out2;
 
-//lcd_out3=trigger_counter; // still goes to 15
+//lcd_out3=enc2_dir; // still goes to 15
 
 //lcd_out3=adc_values[2]; // 3 digit read out , works ok
 //lcd_out3=lcd_out3+180;
@@ -1738,7 +1710,7 @@ for (i=0;i<256;i++) {
 	 if  ((as_attack<1500)  && (as_attack>999))  										{as_attack=as_attack+adsr_att;					lut_temp=1500-(as_attack-500);  }  // 1000-500
 	 if ((as_attack>1499)   && 		(as_attack<2000)) 																{		lut_temp=500; 	as_attack=as_attack+as_sustain;}
 	if ((as_attack>1999)  &&  (as_attack<2500)	)																							{as_attack=as_attack+as_sustain	;	lut_temp=2500-as_attack; } //500-0;
-	if (as_attack>3000)   																																			{lut_temp=1; as_attack=4000; }
+	if (as_attack>3000)   																																			{lut_temp=1; as_attack=4000; }     // THE END
 
 adsr_lut[i]= lut_temp*0.001;
 }
@@ -1758,7 +1730,7 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	if ((next_isr>>4) != (seq_pos)) { 					// next note step 140ms
 		seq_pos=(next_isr>>4); // seq pos =256 max , isr = 1/16 of a note, note lenght is 1-4
 		tempo_start=1;
-note_toggler[i>>5]=1<<(i&31   )   ; // record note triggers or seq_changes position
+// record note triggers or seq_changes position ,NEEDS TO BE OFF FOR NOTE 0
 }
 
 
@@ -1783,7 +1755,7 @@ note_toggler[i>>5]=1<<(i&31   )   ; // record note triggers or seq_changes posit
 
 		note_channel[2]=potValues[80+seq_loop[2]]+potValues[72];  //loop 8 notes from pos and x times
 		note_channel[3]=potValues[seq_loop[3]];  //loop 8 notes from pos and x times ,might disable normal adsr completely
-	if (note_channel[3]) 		{note_channel[3]=note_channel[3]+potValues[73];	adsr_retrigger[3]=1; } // stay at zero for off
+	if (note_channel[3]) 		{note_channel[3]=note_channel[3]+potValues[73];	adsr_retrigger[3]=1; note_toggler[i>>5]=1<<(i&31   )   ; } // stay at zero for off
 //	if ((note_channel[3]) && (adsr_retrigger[3]==1))		adsr_retrigger[3]=0;   // while note on , turn of trigger
 //	if ((note_channel[3]) && (adsr_retrigger[3]==0))	  adsr_retrigger[3]=1;
 
@@ -1844,7 +1816,7 @@ freq2_temp=0;
 		for (l=0;l<10;l++){   //current lfo setup , messy
 
 			freq_temp=potSource[130+l];
-			freq2_temp=freq_temp*tempo_sync ; //correction to one note per cycle ,fixed
+			freq2_temp=freq_temp*tempo_sync ; //correction to one note per cycle ,fixed , maybe loose this
 
 			freq_temp=lfo_accu[l][i_frac]+ freq2_temp;// get lfo value plus rate , will try to get related to tempo for easier sync , at potS 80?/8192/8notes/ 1 bar
 
@@ -1966,7 +1938,7 @@ if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;
 	//	filter_accus[1]=	filter_accus[1]*adsr_level[3][i_frac];
 		filter_accus[1]=	filter_accus[1]*adsr_level[3];
 
-		filter_accus[2]=(filter_accus[1]*freq_point[0])+(filter_accus[2]*freq_point[1]);
+		filter_accus[2]=(filter_accus[1]*freq_point[0])+(filter_accus[2]*freq_point[1]);					// maybe allow bandpass insted of lpf
 		filter_accus[3]=(filter_accus[2]*freq_point[0])+(filter_accus[3]*freq_point[1]);
 		filter_accus[4]=(filter_accus[3]*freq_point[0])+(filter_accus[4]*freq_point[1]);
 		filter_accus[5]=(filter_accus[4]*freq_point[0])+(filter_accus[5]*freq_point[1]);
