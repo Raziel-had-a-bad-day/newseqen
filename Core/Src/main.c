@@ -18,12 +18,11 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#define ARM_MATH_CM4
 #include "main.h"
-#include "arm_math.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +58,14 @@ TIM_HandleTypeDef htim4;
 // STM32F411
 
 // if folding problem , space after // 
-
+/*int _write(int file, char *ptr, int len) {   	// code sw viewer
+	 int DataIdx;
+	 for (DataIdx = 0; DataIdx < len; DataIdx++){
+		 ITM_SendChar(*ptr++);
+	 }
+	 return len;
+ }
+*/
 
 // flash start
 
@@ -315,7 +321,7 @@ static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void display_init(void);
 
-void adc_read(void);
+//void adc_read(void);
 void analogInputloop(void);
 void displayLoop(void);
 void displayBuffer(void);
@@ -412,7 +418,7 @@ uint16_t sample_pointB; //circular pointer
  unsigned short lcd_blink; // lcd blinker
 uint8_t n_lcd; // lcd var
 const char words[10] = "HELLOWORLD";
-uint8_t adc_values[5]={15,15,15,15,0} ;  // adc values storage
+uint16_t adc_values[5]={20,20,20,20,20} ;  // adc values storage
 uint8_t position; // lcd cursor
   uint16_t play_sample[1025]={} ;  //sample storage  , big better
 volatile uint16_t sample_point; // pointer for sample array
@@ -430,7 +436,7 @@ uint16_t adsr_time[11];
 uint16_t note_channel[31]={ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  // 10 notes , 10 velocity 20->16bit , 10 mask toggle
  unsigned short mask_result;
 
- uint16_t adc_source[4] ;
+static uint16_t adc_source[5] ;  // for soem reason static maybe important , also 16 bit most def
 const uint8_t lfo_mask[20]={255,170,85,252,240,192,128,136,238,15,0,0,0,0,0,0,0}; // lfo dif masks
 uint16_t sample_lp;  //low pass accu
 uint8_t sample_lpbuf[512]; // sample average buff
@@ -704,7 +710,7 @@ HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
 //HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_4,pData, 63);
 TIM2->CNT=32000;
 HAL_ADC_Start(&hadc1);
-HAL_ADC_Start_DMA(&hadc1, adc_source, 3); //dma start ,needs this and adc start
+HAL_ADC_Start_DMA(&hadc1, adc_source, 4); //dma start ,needs this and adc start ,set sampling time to very long or it will fail
 
 
 HAL_I2C_MspInit(&hi2c2);
@@ -715,7 +721,6 @@ mem_buf=0;
 HAL_I2C_Mem_Read(&hi2c1, 160, ((1+(i>>6))<<6)+(i&63), 2,  &mem_buf, 1, 1000); // add 160 is correct  // only single byte works for now
 potSource[i]=mem_buf;
 potValues[i]=mem_buf>>2;
-
 } // reads stored values for potvalues
 */
 
@@ -784,7 +789,7 @@ for (i=0;i<416;i++){					// get a few more pages
 menuSelect=0;
 // fill up sample
 firstbarLoop=0;
-
+printf("Hello everybody");
 
 
   /* USER CODE END 2 */
@@ -832,18 +837,16 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 	  ///////////////////////////////////////////////////////////////////////////////
 
 	  if (loop_counter & 255)	{ // grab adc readings + 3ms , 32 step
-	  	for (i=0;i<3;i++) {
+	  	for (i=0;i<4;i++) {
 
-	  	adc_values[2-i]= (adc_source[i]>>7) &31;
+	  adc_values[i]= (adc_source[i])>>3 ;
 	  }
+	  //	adc_read();
 	  	loop_counter=0;
 	  }
 
 	  if ((seq_pos==7) && (lcd_send==0)) {lcd_send=1;} // runs just once
 	  /*
-
-
-
 	   if (promValue<64) promValue=promValue+1 ; else promValue=0;  // fetch eeprom   nogo
 	  	  if ((promValues[promValue] ) !=(potValues[promValue]))  EEPROM.write(promValue,(potValues[promValue]));   //  not too happy can totally kill speed  will have to put elsewhere
 	  	  promValues[promValue] =potValues[promValue];
@@ -893,6 +896,7 @@ void SystemClock_Config(void)
   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
@@ -909,6 +913,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -941,45 +946,58 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 1 */
 
   /* USER CODE END ADC1_Init 1 */
+
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
-  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
+  hadc1.Init.Resolution = ADC_RESOLUTION_8B;
   hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 3;
+  hadc1.Init.NbrOfConversion = 4;
   hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     Error_Handler();
   }
+
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_3;
+  sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
+
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_4;
+  sConfig.Channel = ADC_CHANNEL_5;
   sConfig.Rank = 2;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
+
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_5;
+  sConfig.Channel = ADC_CHANNEL_6;
   sConfig.Rank = 3;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_9;
+  sConfig.Rank = 4;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -1090,11 +1108,11 @@ static void MX_TIM2_Init(void)
   sConfig.IC1Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 1;
+  sConfig.IC1Filter = 2;
   sConfig.IC2Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 1;
+  sConfig.IC2Filter = 2;
   if (HAL_TIM_Encoder_Init(&htim2, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -1192,17 +1210,17 @@ static void MX_TIM4_Init(void)
   htim4.Init.Prescaler = 0;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim4.Init.Period = 65535;
-  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
   sConfig.IC1Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 1;
+  sConfig.IC1Filter = 2;
   sConfig.IC2Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 1;
+  sConfig.IC2Filter = 2;
   if (HAL_TIM_Encoder_Init(&htim4, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -1229,9 +1247,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA2_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  /* DMA2_Stream4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
 
 }
 
@@ -1303,14 +1321,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)    // unreliable
 TIM3->CCR3=play_hold ;  // keep readin sample storage
 
 /* if ((sample_point&7)==6) {
-
-
 	if (spi_send==2){ GPIOB->BSRR =bsrr_seq[bsrr_counter];bsrr_counter++;}  // send spi when loaded up , this works , too fast however will fail
-
 	if ((bsrr_counter==49) && (spi_send==2)) {bsrr_counter=0; spi_send=0;}
 }
-
-
 */
 
 
@@ -1346,10 +1359,10 @@ sample_point++; //this needs to be here or too fast and wrong sample rate
 }
 
 
- void adc_read(void){		HAL_ADC_Start(&hadc1);				//disabled
+ /*void adc_read(void){		HAL_ADC_Start(&hadc1);				//disabled
 		if (HAL_ADC_PollForConversion(&hadc1, 1) == HAL_OK)      // 1ms time out
 				{
-		adc_values[2] = HAL_ADC_GetValue(&hadc1);
+		adc_values[0] = HAL_ADC_GetValue(&hadc1);
 					}  // get value
 		 HAL_ADC_Start(&hadc1); // need for every conversion
 		if (HAL_ADC_PollForConversion(&hadc1, 1) == HAL_OK)      // 1ms time out
@@ -1359,13 +1372,17 @@ sample_point++; //this needs to be here or too fast and wrong sample rate
 	 	HAL_ADC_Start(&hadc1);
 		if (HAL_ADC_PollForConversion(&hadc1, 1) == HAL_OK)      // 1ms time out
 				{
-			adc_values[0] = HAL_ADC_GetValue(&hadc1);
+			adc_values[2] = HAL_ADC_GetValue(&hadc1);
 				}  // get value this works
-		HAL_ADC_Stop(&hadc1);
-for (i=0;i<3;i++){ adc_values[i]= (adc_values[i]>>8) &15; } // reduce value to 4 bit
-
+		HAL_ADC_Start(&hadc1);
+		if (HAL_ADC_PollForConversion(&hadc1, 1) == HAL_OK)      // 1ms time out
+						{
+					adc_values[4] = HAL_ADC_GetValue(&hadc1);
+						}  // get value this this on e is blank
+		//HAL_ADC_Stop(&hadc1);
+//for (i=0;i<3;i++){ adc_values[i]= (adc_values[i]>>8) &15; } // reduce value to 4 bit
 }
-
+*/
 void analoginputloopb(void){  //works fine still
 uint16_t menu_holder;
 
@@ -1482,13 +1499,10 @@ spi_send=1;SPI_command();spi_send=0;spi_enable=0;
 		  /*		  if (spi_enable)			// load up one byte , works good
 		  {
 			 for (samp_temp=0;samp_temp<48;samp_temp++){      // convert bytes to bits
-
 			  clk_pin=(samp_temp&1)^1; // start on high
-
 		  bsrr_longB=bsrr_long>>(((48-samp_temp)>>1));   // need to repeat bit for clock
 		  bsr_out=bsrr_longB&1;
 		  bsr_out=(bsr_out<<2)+clk_pin; //chmaged for other pin
-
 		 // {GPIOB->BSRR =(bsr_out<<13)+(~(bsr_out)<<29); }  // send spi data when enabled
 		  {bsrr_seq[samp_temp] =(bsr_out<<13)+(~(bsr_out)<<29); }  // send spi data when enabled ,fills up bsrr hold
 		//  samp_temp++;
@@ -1503,9 +1517,7 @@ spi_send=1;SPI_command();spi_send=0;spi_enable=0;
 			 bsrr_counter++; // add this or stuck
 		  //if ((bsrr_counter==49) && (spi_send==2)) {bsrr_counter=0; spi_send=0;}
 		  if (bsrr_counter==49)  {bsrr_counter=0; spi_send=0;}
-
 		 }
-
 */
 
 }
@@ -1667,16 +1679,17 @@ for (i=0;i<16;i++) {  note_toggler[i]=0; }
 
 //lcd_out3=enc2_dir; // still goes to 15
 
-//lcd_out3=adc_values[2]; // 3 digit read out , works ok
+lcd_out3=adc_values[0]+adc_values[1]+adc_values[2]; // 3 digit read out , works ok,, [2] works but thats it
 //lcd_out3=lcd_out3+180;
-potSource[150]=(lcd_out3/100)*16;
+potSource[150]=(lcd_out3/100)*16;  // still works
 potSource[151]=((lcd_out3 %100)/10)*16;		 // 0-160 to 0-10
 potSource[152]=(lcd_out3%10)*16;
 
 
 unsigned short  sine_zero;  // zero cross
 note_holdA=0;
-
+//printf ("crap \n");
+//printf("%d|",adc_values[0] );printf("%d|",adc_values[1] );printf("%d|",adc_values[2] );printf("%d|\n",adc_values[3] );
 uint8_t note_patterns[8]={1,4,2,2,1,4,2,1,4,2,1,4,4};   // creating beats
 uint8_t note_lenght=5-note_patterns[seq_pos&7] ; // note length modifier , higher faster
 //tempo_mod=tempo_mod-63+(lfo_out[1]>>7);
@@ -1684,12 +1697,12 @@ uint8_t note_lenght=5-note_patterns[seq_pos&7] ; // note length modifier , highe
 uint8_t note_plain;
 int8_t ring_mod=0;
 //sample_Accu2=0;
-//printf ("crap");
+//printf (adc_values[0]," ",adc_values[1]," ",adc_values[2]," ","crap \n");
 // some good phasin and delays here
 uint8_t cross_fade[2];
 uint8_t fader[17]={0,1,5,11,19,28,39,51,64,76,88,99,108,116,122,126,127}; // sine curve for cross fade
-adc_values[2]=adc_values[1];   // this temp until pot 3 is fixed
-if(adc_values[2]&16)	{cross_fade[1]=127-fader[adc_values[2]&15]; cross_fade[2]=127;}  else {cross_fade[2]=fader[adc_values[2]&15]; cross_fade[1]=127;} //calculate crossfader
+//adc_values[2]=adc_values[1];   // this temp until pot 3 is fixed
+if(adc_values[2]&16)     	{cross_fade[1]=127-fader[adc_values[2]&15]; cross_fade[2]=127;}  else {cross_fade[2]=fader[adc_values[2]&15]; cross_fade[1]=127;} //calculate crossfader
 
 // doing lfo calc here as it is slow only for now
 ////////////////////adsr/////////////////////////////////////////
@@ -1740,8 +1753,8 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	//printf("%d" ,note_channel[10]);
 
 
-		potValues[32]=adc_values[0]>>1; //assigned pots to start of loopers 0-16,works
-		potValues[33]=adc_values[1]>>1;
+		potValues[32]=(adc_values[0]>>2)&15; //assigned pots to start of loopers 0-16,works
+		potValues[33]=(adc_values[1]>>2)&15;
 
 
 		seq_loop[2]=((potValues[32]+(seq_pos&7))&15); // calc  8 note loop positions sets looping point in sequence
@@ -1967,9 +1980,10 @@ if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;
 
 
 filter_Accu=0;
-filter_Accu=(sample_Accu[0]+sample_Accu[2])>>8; //filter + drum out
-
-
+//filter_Accu=(sample_Accu[0]+sample_Accu[2])>>8; //filter + drum out
+//filter_Accu=(sample_Accu[1]+sample_Accu[3])>>8; //filter + drum out ,clean out
+ //filter_Accu=sample_Accu[1]>>8;
+filter_Accu=(sample_Accu[1]>>7)+(sample_Accu[3]>>8); //filter + drum out
  if (one_shot!=199)   one_shot++;  //play one attack then stop
 
  if (filter_Accu>0xFFFF) filter_Accu=0xFFFF; else if (filter_Accu<-65535) filter_Accu=-65535;  // limiter to 16 bits
@@ -2129,61 +2143,33 @@ printf("\n");
 }
 
 
-
-
-
-
-
 /*
 void analogInputloop(void) { // might make menuselect a master override for everything  if chnaged then halt writing new values until screen refreshed
-
 		menuSelect = (7 - (adc_values[0] >>1))<<4;
 		menuSelectX=15 - (adc_values[1] );
 		tempValueA=adc_values[2];
-
 		counterVarB = menuSelectX + menuSelect; // select mem page 10*8  and location pointer  77
-
 	if (counterVarB != tempValue[120]) {
 		modEnable = 1;
 	//	lcd.setCursor((menuSelectX * 2), 1);
 	} else
 		modEnable = 0;   //compared to stored value
 	tempValue[120] = counterVarB;
-
-
  tempValueA=(tempValueA*11) >> 4;
 	if (tempValueA>10) tempValueA=10;
-
  tempValue[counterVarB] = tempValueA; // read and store pots 0-200 ,writemenu to single pos ,
-
 	if ((modEnable) || (firstRound))
 		tempValueB[counterVarB] = tempValue[counterVarB]; // needs replicate values after moving menupot to avoidwriting new values needs to move twice not good
 	valueCurrent = tempValue[counterVarB]; // incoming value  10*8 blocks
 	valueOriginal = tempValueB[counterVarB]; // read original stored value    might just make  all separate regardless
-
 	if (valueCurrent != valueOriginal) {
 		tempValueB[counterVarB] = valueCurrent;
-
 		//  potValues[counterVarB] = 10 - (valueCurrent);  // potvalues 0- 63 and 180 up
-
-
-
 	}    //perfect now   , change to 0-9 here
-
-
 	potValues[counterVarB]=potValues[counterVarB]+
-
 	firstRound = 0;
-
-
 } // loop for reading analog inputs
-
 */
-
-
-
-
-
 
 
 
@@ -2191,13 +2177,10 @@ void analogInputloop(void) { // might make menuselect a master override for ever
 
 
 /*
-
 	if (n_lcd > 18) {
 		row_toggle = !row_toggle;
 		n_lcd = 1;
 	}
-
-
 	lcddata = spell[(n_lcd) + (row_toggle * 18)]; // when n=1 changes
 	if (command_toggle == 4) {
 		command_toggle = 0;
@@ -2213,18 +2196,7 @@ void analogInputloop(void) { // might make menuselect a master override for ever
 */
 
 
-
-
-
-
-
-
-
 /*
-
-
-
-
 	sine_counter++;
 	sine_counter = sine_counter & 511;
 		switch (sine_counter >> 7) {
@@ -2242,30 +2214,15 @@ void analogInputloop(void) { // might make menuselect a master override for ever
 			break;    //384-511
 		default:
 			break;
-
-
-
-
  // future goal = interpolate instead of add
 if ((note_holdA) && (adsr[1] ==128)) adsr[1]=1;  // dont use note for trigger ,works
-
 if (adsr[1]==1) {
-
 	adsr_time[1]=(isrCount+17) &1023; note_channel[5]=127; adsr[1]=2;} // set counter , clear trigger, works , 16 per note
-
-
 if ((isrCount>=adsr_time[1]) && (adsr[1]==2))	 {adsr[1]=128;note_channel[5]=0; } // simple start finish, wwatch isrcount ,works
-
 if (note_channel[0] && (adsr[0] ==128)) adsr[0]=1;  // dont use note for trigger ,works
-
 if (adsr[0]==1) {
-
 	adsr_time[0]=(isrCount+17) &1023; note_channel[4]=127; adsr[0]=2;} // set counter , clear trigger, works , 16 per note
-
-
 if ((isrCount>=adsr_time[0]) && (adsr[0]==2))	 {adsr[0]=128;note_channel[4]=0; } // simple start finish, wwatch isrcount ,works
-
-
 */
 
 
@@ -2276,32 +2233,15 @@ HAL_GPIO_WritePin(GPIOB, D6_Pin, ((lcddata >> 2) & 1));
 HAL_GPIO_WritePin(GPIOB, D7_Pin, ((lcddata >> 3) & 1)); // true or 0 return , value not important , works
 */
 /*
-
 	 HAL_GPIO_WritePin(GPIOB, D4_Pin, ((lcddata >> 4) & 1));
 		HAL_GPIO_WritePin(GPIOB, D5_Pin, ((lcddata >> 5) & 1));
 			HAL_GPIO_WritePin(GPIOB, D6_Pin, ((lcddata >> 6) & 1));
 			HAL_GPIO_WritePin(GPIOB, D7_Pin, ((lcddata >> 7) & 1)); // true or 0 return , value not important , works
-
-
-
-
-
 tim example
  if (GPIOE->IDR & 0x01) TIM2->CNT = 0; // reset counter
  if (GPIOE->IDR & 0x02) TIM2->CR1 |= 0x01; // enable counter
  if (GPIOE->IDR & 0x04) TIM2->CR1 &= ~0x01; // disable counter
-
-
-
-
-
-
 */
-
-
-
-
-
 
 
 /* USER CODE END 4 */
@@ -2337,5 +2277,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
