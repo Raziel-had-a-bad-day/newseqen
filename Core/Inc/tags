@@ -1,0 +1,389 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+ChromNote	myvars.h	/^const uint8_t ChromNote[]={0,2,3,5,6,8,9,11,12,14,15,17,18,20,21}; \/\/chromatic, diminished$/;"	v
+DATA_CACHE_ENABLE	stm32f4xx_hal_conf.h	155;"	d
+DP83848_PHY_ADDRESS	stm32f4xx_hal_conf.h	225;"	d
+ETH_RXBUFNB	stm32f4xx_hal_conf.h	219;"	d
+ETH_RX_BUF_SIZE	stm32f4xx_hal_conf.h	217;"	d
+ETH_TXBUFNB	stm32f4xx_hal_conf.h	220;"	d
+ETH_TX_BUF_SIZE	stm32f4xx_hal_conf.h	218;"	d
+EXTERNAL_CLOCK_VALUE	stm32f4xx_hal_conf.h	140;"	d
+HAL_ADC_MODULE_ENABLED	stm32f4xx_hal_conf.h	40;"	d
+HAL_CORTEX_MODULE_ENABLED	stm32f4xx_hal_conf.h	90;"	d
+HAL_DMA_MODULE_ENABLED	stm32f4xx_hal_conf.h	86;"	d
+HAL_EXTI_MODULE_ENABLED	stm32f4xx_hal_conf.h	85;"	d
+HAL_FLASH_MODULE_ENABLED	stm32f4xx_hal_conf.h	88;"	d
+HAL_GPIO_MODULE_ENABLED	stm32f4xx_hal_conf.h	84;"	d
+HAL_I2C_MODULE_ENABLED	stm32f4xx_hal_conf.h	56;"	d
+HAL_MODULE_ENABLED	stm32f4xx_hal_conf.h	38;"	d
+HAL_PWR_MODULE_ENABLED	stm32f4xx_hal_conf.h	89;"	d
+HAL_RCC_MODULE_ENABLED	stm32f4xx_hal_conf.h	87;"	d
+HAL_SPI_MODULE_ENABLED	stm32f4xx_hal_conf.h	65;"	d
+HAL_TIM_MODULE_ENABLED	stm32f4xx_hal_conf.h	66;"	d
+HSE_STARTUP_TIMEOUT	stm32f4xx_hal_conf.h	103;"	d
+HSE_VALUE	stm32f4xx_hal_conf.h	99;"	d
+HSI_VALUE	stm32f4xx_hal_conf.h	112;"	d
+INSTRUCTION_CACHE_ENABLE	stm32f4xx_hal_conf.h	154;"	d
+LED_GPIO_Port	main.h	64;"	d
+LED_Pin	main.h	63;"	d
+LSE_STARTUP_TIMEOUT	stm32f4xx_hal_conf.h	131;"	d
+LSE_VALUE	stm32f4xx_hal_conf.h	127;"	d
+LSI_VALUE	stm32f4xx_hal_conf.h	119;"	d
+MAC_ADDR0	stm32f4xx_hal_conf.h	209;"	d
+MAC_ADDR1	stm32f4xx_hal_conf.h	210;"	d
+MAC_ADDR2	stm32f4xx_hal_conf.h	211;"	d
+MAC_ADDR3	stm32f4xx_hal_conf.h	212;"	d
+MAC_ADDR4	stm32f4xx_hal_conf.h	213;"	d
+MAC_ADDR5	stm32f4xx_hal_conf.h	214;"	d
+MajorNote	myvars.h	/^const uint8_t MajorNote[]= { 0,2,4,6,7,9,11,13,14,16,18,19,21,23,25,26,28,30,31,33,35,37,38,40,42,43,45} ;  \/\/ major$/;"	v
+MinorNote	myvars.h	/^const uint8_t MinorNote[]={ 0,2,3,5,7,8,10,12,14,15,17,19,20,22,24,26,27,29,31,32,34,36,38,39,41,43,44,46}; \/\/ minor$/;"	v
+Note	myvars.h	/^uint8_t  Note=0;$/;"	v
+NoteB	myvars.h	/^uint8_t NoteB;$/;"	v
+NoteBuffer	myvars.h	/^uint8_t NoteBuffer=0;$/;"	v
+NoteC	myvars.h	/^uint8_t NoteC; \/\/ second channel note$/;"	v
+PHY_AUTONEGOTIATION	stm32f4xx_hal_conf.h	245;"	d
+PHY_AUTONEGO_COMPLETE	stm32f4xx_hal_conf.h	250;"	d
+PHY_BCR	stm32f4xx_hal_conf.h	236;"	d
+PHY_BSR	stm32f4xx_hal_conf.h	237;"	d
+PHY_CONFIG_DELAY	stm32f4xx_hal_conf.h	229;"	d
+PHY_DUPLEX_STATUS	stm32f4xx_hal_conf.h	258;"	d
+PHY_FULLDUPLEX_100M	stm32f4xx_hal_conf.h	241;"	d
+PHY_FULLDUPLEX_10M	stm32f4xx_hal_conf.h	243;"	d
+PHY_HALFDUPLEX_100M	stm32f4xx_hal_conf.h	242;"	d
+PHY_HALFDUPLEX_10M	stm32f4xx_hal_conf.h	244;"	d
+PHY_ISOLATE	stm32f4xx_hal_conf.h	248;"	d
+PHY_JABBER_DETECTION	stm32f4xx_hal_conf.h	252;"	d
+PHY_LINKED_STATUS	stm32f4xx_hal_conf.h	251;"	d
+PHY_LOOPBACK	stm32f4xx_hal_conf.h	240;"	d
+PHY_POWERDOWN	stm32f4xx_hal_conf.h	247;"	d
+PHY_READ_TO	stm32f4xx_hal_conf.h	231;"	d
+PHY_RESET	stm32f4xx_hal_conf.h	239;"	d
+PHY_RESET_DELAY	stm32f4xx_hal_conf.h	227;"	d
+PHY_RESTART_AUTONEGOTIATION	stm32f4xx_hal_conf.h	246;"	d
+PHY_SPEED_STATUS	stm32f4xx_hal_conf.h	257;"	d
+PHY_SR	stm32f4xx_hal_conf.h	255;"	d
+PHY_WRITE_TO	stm32f4xx_hal_conf.h	232;"	d
+PREFETCH_ENABLE	stm32f4xx_hal_conf.h	153;"	d
+TICK_INT_PRIORITY	stm32f4xx_hal_conf.h	151;"	d
+USE_HAL_ADC_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	157;"	d
+USE_HAL_CAN_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	158;"	d
+USE_HAL_CEC_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	159;"	d
+USE_HAL_CRYP_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	160;"	d
+USE_HAL_DAC_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	161;"	d
+USE_HAL_DCMI_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	162;"	d
+USE_HAL_DFSDM_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	163;"	d
+USE_HAL_DMA2D_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	164;"	d
+USE_HAL_DSI_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	165;"	d
+USE_HAL_ETH_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	166;"	d
+USE_HAL_FMPI2C_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	170;"	d
+USE_HAL_FMPSMBUS_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	171;"	d
+USE_HAL_HASH_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	167;"	d
+USE_HAL_HCD_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	168;"	d
+USE_HAL_I2C_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	169;"	d
+USE_HAL_I2S_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	172;"	d
+USE_HAL_IRDA_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	173;"	d
+USE_HAL_LPTIM_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	174;"	d
+USE_HAL_LTDC_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	175;"	d
+USE_HAL_MMC_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	176;"	d
+USE_HAL_NAND_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	177;"	d
+USE_HAL_NOR_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	178;"	d
+USE_HAL_PCCARD_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	179;"	d
+USE_HAL_PCD_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	180;"	d
+USE_HAL_QSPI_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	181;"	d
+USE_HAL_RNG_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	182;"	d
+USE_HAL_RTC_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	183;"	d
+USE_HAL_SAI_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	184;"	d
+USE_HAL_SDRAM_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	187;"	d
+USE_HAL_SD_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	185;"	d
+USE_HAL_SMARTCARD_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	186;"	d
+USE_HAL_SMBUS_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	190;"	d
+USE_HAL_SPDIFRX_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	189;"	d
+USE_HAL_SPI_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	191;"	d
+USE_HAL_SRAM_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	188;"	d
+USE_HAL_TIM_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	192;"	d
+USE_HAL_UART_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	193;"	d
+USE_HAL_USART_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	194;"	d
+USE_HAL_WWDG_REGISTER_CALLBACKS	stm32f4xx_hal_conf.h	195;"	d
+USE_RTOS	stm32f4xx_hal_conf.h	152;"	d
+USE_SPI_CRC	stm32f4xx_hal_conf.h	267;"	d
+VDD_VALUE	stm32f4xx_hal_conf.h	150;"	d
+__MAIN_H	main.h	24;"	d
+__STM32F4xx_HAL_CONF_H	stm32f4xx_hal_conf.h	25;"	d
+__STM32F4xx_IT_H	stm32f4xx_it.h	23;"	d
+_write	myvars.h	/^int _write(int file, char *ptr, int len)$/;"	f
+adc_source	myvars.h	/^static uint16_t adc_source[5] ;  \/\/ for soem reason static maybe important , also 16 bit most def$/;"	v
+adc_values	myvars.h	/^uint16_t adc_values[5]={20,20,20,20,20} ;  \/\/ adc values storage$/;"	v
+adsr_att	myvars.h	/^	float adsr_att;$/;"	v
+adsr_counter	myvars.h	/^uint8_t adsr_counter[11]; \/\/ hold count from 0-31 max 10+10+10 =ADR,  +1 on posedge then stop when above count value$/;"	v
+adsr_countup	myvars.h	/^float  adsr_countup[11];  \/\/holds isr count on notes ,$/;"	v
+adsr_isr	myvars.h	/^uint16_t adsr_isr; \/\/ holds adsr isrCount$/;"	v
+adsr_level	myvars.h	/^	float adsr_level[11]  ; \/\/float for vol envelope  ,ps 20 21$/;"	v
+adsr_lut	myvars.h	/^float adsr_lut[256];   \/\/ hold an envelope$/;"	v
+adsr_retrigger	myvars.h	/^unsigned short adsr_retrigger[11]={0,0,0,0,0,0,0,0,0,0,0}; \/\/ adsr auto retrigger or wait for note start , if 0 zero big problem$/;"	v
+adsr_step	myvars.h	/^				  uint8_t adsr_step;$/;"	v
+adsr_temp	myvars.h	/^uint8_t adsr_temp; \/\/ just a pointer for adsr$/;"	v
+adsr_test	myvars.h	/^uint8_t adsr_test=0;   \/\/ select if enable upcount$/;"	v
+adsr_time	myvars.h	/^uint16_t adsr_time[11];$/;"	v
+adsr_toggle	myvars.h	/^uint8_t adsr_toggle[11]={0,0,0,0,0,0,0,0};   \/\/ needs to be 0 or it never starts$/;"	v
+adsr_up	myvars.h	/^uint8_t adsr_up; \/\/up counter for adsr$/;"	v
+as_attack	myvars.h	/^	float as_attack=0; \/\/ for now all of them from this only , speed , 0-16  \/\/ rarely read$/;"	v
+as_sustain	myvars.h	/^	float as_sustain=0;  \/\/ length and level this is ok is running 1\/16 ish$/;"	v
+assert_param	stm32f4xx_hal_conf.h	480;"	d
+assert_param	stm32f4xx_hal_conf.h	484;"	d
+bank_write	myvars.h	/^ unsigned short bank_write=1;$/;"	v
+barCount	myvars.h	/^uint8_t barCount=0;  \/\/ counts +1 per 8 bars ie$/;"	v
+barCountB	myvars.h	/^uint8_t barCountB=1;\/\/ dec 1-8$/;"	v
+barCountC	myvars.h	/^uint8_t barCountC=1;$/;"	v
+barCountTotal	myvars.h	/^uint16_t barCountTotal=0;  \/\/ total note position in 32 bars 95 * 8 , 16bit$/;"	v
+bs_count	myvars.h	/^uint8_t bs_count=0; \/\/count to 40 on bsrrr$/;"	v
+bsr_out	myvars.h	/^uint8_t bsr_out;$/;"	v
+bsrr_counter	myvars.h	/^uint8_t bsrr_counter;$/;"	v
+bsrr_hold	myvars.h	/^ uint8_t bsrr_hold[128]; \/\/store to hold bsrr data ready for transfer in a loop$/;"	v
+bsrr_long	myvars.h	/^uint32_t bsrr_long;$/;"	v
+bsrr_longB	myvars.h	/^uint32_t bsrr_longB;$/;"	v
+bsrr_seq	myvars.h	/^uint32_t bsrr_seq[49]; \/\/ holds bits for one byte spi$/;"	v
+buffer	myvars.h	/^uint8_t buffer[4];$/;"	v
+ccValues	myvars.h	/^ uint8_t ccValues[6]={}; \/\/cc memories storage$/;"	v
+changeNote	myvars.h	/^uint8_t changeNote=2; \/\/ note on off flags$/;"	v
+clk_pin	myvars.h	/^uint8_t clk_pin=0;$/;"	v
+command	myvars.h	/^uint8_t command[5]={254,191,254,128}; \/\/ lcd setcursor command$/;"	v
+command_toggle	myvars.h	/^uint8_t command_toggle; \/\/ points to lcd command$/;"	v
+counterVar	myvars.h	/^ uint8_t counterVar=0;$/;"	v
+counterVarB	myvars.h	/^uint16_t counterVarB;$/;"	v
+cs_pin	myvars.h	/^unsigned short cs_pin=1;$/;"	v
+currentValues	myvars.h	/^uint8_t currentValues [10] = {  };  \/\/note switches on,stop,off  storage 15=on 0=off 1=loop$/;"	v
+currentValuesB	myvars.h	/^uint8_t currentValuesB [10] = {  };  \/\/ note switch  storage for lcd$/;"	v
+cursor_blink	myvars.h	/^uint8_t cursor_blink=0; \/\/ blink position  blink 1 or 2 or off$/;"	v
+cursor_menu	myvars.h	/^uint16_t cursor_menu[3]; \/\/ holds cursor position$/;"	v
+cursor_pos	myvars.h	/^uint16_t cursor_pos[2];$/;"	v
+cust_char	myvars.h	/^uint8_t cust_char[64];  \/\/ holder for custom characters 8x5bit x8 ,Send command: 0x40 (Set pointer to the first CGRAM address).$/;"	v
+disp_bit	myvars.h	/^uint8_t disp_bit;$/;"	v
+disp_end	myvars.h	/^uint8_t disp_end; \/\/ end of spi sequence per whole page$/;"	v
+disp_lut	myvars.h	/^const uint16_t disp_lut [26] [16]= {							 \/\/ menu look up using char$/;"	v
+disp_multi	myvars.h	/^uint8_t disp_multi[30]={8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1};   \/\/ display row potSource multiplier for different resolutions , for faster input$/;"	v
+disp_refresh	myvars.h	/^uint8_t disp_refresh;  \/\/ full screen refresh$/;"	v
+disp_stepper	myvars.h	/^uint8_t disp_stepper=1; \/\/ display these chars before moving onto next cursor position$/;"	v
+displayMem	myvars.h	/^uint8_t displayMem[9] = { }; \/\/ past stored values for lcd$/;"	v
+displayMemVelocity	myvars.h	/^uint8_t displayMemVelocity[9] = {};$/;"	v
+electPitch	myvars.h	/^uint8_t electPitch=64; \/\/ Electribe pitch$/;"	v
+enc2_dir	myvars.h	/^int16_t enc2_dir;    \/\/ enc direction2$/;"	v
+enc2_lut	myvars.h	/^uint16_t enc2_lut[180];   \/\/ lut to skip cells ,filled in on main$/;"	v
+enc2_temp	myvars.h	/^uint16_t enc2_temp;  \/\/ hold in for tim4$/;"	v
+enc2_tempB	myvars.h	/^uint16_t enc2_tempB;  \/\/ hold old in2$/;"	v
+enc2_tempc	myvars.h	/^uint16_t enc2_tempc; \/\/enc2 holder duh$/;"	v
+enc_dir	myvars.h	/^int16_t enc_dir;    \/\/ enc direction$/;"	v
+enc_temp	myvars.h	/^uint16_t enc_temp;  \/\/ hold in for tim2$/;"	v
+enc_tempB	myvars.h	/^uint16_t enc_tempB;  \/\/ hold old in$/;"	v
+eventCounter	myvars.h	/^uint8_t eventCounter=0; \/\/ event timer$/;"	v
+feedback_line	myvars.h	/^uint16_t feedback_line[17]={'F','o','o','d','b','a','c','k','g','_' ,'k',64, 278, 279, 280,64}; \/\/ this is variable , last display line for info$/;"	v
+feedback_pointer	myvars.h	/^uint8_t feedback_pointer;  \/\/ pointer for feedback item start position , maybe bit search for less menu data ,dunno$/;"	v
+feedback_temp	myvars.h	/^uint8_t feedback_temp;$/;"	v
+filter_accus	myvars.h	/^float filter_accus[15];  \/\/ hold floats for filter$/;"	v
+filter_counter	myvars.h	/^uint8_t filter_counter=0;$/;"	v
+filter_hold	myvars.h	/^float filter_hold[5];  \/\/holds some feedback related stuff$/;"	v
+filter_in	myvars.h	/^int32_t filter_in[5]={0,0,0,0,0};  \/\/ small values come in$/;"	v
+filter_out	myvars.h	/^int32_t filter_out[7]={0,0,0,0,0,0,0};	\/\/ big out$/;"	v
+firstRound	myvars.h	/^ unsigned short firstRound=1;$/;"	v
+firstbarLoop	myvars.h	/^uint8_t firstbarLoop;$/;"	v
+firstbarLoopB	myvars.h	/^uint8_t firstbarLoopB;\/\/ bit shifted$/;"	v
+flash_page	myvars.h	/^const uint32_t flash_page=0x800;$/;"	v
+flash_start	myvars.h	/^const uint32_t flash_start=0x0800D2F0; \/\/ flash start address , 2048 page saize or 0x800$/;"	v
+flip_list	myvars.h	/^uint8_t flip_list=0;  \/\/ line flipping for display$/;"	v
+freq_lut	myvars.h	/^const uint16_t freq_lut[]={4186,4434,4698,4978,5274,5587,5919,6271,6644,7039,7458,7902,8371,8869,9397,9955,10547,11175,11839,12543,13289,14079,14916,15803,16743,17739,$/;"	v
+freq_point	myvars.h	/^float freq_point[4] ; \/\/ multiplier coeff holder temp$/;"	v
+freq_pointer	myvars.h	/^float freq_pointer[4] [9];  \/\/ multiplier coeff holder$/;"	v
+gfx_blink	myvars.h	/^uint8_t gfx_blink=0; \/\/ blinker counter$/;"	v
+gfx_char	myvars.h	/^uint8_t gfx_char[1024]={   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  0x00,     \/\/ 8*5 fonts vert aligned  , maybe play with other fonts too$/;"	v
+gfx_char1	myvars.h	/^uint8_t gfx_char1[512] =  {$/;"	v
+gfx_counter	myvars.h	/^uint16_t gfx_counter[6]={0,0,0,0,0}; \/\/ just upcounter for gfx ram bytes$/;"	v
+gfx_ram	myvars.h	/^uint8_t gfx_ram[64][16] ; \/\/holds data for lcd 64*256bit , display 16kbyte\/sec so 8fps , maybe use dma for memory transfers$/;"	v
+gfx_skip	myvars.h	/^uint8_t gfx_skip=1;  \/\/ important$/;"	v
+i	myvars.h	/^ uint16_t i;$/;"	v
+i_frac	myvars.h	/^uint8_t i_frac;  \/\/ divide i\/64$/;"	v
+init	myvars.h	/^uint8_t init=0; \/\/init counter$/;"	v
+init_b	myvars.h	/^uint16_t init_b;  \/\/  needs to above 256 for ore pages$/;"	v
+isrCount	myvars.h	/^uint16_t isrCount; \/\/ ISR counter tcik 32 bit$/;"	v
+isrCountB	myvars.h	/^volatile uint16_t isrCountB; \/\/  512-820 per tick 16bit$/;"	v
+isrCountC	myvars.h	/^uint8_t isrCountC;$/;"	v
+isrDivide	myvars.h	/^uint16_t isrDivide; \/\/ counter for isrcount since notimer for now$/;"	v
+isrMask	myvars.h	/^volatile uint16_t isrMask;  \/\/ tempo mask for tick  16 bit$/;"	v
+isrPoint	myvars.h	/^uint16_t isrPoint;$/;"	v
+isrPointB	myvars.h	/^uint16_t isrPointB;  \/\/ for noteBar jump by 4$/;"	v
+isrTemp	myvars.h	/^volatile uint16_t isrTemp;$/;"	v
+keyPot	myvars.h	/^uint8_t keyPot=0; \/\/ make it real time only from now$/;"	v
+keyPotB	myvars.h	/^uint8_t keyPotB=5;$/;"	v
+keyPotC	myvars.h	/^uint8_t keyPotC=0; \/\/ storage for analogeread$/;"	v
+kick	myvars.h	/^unsigned char kick[202]={0x7f,0x82,0x97,0xae,0xc1,0xd3,0xe2,0xef,0xf2,0xf7,0xf7,0xf7,0xf5,0xef,0xea,0xe5,0xe0,0xd8,0xd0,0xcb,0xc3,0xbb,0xb6,0xae,0xa9,0xa4,0x9f,0x99,0x94,0x92,0x8f,0x8d,0x8a,0x87,0x87,0x87,0x85,0x85,0x85,0x87,0x82,0x7d,0x75,0x70,0x6b,0x66,0x60,0x5e,0x5b,0x58,0x59,0x56,0x56,0x56,0x59,0x58,0x58,0x5b,0x5e,0x5e,0x60,0x63,0x63,0x65,0x68,0x68,0x6b,0x6b,0x6d,0x6d,0x6d,0x6d,0x6d,0x6d,0x6d,0x6d,0x6d,0x6d,0x6b,0x6b,0x6b,0x68,0x68,0x65,0x63,0x63,0x60,0x60,0x5e,0x5b,0x5b,0x58,0x56,0x56,0x53,0x51,0x51,0x4e,$/;"	v
+lastbarCountB	myvars.h	/^uint16_t lastbarCountB=0; \/\/ ( dec signed barcountB-2)  0-7 pointer$/;"	v
+lcdBufferCounter	myvars.h	/^uint8_t lcdBufferCounter;  \/\/ counter in lcd buffer$/;"	v
+lcdBufferCounterB	myvars.h	/^uint8_t lcdBufferCounterB;  \/\/ counter in lcd buffer$/;"	v
+lcdBufferMem	myvars.h	/^char lcdBufferMem[33] = {};  \/\/ string memory for lcdbuffering$/;"	v
+lcdBufferMemNew	myvars.h	/^char lcdBufferMemNew[33] = {};  \/\/ string memory for lcdbuffering incoming$/;"	v
+lcdBufferString	myvars.h	/^uint8_t lcdBufferString; \/\/ string storage$/;"	v
+lcdCounter	myvars.h	/^uint8_t lcdCounter=0;$/;"	v
+lcd_blink	myvars.h	/^ unsigned short lcd_blink; \/\/ lcd blinker$/;"	v
+lcd_holder	myvars.h	/^uint32_t lcd_holder;$/;"	v
+lcd_isr	myvars.h	/^volatile uint8_t lcd_isr;$/;"	v
+lcd_out3	myvars.h	/^uint16_t lcd_out3; \/\/for feedback$/;"	v
+lcd_return	myvars.h	/^uint8_t lcd_return[16];$/;"	v
+lcd_send	myvars.h	/^unsigned short lcd_send=0;$/;"	v
+lcddata	myvars.h	/^uint8_t lcddata = 0; \/\/ lcd data var$/;"	v
+lcdstep_toggle	myvars.h	/^volatile uint8_t lcdstep_toggle;$/;"	v
+lfoGainValues	myvars.h	/^const uint16_t lfoGainValues[8] = {}; \/\/ gain adder values$/;"	v
+lfoPhase	myvars.h	/^uint8_t lfoPhase;$/;"	v
+lfoWave	myvars.h	/^uint8_t lfoWave[4]={};$/;"	v
+lfo_accu	myvars.h	/^float  lfo_accu[10]  [10]; \/\/holds last lfo value , simple 0-255 upcount for now,will change; 10x8$/;"	v
+lfo_base	myvars.h	/^uint16_t lfo_base[3]; \/\/ new lfo multi$/;"	v
+lfo_mask	myvars.h	/^const uint8_t lfo_mask[20]={255,170,85,252,240,192,128,136,238,15,0,0,0,0,0,0,0}; \/\/ lfo dif masks$/;"	v
+lfo_out	myvars.h	/^uint16_t  lfo_out[10] [10];   \/\/8x10 values for lfo$/;"	v
+lfo_output	myvars.h	/^int16_t lfo_output[5]; \/\/ lfo out 0-2047 normally$/;"	v
+lfo_send	myvars.h	/^uint32_t lfo_send[10];$/;"	v
+lfo_value	myvars.h	/^uint16_t lfo_value[5]={0,0,0,0}; \/\/  lfo value hold$/;"	v
+lfolastccA	myvars.h	/^uint8_t lfolastccA[4]={};$/;"	v
+loop_counter	myvars.h	/^uint8_t loop_counter; \/\/ basic loop schedule$/;"	v
+loop_counter2	myvars.h	/^uint32_t loop_counter2; \/\/long counter$/;"	v
+loop_counter3	myvars.h	/^uint8_t loop_counter3;$/;"	v
+mainNote	myvars.h	/^const char mainNote[29] = "_CDEFGABCDEF>_1234567890+>_x" ; \/\/note string values 7 notes and flat and sharp which are double length ? 11=1  20=0 21-$/;"	v
+mask_result	myvars.h	/^ unsigned short mask_result;$/;"	v
+memNote	myvars.h	/^uint8_t memNote[10] = { 0,0,0,0,0,0,0,0,0 };  \/\/ current note values for lcd$/;"	v
+mem_buf	myvars.h	/^uint8_t mem_buf;$/;"	v
+mem_count	myvars.h	/^uint8_t mem_count; \/\/just count mem address$/;"	v
+menuList	myvars.h	/^const char menuList[129] = "_Notes_1_NotePtchNotes_2_AttkDcayLFOspeedLFOdepthLFO_gainkeepgoinNext page_LFOSSWITCHESREPEAT__KEY#____Time____NTE2_____________";   \/\/ top menu$/;"	v
+menuList2	myvars.h	/^const char menuList2 [129] = "_LPF_1___LPF_2___PITCH_1_PITCH_2_PITCH_3_EMPTY___NotePtchNotes_2_AttkDcayLFOspeedLFOdepthLFO_gainkeepgoinNext page_LFOSWI_______";   \/\/ lfo target list, etc$/;"	v
+menuSelect	myvars.h	/^uint8_t menuSelect;     \/\/ menu selector pot$/;"	v
+menuSelectB	myvars.h	/^uint8_t menuSelectB;  \/\/ old menu data$/;"	v
+menuSelectX	myvars.h	/^uint8_t menuSelectX; \/\/ menu horizontal$/;"	v
+menuSelectX2	myvars.h	/^uint8_t menuSelectX2; \/\/ old menu$/;"	v
+menu_page	myvars.h	/^uint16_t menu_page[3]; \/\/ switch between pages, keep track when flipping$/;"	v
+menu_store	myvars.h	/^uint8_t menu_store=1;$/;"	v
+midSettings	myvars.h	/^uint8_t midSettings[]={1,1,0,0}; \/\/ midi channel and lfo cc setting$/;"	v
+midiBarcount	myvars.h	/^uint8_t midiBarcount=0; \/\/ note off var rollover on 8$/;"	v
+midiMemory	myvars.h	/^uint8_t midiMemory[70]={}; \/\/midi storage for incoming$/;"	v
+midiTimer	myvars.h	/^volatile int  midiTimer =0; \/\/ timing from midiclock to notes$/;"	v
+modBarPitch	myvars.h	/^uint16_t modBarPitch; \/\/ changes bar pitch , 8 bars$/;"	v
+modDelay	myvars.h	/^uint8_t modDelay; \/\/ lfo initialdelay$/;"	v
+modEnable	myvars.h	/^unsigned short modEnable=0;   \/\/ true when menu pot above 0$/;"	v
+modGain	myvars.h	/^uint16_t modGain;\/\/ moddepth setting ,not sure yet can be -$/;"	v
+modOut	myvars.h	/^uint8_t modOut; \/\/ mod output$/;"	v
+modPhase	myvars.h	/^uint8_t modPhase; \/\/ lfo phase$/;"	v
+modPitch	myvars.h	/^uint16_t modPitch;\/\/ pitch modifier$/;"	v
+modPointer	myvars.h	/^uint8_t modPointer; \/\/ mod pointer$/;"	v
+modPosition	myvars.h	/^uint8_t modPosition; \/\/ like notePosition but freewheel$/;"	v
+modPositionB	myvars.h	/^uint8_t modPositionB; \/\/ like modPosition but shifted$/;"	v
+modRate	myvars.h	/^uint8_t modRate; \/\/ lfo rate$/;"	v
+modSwitches	myvars.h	/^uint8_t modSwitches [9] ={0,0,0,0,0,0,0,0 }; \/\/ function switch storage ,all values are 0-2$/;"	v
+modTop	myvars.h	/^const char modTop[] = "Nt_WvRtWdTyDp"; \/\/ modulation top lcd row : Note(1-8),LFO wave type(0-3) 0 is off , Rate(1-8), Pulse width(1-8) , velocity pitch or time modulation(1-3) , depth goes +- for inversion (+5 -5)$/;"	v
+mosi_pin	myvars.h	/^unsigned short mosi_pin=0;$/;"	v
+n	myvars.h	/^uint16_t n = 0; \/\/ lcd counter$/;"	v
+n_calc	myvars.h	/^ uint16_t n_calc=0;$/;"	v
+n_lcd	myvars.h	/^uint8_t n_lcd; \/\/ lcd var$/;"	v
+next_isr	myvars.h	/^uint16_t next_isr; \/\/isrcount ahead$/;"	v
+nextbarCountB	myvars.h	/^uint8_t nextbarCountB=0; \/\/ next barcounter$/;"	v
+noteAccu	myvars.h	/^uint16_t noteAccu; \/\/adder for left over timing$/;"	v
+noteBar	myvars.h	/^ uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  \/\/   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start$/;"	v
+noteDelay	myvars.h	/^uint8_t noteDelay; \/\/ initial delay for trigger$/;"	v
+noteDuration	myvars.h	/^uint8_t noteDuration[9] = {  }; \/\/ note length array$/;"	v
+noteLength	myvars.h	/^uint8_t noteLength=16; \/\/ lenght of note 16 ticks default$/;"	v
+noteMem	myvars.h	/^uint8_t noteMem=0;$/;"	v
+notePos2	myvars.h	/^uint8_t notePos2;$/;"	v
+notePosition	myvars.h	/^uint8_t notePosition; \/\/ seq position for noteplayback 8x8 for now 0-63$/;"	v
+noteSwitch	myvars.h	/^const uint8_t noteSwitch[] = { 255,0,204,51,170,85,240,15,17,252,0 };  \/\/ note switching using bitread , alternating pattern on, off, 11001100, 00110011,10101010,01010101,11110000,00001111,00010001,11101110$/;"	v
+noteTimeFlag	myvars.h	/^static unsigned short noteTimeFlag;$/;"	v
+noteTimebit	myvars.h	/^uint8_t noteTimebit[]= {0,170,85,240,15,204,51,153,102,165,90,0}   ;   \/\/ bit switch for adjustimg rythm$/;"	v
+noteTiming	myvars.h	/^uint8_t noteTiming;  \/\/ set timing shift$/;"	v
+noteTraffic	myvars.h	/^uint8_t noteTraffic[4]={1,48,0,0}; \/\/ remember if note was sent from midi or sequencer : switchone , outNote, midi stored value ,0$/;"	v
+note_channel	myvars.h	/^uint16_t note_channel[31]={ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  \/\/ 10 notes , 10 velocity 20->16bit , 10 mask toggle$/;"	v
+note_enabled	myvars.h	/^uint8_t note_enabled=0;  \/\/ simple flag for note on seq_pos$/;"	v
+note_holdA	myvars.h	/^uint8_t note_holdA;$/;"	v
+note_holdB	myvars.h	/^uint8_t note_holdB;$/;"	v
+note_tuned	myvars.h	/^uint16_t note_tuned[11];$/;"	v
+note_vol	myvars.h	/^uint16_t  note_vol[11]={0,0,0,0,0,0,0,0,0,0};  \/\/ note volumes and mask toggle$/;"	v
+octKey	myvars.h	/^uint8_t octKey = 0;$/;"	v
+oldNote	myvars.h	/^uint8_t oldNote; \/\/store previous note$/;"	v
+oldNote2	myvars.h	/^uint8_t oldNote2;$/;"	v
+one_shot	myvars.h	/^uint8_t one_shot; \/\/ up counter for attack sample$/;"	v
+patternEditPos	myvars.h	/^uint8_t patternEditPos=1; \/\/ bar position for pattern edit$/;"	v
+patternType	myvars.h	/^uint8_t patternType=0;$/;"	v
+pitchValues	myvars.h	/^uint8_t pitchValues[9] = {  }; \/\/ remember pitch values of key pot$/;"	v
+play_hold	myvars.h	/^ volatile  uint16_t play_hold;$/;"	v
+play_sample	myvars.h	/^  uint16_t play_sample[1025]={} ;  \/\/sample storage  , big better$/;"	v
+position	myvars.h	/^uint8_t position; \/\/ lcd cursor$/;"	v
+potPosition	myvars.h	/^uint8_t potPosition=0; \/\/ potValues pointer$/;"	v
+potRange	myvars.h	/^uint8_t potRange=54; \/\/ range of potvalues 8\/14$/;"	v
+potSource	myvars.h	/^uint8_t potSource[256]; \/\/ high res version of potValues used when needed 40-0, gonna change to 160 just o break things, need more res for lfo$/;"	v
+potValues	myvars.h	/^uint8_t potValues [256];  \/\/low res values mostly for display$/;"	v
+pot_stored	myvars.h	/^uint8_t pot_stored[130] ={29,15,26,19,12,16,15,0,7,16,1,0,1,1,1,0,40,19,40,17,35,40,40,31,40,24,40,36,29,1,39,24,7,2,4,0,4,17,16,7,0,0,0,0,0,0,0,0,16,23,3,19,19,18,18,22,22,10,25,8,0,0,0,0,5,0,4,0,4,1,4,0,9,0,10,29,0,0,0,0,0,16,0,16,0,0,16,0,0,16,0,0,12,16,0,0,10,23,36,27,1,7,0,4,0,39,28,30,20,14,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,$/;"	v
+promValue	myvars.h	/^volatile uint8_t promValue; \/\/eprom$/;"	v
+promValues	myvars.h	/^volatile uint8_t promValues[64]; \/\/ hold original potvalues here$/;"	v
+pwmVel	myvars.h	/^uint16_t pwmVel;$/;"	v
+pwmVelB	myvars.h	/^uint16_t pwmVelB;$/;"	v
+row_toggle	myvars.h	/^ unsigned short row_toggle=0; \/\/ lcd row select$/;"	v
+rs_toggle	myvars.h	/^uint8_t rs_toggle = 1; \/\/ lcd rs toggle$/;"	v
+samp_temp	myvars.h	/^uint8_t samp_temp=0;$/;"	v
+sample_Accu	myvars.h	/^ int32_t sample_Accu[7] ={0,0,0,0,0,0,0};   \/\/ accu for sample output or lookup$/;"	v
+sample_AccuB	myvars.h	/^uint32_t sample_AccuB=0;   \/\/ second tone accu$/;"	v
+sample_Note	myvars.h	/^uint16_t sample_Note;  \/\/ hold sampleNoteadd value$/;"	v
+sample_Noteadd	myvars.h	/^const uint16_t sample_Noteadd[50]= { 2059, 2181, 2311, 2448, 2594, 2748, 2912, 3085, 3268, 3462, 3668, 3886, 4117, 4362, 4622, 4896, 5188, 5496, 5823, 6169, 6536, 6925, 7336, 7773, 8235, 8725, 9243, 9793,$/;"	v
+sample_accub	myvars.h	/^int32_t sample_accub;$/;"	v
+sample_accus	myvars.h	/^int32_t sample_accus[6]={0,0,0,0,0,0};  \/\/ sample array$/;"	v
+sample_lp	myvars.h	/^uint16_t sample_lp;  \/\/low pass accu$/;"	v
+sample_lpbuf	myvars.h	/^uint8_t sample_lpbuf[512]; \/\/ sample average buff$/;"	v
+sample_point	myvars.h	/^volatile uint16_t sample_point; \/\/ pointer for sample array$/;"	v
+sample_pointB	myvars.h	/^uint16_t sample_pointB; \/\/circular pointer$/;"	v
+sample_pointD	myvars.h	/^ uint16_t sample_pointD;  \/\/ global store buffer start$/;"	v
+sampling_counter	myvars.h	/^ uint16_t sampling_counter; \/\/  chase counter for sampling$/;"	v
+seq_loop	myvars.h	/^uint8_t seq_loop[7]; \/\/loop positions$/;"	v
+seq_pos	myvars.h	/^uint8_t seq_pos; \/\/ sequencer position linked to isrCount for now but maybe change$/;"	v
+seq_spi	myvars.h	/^uint8_t seq_spi;$/;"	v
+seq_store	myvars.h	/^uint8_t seq_store;  \/\/ just an seq_pos holder for adsr$/;"	v
+sine_adder	myvars.h	/^uint16_t sine_adder; \/\/ sine_lut return$/;"	v
+sine_block	myvars.h	/^const uint16_t sine_block[601]={20112,20707,21302,21880,22447,23026,23624,24233,24838,25438,26044,26667,27301,27930,28544,29145,29741,30339,30936,31519,32086,32638,33181,33713,34225,34711,35178,35630,36070,36486,36874,37241,37590,37920,38219,38488,38737,38972,39186,39369,39521,39651,39763,39851,39916,39962,39992,39999,39970,39903,39822,39755,39705,39647,39544,39393,39220,39063,38928,38790,38617,38406,38187,37989,37813,37629,37413,37172,36936,36721,36517,36300,36063,35824,35603,35397,35186,34955,34720,34496,34289,34080,33847,33600,33365,33156,32961,32753,32527,32302,32098,31909,31709,31490,31270,31070,30887,30699,30497$/;"	v
+sine_block2	myvars.h	/^const uint16_t sine_block2[514]={20000,20245,20491,20736,20981,21226,21471,21716,21960,22204,22448,22692,22935,23177,23419,23661,23902,24142,24382,24621,24860,25097,25334,25570,25806,26040,26274,26506,26738,26968,27198,27426,27654,27880,28105,28329,28551,28772,28992,29211,29428,29644,29858,30071,30282,30492,30700,30906,31111,31315,31516,31716,31914,32110,32305,32497,32688,32877,33063,33248,33431,33612,33791,33968,34142,34315,34485,34653,34819,34983,35144,35303,35460,35615,35767,35917,36064,36209,36352,36492,36629,36764,36897,37027,37155,37279,37402,37521,37638,37753,37864,37973,38080,38183,38284,38382,$/;"	v
+sine_block3	myvars.h	/^const uint16_t sine_block3[601]={20059,20270,20479,20686,20891,21093,21297,21503,21711,21917,22124,22330,22534,22736,22937,23135,23333,23527,23721,23912,24102,24290,24476,24660,24841,25021,25200,25376,25550,25722,25892,26060,26227,26391,26553,26714,26873,27029,27183,27336,27487,27635,27782,27927,28069,28210,28350,28486,28621,28754,28885,29014,29142,29268,29392,29514,29634,29754,29871,29986,30100,30212,30323,30432,30540,30646,30751,30854,30958,31058,31158,31257,31354,31451,31546,31641,31735,31827,31919,32009,32100,32190,32278,32367,32454,32541,32628,32713,32798,32883,32968,33052,33136,33220,33302,33384,33467,33548,$/;"	v
+sine_block5	myvars.h	/^const uint16_t sine_block5[601]={ 20037, 20533, 20996, 21339, 21610, 21874, 22165, 22508, 22874, 23264, 23679, 24069, 24386, 24592, 24703, 24777, 24859, 24964, 25095, 25244, 25399, 25522, 25586, 25716, 25912, 26134, 26391, 26655, 26929, 27216, 27493, 27768, 28034, 28300, 28546, 28779, 29006, 29208, 29394, 29569, 29718, 29851, 29968, 30062, 30138, 30196, 30235, 30253, 30254, 30236, 30203, 30153, 30082, 30000, 29902, 29788, 29657, 29517, 29365, 29195, 29018, 28831, 28626, 28417, 28198, 27963, 27726, 27484, 27232, 26964, 26698, 26427, 26139, 25857, 25568, 25266, 24969, 24669, 24354, 24047, 23738, 23427, 23100, 22787, 22428, 21713, 20446, 18728, 16764, 15066, 13888,$/;"	v
+sine_counter	myvars.h	/^uint16_t sine_counter;  \/\/ up counter for sine reading$/;"	v
+sine_counterB	myvars.h	/^uint16_t sine_counterB;  \/\/ up counter for sine reading ,fractional * 8$/;"	v
+sine_length	myvars.h	/^uint16_t sine_length=600; \/\/holds sample size$/;"	v
+sine_lut	myvars.h	/^uint16_t	sine_lut[]= { 33,33, 36, 38, 41, 43, 46, 48, 51, 54, 57, 61, 65, 68, 72, 77, 81, 86, 91, 97, 102, 108, 115, 122, 129, 137, 145, 153, 163, 172, 182, 193, 205, 217, 230, 244,$/;"	v
+sine_out	myvars.h	/^int32_t sine_out;     \/\/ generated sine output 9 bit$/;"	v
+sine_temp2	myvars.h	/^uint16_t sine_temp2;$/;"	v
+spell	myvars.h	/^ uint8_t spell[322] = { 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,$/;"	v
+spellB	myvars.h	/^uint8_t spellB[42]; \/\/ temp store$/;"	v
+spi_byte	myvars.h	/^uint8_t spi_byte; \/\/incoming data$/;"	v
+spi_counter	myvars.h	/^uint8_t spi_counter=0; \/\/ tracks spi progress$/;"	v
+spi_enable	myvars.h	/^unsigned short spi_enable=0;$/;"	v
+spi_hold	myvars.h	/^uint16_t spi_hold; \/\/ temp hold for incoming$/;"	v
+spi_send	myvars.h	/^uint8_t spi_send=0; \/\/ keeps track of send process$/;"	v
+spi_state	myvars.h	/^unsigned short spi_state=0; \/\/select data or command 0= command$/;"	v
+spi_toggle	myvars.h	/^uint8_t spi_toggle; \/\/ toggle between command a data for writing characters$/;"	v
+store_c	myvars.h	/^uint16_t store_c=0;$/;"	v
+switchOne	myvars.h	/^uint8_t switchOne=0;$/;"	v
+t	myvars.h	/^volatile int  t =0;$/;"	v
+tempAccuA	myvars.h	/^uint16_t tempAccuA;  \/\/ accu for pots$/;"	v
+tempValue	myvars.h	/^uint8_t tempValue[127]={ }; \/\/ last value is menu control$/;"	v
+tempValueA	myvars.h	/^uint16_t tempValueA;$/;"	v
+tempValueB	myvars.h	/^uint8_t tempValueB[127]={ };$/;"	v
+tempo	myvars.h	/^ uint8_t tempo=20; \/\/delay timer$/;"	v
+tempoTemp	myvars.h	/^uint8_t tempoTemp;$/;"	v
+tempo_count	myvars.h	/^uint16_t tempo_count=0; \/\/ up counter for tempo reset$/;"	v
+tempo_lut	myvars.h	/^uint16_t tempo_lut[162]; \/\/ tempo look up 40-200bpm$/;"	v
+timExe	myvars.h	/^uint32_t timExe=0;$/;"	v
+timeCount	myvars.h	/^uint8_t timeCount=0; \/\/time execute schedule once per note$/;"	v
+timerValues	myvars.h	/^const uint16_t timerValues[]= {34400,32469,30647,28927,27303,25771,24324,22959,21670,20454,19306,18222,17200,16234,15323,14463,13651,12885,12162,11479,10835,10227,9653,9111,8600,8117,7661$/;"	v
+timerVar	myvars.h	/^uint32_t timerVar ;  \/\/ multipler for timer1 lenght for freq , too big needs to be 16bit$/;"	v
+timerVar2	myvars.h	/^uint32_t timerVar2; \/\/ timer 2$/;"	v
+trigger_counter	myvars.h	/^uint16_t trigger_counter;$/;"	v
+tune_Accu	myvars.h	/^	uint32_t tune_Accu;$/;"	v
+valueChange	myvars.h	/^uint8_t valueChange[9]={1,1,1,1,1,1,1,1}; \/\/ enable writing$/;"	v
+valueCurrent	myvars.h	/^uint16_t valueCurrent; \/\/current setting$/;"	v
+valueOriginal	myvars.h	/^uint16_t valueOriginal; \/\/ stored value  needs signed$/;"	v
+valueReturn	myvars.h	/^uint8_t valueReturn; \/\/ final value out$/;"	v
+waveSaw	myvars.h	/^const uint8_t  waveSaw[17] = {  10,31,47,63,79,95,111,127,0,31,47,63,79,95,111,127}; \/\/lfo saw values lut ,not used$/;"	v
+waveTri	myvars.h	/^const uint8_t waveTri[17] = { 0,15,31,47,63,79,95,111,127,111,95,79,63,47,32,15 }; \/\/lfo triangle values lut ,not used$/;"	v
+words	myvars.h	/^const char words[10] = "HELLOWORLD";$/;"	v
+x	myvars.h	/^uint32_t x;  \/\/ calc timer note$/;"	v
+y	myvars.h	/^uint32_t y;$/;"	v

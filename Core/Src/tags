@@ -1,0 +1,94 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+AHBPrescTable	system_stm32f4xx.c	/^const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};$/;"	v
+APBPrescTable	system_stm32f4xx.c	/^const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};$/;"	v
+BusFault_Handler	stm32f4xx_it.c	/^void BusFault_Handler(void)$/;"	f
+DMA2_Stream4_IRQHandler	stm32f4xx_it.c	/^void DMA2_Stream4_IRQHandler(void)$/;"	f
+DebugMon_Handler	stm32f4xx_it.c	/^void DebugMon_Handler(void)$/;"	f
+Error_Handler	main.c	/^void Error_Handler(void)$/;"	f
+HAL_ADC_MspDeInit	stm32f4xx_hal_msp.c	/^void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)$/;"	f
+HAL_ADC_MspInit	stm32f4xx_hal_msp.c	/^void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)$/;"	f
+HAL_I2C_MspDeInit	stm32f4xx_hal_msp.c	/^void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)$/;"	f
+HAL_I2C_MspInit	stm32f4xx_hal_msp.c	/^void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)$/;"	f
+HAL_MspInit	stm32f4xx_hal_msp.c	/^void HAL_MspInit(void)$/;"	f
+HAL_SPI_MspDeInit	stm32f4xx_hal_msp.c	/^void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)$/;"	f
+HAL_SPI_MspInit	stm32f4xx_hal_msp.c	/^void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)$/;"	f
+HAL_TIM_Base_MspDeInit	stm32f4xx_hal_msp.c	/^void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* htim_base)$/;"	f
+HAL_TIM_Base_MspInit	stm32f4xx_hal_msp.c	/^void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)$/;"	f
+HAL_TIM_Encoder_MspDeInit	stm32f4xx_hal_msp.c	/^void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* htim_encoder)$/;"	f
+HAL_TIM_Encoder_MspInit	stm32f4xx_hal_msp.c	/^void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)$/;"	f
+HAL_TIM_MspPostInit	stm32f4xx_hal_msp.c	/^void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)$/;"	f
+HAL_TIM_PeriodElapsedCallback	main.c	/^void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)    \/\/ unreliable$/;"	f
+HSE_VALUE	system_stm32f4xx.c	52;"	d	file:
+HSI_VALUE	system_stm32f4xx.c	56;"	d	file:
+HardFault_Handler	stm32f4xx_it.c	/^void HardFault_Handler(void)$/;"	f
+MX_ADC1_Init	main.c	/^static void MX_ADC1_Init(void)$/;"	f	file:
+MX_DMA_Init	main.c	/^static void MX_DMA_Init(void)$/;"	f	file:
+MX_GPIO_Init	main.c	/^static void MX_GPIO_Init(void)$/;"	f	file:
+MX_I2C2_Init	main.c	/^static void MX_I2C2_Init(void)$/;"	f	file:
+MX_SPI2_Init	main.c	/^static void MX_SPI2_Init(void)$/;"	f	file:
+MX_TIM2_Init	main.c	/^static void MX_TIM2_Init(void)$/;"	f	file:
+MX_TIM3_Init	main.c	/^static void MX_TIM3_Init(void)$/;"	f	file:
+MX_TIM4_Init	main.c	/^static void MX_TIM4_Init(void)$/;"	f	file:
+MemManage_Handler	stm32f4xx_it.c	/^void MemManage_Handler(void)$/;"	f
+NMI_Handler	stm32f4xx_it.c	/^void NMI_Handler(void)$/;"	f
+PendSV_Handler	stm32f4xx_it.c	/^void PendSV_Handler(void)$/;"	f
+SPI_command	main.c	/^void SPI_command(void){$/;"	f
+SVC_Handler	stm32f4xx_it.c	/^void SVC_Handler(void)$/;"	f
+SysTick_Handler	stm32f4xx_it.c	/^void SysTick_Handler(void)$/;"	f
+SystemClock_Config	main.c	/^void SystemClock_Config(void)$/;"	f
+SystemCoreClock	system_stm32f4xx.c	/^uint32_t SystemCoreClock = 16000000;$/;"	v
+SystemCoreClockUpdate	system_stm32f4xx.c	/^void SystemCoreClockUpdate(void)$/;"	f
+SystemInit	system_stm32f4xx.c	/^void SystemInit(void)$/;"	f
+SystemInit_ExtMemCtl	system_stm32f4xx.c	/^void SystemInit_ExtMemCtl(void)$/;"	f
+TIM3_IRQHandler	stm32f4xx_it.c	/^void TIM3_IRQHandler(void)$/;"	f
+UsageFault_Handler	stm32f4xx_it.c	/^void UsageFault_Handler(void)$/;"	f
+VECT_TAB_OFFSET	system_stm32f4xx.c	93;"	d	file:
+__env	syscalls.c	/^char *__env[1] = { 0 };$/;"	v
+__sbrk_heap_end	sysmem.c	/^static uint8_t *__sbrk_heap_end = NULL;$/;"	v	file:
+_close	syscalls.c	/^int _close(int file)$/;"	f
+_execve	syscalls.c	/^int _execve(char *name, char **argv, char **env)$/;"	f
+_exit	syscalls.c	/^void _exit (int status)$/;"	f
+_fork	syscalls.c	/^int _fork(void)$/;"	f
+_fstat	syscalls.c	/^int _fstat(int file, struct stat *st)$/;"	f
+_getpid	syscalls.c	/^int _getpid(void)$/;"	f
+_isatty	syscalls.c	/^int _isatty(int file)$/;"	f
+_kill	syscalls.c	/^int _kill(int pid, int sig)$/;"	f
+_link	syscalls.c	/^int _link(char *old, char *new)$/;"	f
+_lseek	syscalls.c	/^int _lseek(int file, int ptr, int dir)$/;"	f
+_open	syscalls.c	/^int _open(char *path, int flags, ...)$/;"	f
+_read	syscalls.c	/^__attribute__((weak)) int _read(int file, char *ptr, int len)$/;"	f
+_sbrk	sysmem.c	/^void *_sbrk(ptrdiff_t incr)$/;"	f
+_stat	syscalls.c	/^int _stat(char *file, struct stat *st)$/;"	f
+_times	syscalls.c	/^int _times(struct tms *buf)$/;"	f
+_unlink	syscalls.c	/^int _unlink(char *name)$/;"	f
+_wait	syscalls.c	/^int _wait(int *status)$/;"	f
+_write	syscalls.c	/^__attribute__((weak)) int _write(int file, char *ptr, int len)$/;"	f
+adsr	main.c	/^void adsr(void){						\/\/ pretty terrible now .better just write a lut$/;"	f
+analoginputloopb	main.c	/^void analoginputloopb(void){  \/\/works fine still$/;"	f
+assert_failed	main.c	/^void assert_failed(uint8_t *file, uint32_t line)$/;"	f
+displayBuffer	main.c	/^void displayBuffer (void){        \/\/  in a constant state of flux$/;"	f
+display_fill	main.c	/^void display_fill(void)  {     \/\/ full update of gfx memory$/;"	f
+display_gfx	main.c	/^void display_gfx(void){   \/\/ new display driver , all gfx based$/;"	f
+display_init	main.c	/^void display_init(void){$/;"	f
+display_update	main.c	/^void display_update(void){				\/\/spi display updater code , all gfx , works pretty ok n doesn't need to be running always 18x 128 ,constant scanning$/;"	f
+environ	syscalls.c	/^char **environ = __env;$/;"	v
+hadc1	main.c	/^ADC_HandleTypeDef hadc1;$/;"	v
+hdma_adc1	main.c	/^DMA_HandleTypeDef hdma_adc1;$/;"	v
+hi2c2	main.c	/^I2C_HandleTypeDef hi2c2;$/;"	v
+hspi2	main.c	/^SPI_HandleTypeDef hspi2;$/;"	v
+htim2	main.c	/^TIM_HandleTypeDef htim2;$/;"	v
+htim3	main.c	/^TIM_HandleTypeDef htim3;$/;"	v
+htim4	main.c	/^TIM_HandleTypeDef htim4;$/;"	v
+initialise_monitor_handles	syscalls.c	/^void initialise_monitor_handles()$/;"	f
+lcd_feedback	main.c	/^void lcd_feedback(void){      \/\/ works, super obsolete$/;"	f
+lfo	main.c	/^void lfo(void){ \/\/ save this for another page$/;"	f
+main	main.c	/^int main(void)$/;"	f
+mask_calc	main.c	/^void mask_calc(uint8_t mask_select,uint8_t mask_speed){    \/\/calculate mask output from lfos$/;"	f
+print_pot	main.c	/^void print_pot(void){$/;"	f
+sampling	main.c	/^void sampling(void){						\/\/ 18 ms of data$/;"	f
+sine_count	main.c	/^void sine_count(void) {         \/\/ sine_out is the output 9  bit  , works$/;"	f
