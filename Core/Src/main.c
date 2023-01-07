@@ -53,9 +53,34 @@ SPI_HandleTypeDef hspi2;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
-#include "maincode.h"   // my code is here
-/* USER CODE BEGIN PV */
 
+/* USER CODE BEGIN PV */
+#include "maincode.h"			// void
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
+static void MX_ADC1_Init(void);
+static void MX_SPI2_Init(void);
+static void MX_TIM3_Init(void);
+static void MX_TIM4_Init(void);
+static void MX_I2C2_Init(void);
+static void MX_TIM2_Init(void);
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+
+/* USER CODE END 0 */
+
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -97,7 +122,7 @@ int main(void)
 
 //LL_SPI_Enable(SPI2);
 
-  HAL_SPI_Init(&hspi2);
+  HAL_SPI_Init(&hspi2); // write to register hspi2
   // lcd_init(); // keep this late or have issues
 //HAL_TIM_Base_Start_IT(&htim1);  // This needs to work for irq   ,disbling tim1 made loop a lot faster
 //TIM1->CCER=0;
@@ -110,7 +135,7 @@ HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
 //HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_4,pData, 63);
 TIM2->CNT=32000;
 HAL_ADC_Start(&hadc1);
-HAL_ADC_Start_DMA(&hadc1, adc_source, 4); //dma start ,needs this and adc start ,set sampling time to very long or it will fail
+HAL_ADC_Start_DMA(&hadc1, adc_source, 512); //dma start ,needs this and adc start ,set sampling time to very long or it will fail
 
 
 HAL_I2C_MspInit(&hi2c2);
@@ -178,11 +203,11 @@ for (i=0;i<512;i++)	{gfx_char[i]=gfx_char[i];
 
 uint16_t lut_temp2=0;
 uint16_t lut_temp3=0;
-for  (i=0;i<416;i++){					// get a few more pages
+for  (i=0;i<390;i++){					// get a few more pages
 
-	if (disp_lut [i>>4] [i&15] <95) lut_temp2=lut_temp2+1;
+	if (disp_lut [i>>4] [i&15] <95) lut_temp2=lut_temp2+1;    // skip space or characters
 
-	else {enc2_lut[lut_temp3] =i;  lut_temp3++;}
+	else {enc2_lut[lut_temp3] =i;  lut_temp3++;}     // goes to 511
 }
 
 
@@ -210,7 +235,7 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 
 	mem_buf=potSource[mem_count];
 	// read values from stored
-	HAL_I2C_Mem_Write(&hi2c2, 160, ((1+(mem_count>>6))<<6)+(mem_count&63), 2, &mem_buf, 1, 1000);
+	HAL_I2C_Mem_Write(&hi2c2, 160, ((1+(mem_count>>6))<<6)+(mem_count&63), 2, &mem_buf, 1, 1000);  // "&hi2c2"  actual register address
 	HAL_Delay(5);
 	if (mem_count==255) mem_count=0; else mem_count++;  // write to first
 	loop_counter2=0; //reset
@@ -240,8 +265,13 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 	  	for (i=0;i<4;i++) {
 
 	  adc_values[i]= (adc_source[i])>>3 ;
-	  }
+
+
+	  	}
 	  //	adc_read();
+	  //	input_holder[input_count]=adc_source[3];  // get audio input
+	  //	input_count++;
+	//  	if (input_count>511) input_count=0;
 	  	loop_counter=0;
 	  }
 
@@ -351,14 +381,14 @@ static void MX_ADC1_Init(void)
   */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
-  hadc1.Init.Resolution = ADC_RESOLUTION_8B;
-  hadc1.Init.ScanConvMode = ENABLE;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.ScanConvMode = DISABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 4;
+  hadc1.Init.NbrOfConversion = 1;
   hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
@@ -368,36 +398,9 @@ static void MX_ADC1_Init(void)
 
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_4;
-  sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
-  sConfig.Channel = ADC_CHANNEL_5;
-  sConfig.Rank = 2;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
-  sConfig.Channel = ADC_CHANNEL_6;
-  sConfig.Rank = 3;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
   sConfig.Channel = ADC_CHANNEL_9;
-  sConfig.Rank = 4;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -551,7 +554,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 2857;
+  htim3.Init.Period = 2544;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -681,7 +684,13 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 /* USER CODE BEGIN 4 */
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)   // get data after conversion
+{
+	for (i=0;i<512;i++)
+	{input_holder[i] = adc_source[i];
 
+	}
+}
 
 
 /*

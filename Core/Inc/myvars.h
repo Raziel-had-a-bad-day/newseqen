@@ -42,19 +42,22 @@ const uint16_t sample_Noteadd[50]= { 2059, 2181, 2311, 2448, 2594, 2748, 2912, 3
 const uint16_t freq_lut[]={4186,4434,4698,4978,5274,5587,5919,6271,6644,7039,7458,7902,8371,8869,9397,9955,10547,11175,11839,12543,13289,14079,14916,15803,16743,17739,
 		18794,19911,21095,22350,23679,25087,26578,28160,29834,31608,33488,35479,37589,39824,42192,44701,47359,50175,53158,56319,59668,63216};  // freq lookup x64  64hz_>987hz , C2-C6 Note 1-48
 //const uint8_t disp_lut [18] [16]= {                    // menu look up
-const uint16_t disp_lut [26] [16]= {							 // menu look up using char
 
+
+
+
+const uint16_t disp_lut [32] [16]= {							 // menu look up using char , this is default but will be dynamic
 
 
 		{208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223}, // 16 notes for drums and other tones 80 - 95
-		{'P',64,200,64,201,64,202,64,64,64,64,64,64,64,64,64},  // filter 2 settings and loop start
+
 		{128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143},  // 16 notes 0-15 
 		{'A'  ,64 ,148 ,149 ,64,64,64,64,64,64,64,64,'T',237,64,64},	// 20,21    attack sustain  maybe follow a diff system ,attach+decay then sustain+release
+		{'P',64,200,64,201,64,202,64,64,64,64,64,64,64,64,64},  // pitch settings and loop start
 
+		{'S',64,258,64,259,64,260,64,261 ,64,262,64,263,64,64,64},	// lfo speed 1-7
 
-		{'S',64,258,64,259,64,260,64,261 ,64,262,64,263,64,264,64},	// lfo speed 1-7
-
-		{'D',64,268,64,269,64,270,64,271,64,271,64,272,64,273,64},   // lfo depth 1-7
+		{'D',64,268,64,269,64,270,64,271,64,272,64,273,64,64,64},   // lfo depth 1-7
 		{'G',64,64,64,64,64,64,64,264,64,64,64,64,64,64,64},	// lfo gain
 
 
@@ -69,13 +72,13 @@ const uint16_t disp_lut [26] [16]= {							 // menu look up using char
 			//	{98 ,97, 114, 64, 80, 105, 116, 99, 104,64,200,201,202,203,64,64}, //p5  bug with 66?
 
 		//{192,64,193,64,194,64,195,64,196,64,197,64,198,64,199,64},					// keychange
-				{'L','F','O','1','=',512,513,514,515,516,517,518,519,64,64,64},
-				{'L','F','O','2','=',520,521,522,523,524,525,526,527,64,64,64},
-				{'L','F','O','3','=',528,529,530,531,532,533,534,535,64,64,64},
-				{'L','F','O','4','=',536,537,538,539,540,541,542,543,64,64,64},
-				{'L','F','O','5','=',544,545,546,547,548,549,550,551,64,64,64},
-				{'L','F','O','6','=',552,553,554,555,556,557,558,559,64,64,64},
-
+				{'L','F','O','1','=',330,64,64,64,64,64,64,64,64,64,64},
+				{'L','F','O','2','=',331,64,64,64,64,64,64,64,64,64,64},
+				{'L','F','O','3','=',332,64,64,64,64,64,64,64,64,64,64},
+				{'L','F','O','4','=',333,64,64,64,64,64,64,64,64,64,64},
+				{'L','F','O','5','=',334,64,64,64,64,64,64,64,64,64,64},
+				{'L','F','O','6','=',335,64,64,64,64,64,64,64,64,64,64},
+				//{'L','F','O','6','=',552,553,554,555,556,557,558,559,64,64,64},
 				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},					//p6 empty
 				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
 				{'s','t','a','r','t',64,64,64,64,64,64,64,64,64,64,64},
@@ -87,14 +90,23 @@ const uint16_t disp_lut [26] [16]= {							 // menu look up using char
 		{64,64,64,64,64,64,64,64,64,64,64,64,'E','n','d',64},			//p8
 		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
 		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64}
+		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
+				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
+				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
+				{64,64,64,64,64,64,64,64,64,64,64,64,'E','n','d',64},
+						{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
+						{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
+
+
+
+
 
 
 };
 
 uint16_t enc2_lut[180];   // lut to skip cells ,filled in on main
 uint16_t feedback_line[17]={'F','o','o','d','b','a','c','k','g','_' ,'k',64, 278, 279, 280,64}; // this is variable , last display line for info
-uint8_t feedback_pointer;  // pointer for feedback item start position , maybe bit search for less menu data ,dunno
+uint16_t feedback_pointer;  // pointer for feedback item start position , maybe bit search for less menu data ,dunno
 
 int _write(int file, char *ptr, int len)
 {
@@ -107,10 +119,39 @@ int _write(int file, char *ptr, int len)
 
 	return len;
 }
+const char* menu_items[]  =  {"menu_edit","yes","no,square","sine","triangle,saw",				// menu_loc has reference potSource locations
+		"OSC1_Notes","OSC2_Notes","OSC3_Notes",
+		"OSC1_pitch","OSC2_pitch","OSC3_pitch",
+		"OSC1_attack","OSC2_attack","OSC3_attack",
+		"OSC1_decay","OSC2_decay","OSC3_decay",
+		"LFO1_wave","LFO2_wave","LFO3_wave","LFO4_wave","LFO5_wave","LFO6_wave",
+		"LFO1_speed"," LFO2_speed","LFO3_speed","LFO4_speed","LFO5_speed","LFO6_speed",
+		"LFO1_depth","LFO2_depth","LFO3_depth","LFO4_depth","LFO5_depth","LFO6_depth",
+		"LFO1_gain","LFO2_gain","LFO3_gain","LFO4_gain","LFO5_gain","LFO6_gain",
+		"LFO1_offset","LFO2_offset","LFO3_offset","LFO4_offset","LFO5_offset","LFO6_offset",
+		"LFO1_out","LFO2_out","LFO3_out","LFO4_out","LFO5_out","LFO6_out"
 
+};
+const uint16_t menu_loc[]  ={511,511,511,511,511,511,511,511,  // potSource ref for menu_items[]  ,  maybe above 512 its text reference(not yet) , also 0-128 is just characters ,128-143 notes 1 , 208-223 notes 2
+		200,201,202,	//pitch
+		148,148,148,  // no new ref yet
+		149,149,149,	 // no new ref yet
+		300,301,302,303,304,305,   // lfo wave not used yet
+		258,259,260,261,262,263,   //lfo speed
+		268,269,270,271,272,273,  // lfo depth
+		310,311,312,313,314,315, // lfo gain not used
+		320,321,322,323,324,325,  // lfo offset not used
+		330,331,332,333,334,335  // lfo target not used yet
+
+}; //56
+uint16_t menu_locA=0;
+char menulist_hold[20]=" not working at all" ;
 const char menuList[129] = "_Notes_1_NotePtchNotes_2_AttkDcayLFOspeedLFOdepthLFO_gainkeepgoinNext page_LFOSSWITCHESREPEAT__KEY#____Time____NTE2_____________";   // top menu
 const char menuList2 [129] = "_LPF_1___LPF_2___PITCH_1_PITCH_2_PITCH_3_EMPTY___NotePtchNotes_2_AttkDcayLFOspeedLFOdepthLFO_gainkeepgoinNext page_LFOSWI_______";   // lfo target list, etc
 const char mainNote[29] = "_CDEFGABCDEF>_1234567890+>_x" ; //note string values 7 notes and flat and sharp which are double length ? 11=1  20=0 21-
+uint8_t menulength;
+
+
 
 // const char mainNoteLow[] = "cdefgab_^: " ; // note string for off values
 const uint8_t noteSwitch[] = { 255,0,204,51,170,85,240,15,17,252,0 };  // note switching using bitread , alternating pattern on, off, 11001100, 00110011,10101010,01010101,11110000,00001111,00010001,11101110
@@ -119,9 +160,9 @@ const uint8_t  waveSaw[17] = {  10,31,47,63,79,95,111,127,0,31,47,63,79,95,111,1
 
 const uint8_t waveTri[17] = { 0,15,31,47,63,79,95,111,127,111,95,79,63,47,32,15 }; //lfo triangle values lut ,not used
 
-uint8_t potValues [256];  //low res values mostly for display
+uint8_t potValues [383];  //low res values mostly for display
 
-uint8_t potSource[256]; // high res version of potValues used when needed 40-0, gonna change to 160 just o break things, need more res for lfo
+uint8_t potSource[383]; // high res version of potValues used when needed 40-0, gonna change to 160 just o break things, need more res for lfo
 // lfos speed=150-160 ,lfo_depth=160-170,lfo_gain=170-180;lfo_target=180-190;  80-95=notes,
 
 uint8_t notePos2;
@@ -275,7 +316,7 @@ void timerNote2(void);
 void sine_count(void);
 void sampling(void);
 void noteCalc(void);
-void lcd_feedback(void);
+
 void lfo(void);
 void print_pot(void);
 void analoginputloopb(void);
@@ -381,7 +422,7 @@ uint16_t adsr_time[11];
 uint16_t note_channel[31]={ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  // 10 notes , 10 velocity 20->16bit , 10 mask toggle
  unsigned short mask_result;
 
-static uint16_t adc_source[5] ;  // for soem reason static maybe important , also 16 bit most def
+static uint16_t adc_source[512] ;  // for soem reason static maybe important , also 16 bit most def
 const uint8_t lfo_mask[20]={255,170,85,252,240,192,128,136,238,15,0,0,0,0,0,0,0}; // lfo dif masks
 uint16_t sample_lp;  //low pass accu
 uint8_t sample_lpbuf[512]; // sample average buff
@@ -426,7 +467,7 @@ uint16_t enc_temp;  // hold in for tim2
 uint16_t enc_tempB;  // hold old in
 uint16_t enc2_temp;  // hold in for tim4
 uint16_t enc2_tempB;  // hold old in2
-int16_t enc2_dir;    // enc direction2
+uint16_t enc2_dir;    // enc direction2
 int16_t enc_dir;    // enc direction
 uint16_t tempo_count=0; // up counter for tempo reset
  uint8_t bsrr_hold[128]; //store to hold bsrr data ready for transfer in a loop
@@ -580,12 +621,14 @@ uint16_t gfx_counter[6]={0,0,0,0,0}; // just upcounter for gfx ram bytes
 uint8_t gfx_skip=1;  // important
 uint8_t gfx_blink=0; // blinker counter
 uint16_t lcd_out3; //for feedback
-uint8_t disp_multi[30]={8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1};   // display row potSource multiplier for different resolutions , for faster input
+uint8_t disp_multi[33]={8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1,8,1,8,1,1,1,1,1,1,1,1,1};   // display row potSource multiplier for different resolutions , for faster input
 uint8_t disp_stepper=1; // display these chars before moving onto next cursor position
 uint8_t disp_end; // end of spi sequence per whole page
 uint8_t loop_counter3;
 uint16_t enc2_tempc; //enc2 holder duh
 uint8_t disp_refresh;  // full screen refresh
+uint16_t input_holder[512];    // hold adc incoming data, vref sits around 1020 with a cap
+uint16_t input_count; // adc input couinter
 
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
