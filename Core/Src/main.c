@@ -261,17 +261,27 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 
 	  ///////////////////////////////////////////////////////////////////////////////
 
-	  if (loop_counter & 255)	{ // grab adc readings + 3ms , 32 step
-	  	for (i=0;i<4;i++) {
-
-	  adc_values[i]= (adc_source[i])>>3 ;
+	  if (loop_counter == 255)	{ // grab adc readings + 3ms , 32 step
 
 
-	  	}
-	  //	adc_read();
-	  //	input_holder[input_count]=adc_source[3];  // get audio input
-	  //	input_count++;
-	//  	if (input_count>511) input_count=0;
+
+		  //HAL_ADC_Stop_DMA(&hadc1); // a lot more stable this way , also sampling time no more than /8 +  144 or no go
+
+		  HAL_ADCEx_InjectedStart(&hadc1) ;  // start injected mode normal conversion
+		  uint16_t adc_temp1[4]={0,0,0,0};
+
+		  HAL_ADC_PollForConversion(&hadc1,10);  // works but  slow ,blocking
+
+		  adc_temp1[0]=HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
+		  adc_temp1[1] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
+		  adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
+		  adc_values[0]=	  adc_temp1[0]>>7;
+		  adc_values[1]=	  adc_temp1[1]>>7;
+		  adc_values[2]=	  adc_temp1[2]>>7;
+		  HAL_ADCEx_InjectedStop(&hadc1) ;
+		  //HAL_ADC_Start_DMA(&hadc1, adc_source, 512);
+
+
 	  	loop_counter=0;
 	  }
 
@@ -372,6 +382,7 @@ static void MX_ADC1_Init(void)
   /* USER CODE END ADC1_Init 0 */
 
   ADC_ChannelConfTypeDef sConfig = {0};
+  ADC_InjectionConfTypeDef sConfigInjected = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
 
@@ -382,7 +393,7 @@ static void MX_ADC1_Init(void)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -402,6 +413,40 @@ static void MX_ADC1_Init(void)
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
+  */
+  sConfigInjected.InjectedChannel = ADC_CHANNEL_4;
+  sConfigInjected.InjectedRank = 1;
+  sConfigInjected.InjectedNbrOfConversion = 3;
+  sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_56CYCLES;
+  sConfigInjected.ExternalTrigInjecConvEdge = ADC_EXTERNALTRIGINJECCONVEDGE_NONE;
+  sConfigInjected.ExternalTrigInjecConv = ADC_INJECTED_SOFTWARE_START;
+  sConfigInjected.AutoInjectedConv = DISABLE;
+  sConfigInjected.InjectedDiscontinuousConvMode = DISABLE;
+  sConfigInjected.InjectedOffset = 0;
+  if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
+  */
+  sConfigInjected.InjectedChannel = ADC_CHANNEL_5;
+  sConfigInjected.InjectedRank = 2;
+  if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
+  */
+  sConfigInjected.InjectedChannel = ADC_CHANNEL_6;
+  sConfigInjected.InjectedRank = 3;
+  if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK)
   {
     Error_Handler();
   }

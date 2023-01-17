@@ -406,7 +406,7 @@ for (i=0;i<16;i++) {  note_toggler[i]=0; }
 
 //float lcd_out2;
 
-lcd_out3=menu_page[1]; // still goes to 15
+//lcd_out3=menu_page[1]; // still goes to 15
 
 //lcd_out3=adc_values[0]+adc_values[1]+adc_values[2]; // 3 digit read out , works ok,, [2] works but thats it
 //lcd_out3=lcd_out3+180;
@@ -430,7 +430,7 @@ int8_t ring_mod=0;
 // some good phasin and delays here
 uint8_t cross_fade[2];
 uint8_t fader[17]={0,1,5,11,19,28,39,51,64,76,88,99,108,116,122,126,127}; // sine curve for cross fade
-//adc_values[2]=adc_values[1];   // this temp until pot 3 is fixed
+
 if(adc_values[2]&16)     	{cross_fade[1]=127-fader[adc_values[2]&15]; cross_fade[2]=127;}  else {cross_fade[2]=fader[adc_values[2]&15]; cross_fade[1]=127;} //calculate crossfader
 
 // doing lfo calc here as it is slow only for now
@@ -647,6 +647,8 @@ play_holder2[i]=sample_Accu[2];
 } // end of osc , doing some sound
 
 HAL_ADC_Stop_DMA(&hadc1); // a lot more stable this way , also sampling time no more than /8 +  144 or no go
+
+
 HAL_ADC_Start_DMA(&hadc1, adc_source, 512); //dma start ,needs this and adc start ,set sampling time
 
 int32_t filter_Accu;
