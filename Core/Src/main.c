@@ -24,8 +24,12 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "myvars.h"			// variables
+#include <stdlib.h>
+#include <string.h>
+//#define __FPU_PRESENT   1
 
-
+/* Use ARM MATH for Cortex-M4 */
+//#define ARM_MATH_CM4
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,6 +52,7 @@ DMA_HandleTypeDef hdma_adc1;
 
 I2C_HandleTypeDef hi2c2;
 
+SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim2;
@@ -68,6 +73,7 @@ static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -112,6 +118,7 @@ int main(void)
   MX_TIM4_Init();
   MX_I2C2_Init();
   MX_TIM2_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
   const volatile uint8_t *userConfig=(const volatile uint8_t *)0x0800D2F0;
@@ -123,6 +130,7 @@ int main(void)
 //LL_SPI_Enable(SPI2);
 
   HAL_SPI_Init(&hspi2); // write to register hspi2
+  HAL_SPI_Init(&hspi1); // write to register hspi2
   // lcd_init(); // keep this late or have issues
 //HAL_TIM_Base_Start_IT(&htim1);  // This needs to work for irq   ,disbling tim1 made loop a lot faster
 //TIM1->CCER=0;
@@ -135,10 +143,113 @@ HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
 //HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_4,pData, 63);
 TIM2->CNT=32000;
 HAL_ADC_Start(&hadc1);
-HAL_ADC_Start_DMA(&hadc1, adc_source, 512); //dma start ,needs this and adc start ,set sampling time to very long or it will fail
+HAL_ADC_Start_DMA(&hadc1, adc_source, 1024); //dma start ,needs this and adc start ,set sampling time to very long or it will fail
 
 
 HAL_I2C_MspInit(&hi2c2);
+uint8_t send_spi1[5]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
+/*
+HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000); // send dummy,dummy , then whatever command for manuf
+HAL_SPI_Receive(&hspi1, return_spi1, 2, 1000);   // manuf return sif correct , 0xEF,0x17 which is correct, then repeats when more request
+
+*/
+
+
+
+
+
+
+
+HAL_Delay(5);
+
+
+send_spi1[0]=0x06; //enable write  , only lasts for single operation
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+HAL_Delay(5);
+send_spi1[0]=0x20; //sector erase
+send_spi1[1]=0; //24bit address msb
+send_spi1[2]=0; //24bit address
+send_spi1[3]=1; //24bit address lsb
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
+HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+
+send_spi1[0]=0x05; //read status register  if writing
+send_spi1[1]=0; //24bit address msb
+status_reg[1]=1; // set busy on
+
+while (status_reg[1]&1){								// check if write busy
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+	HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+}
+
+send_spi1[0]=0x06; //enable write again
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+HAL_Delay(5);
+
+
+
+
+//uint8_t temp_spi1[]={0x02,0,0,1,"H","E","L","L","O"," ","W","O","R","L","D",250,0,0} ; //page progrram ,24bit(address)  +1-255 byte data  (page)
+uint8_t temp_spi1[]={0x02,0,0,1,128,129,130,131,132,133,134,135,136,137,138,250,0,0} ; //page progrram ,24bit(address)  +1-255 byte data  (page)
+memcpy  (send_spi1,temp_spi1, 14);   // copy new array over old
+
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+HAL_SPI_Transmit(&hspi1, send_spi1, 14, 1000);  //address,page program
+
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+
+
+
+HAL_Delay(25);
+send_spi1[0]=0x04; //disable write
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+HAL_Delay(5);
+memcpy  (send_spi1,return_spi1, 14);   // clear out
+send_spi1[0]=0x03; //read page 1
+send_spi1[1]=0; //24bit address msb
+send_spi1[2]=0; //24bit address
+send_spi1[3]=1; //24bit address lsb
+
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
+
+HAL_SPI_Transmit (&hspi1, send_spi1, 4, 100);
+HAL_SPI_Receive (&hspi1, return_spi1, 10, 100);   // works fine
+
+//HAL_SPI_TransmitReceive(&hspi1, send_spi1, return_spi1,14, 100);  // better in case skip , 4 bytes is null then data , slow
+//HAL_Delay(5);
+
+//HAL_SPI_Receive(&hspi1, return_spi1, 12, 1000);  // reverse msb ?
+HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+
+
+
+
+/*
+send_spi1[0]=0x20; //sector erase
+send_spi1[1]=0; //24bit address msb
+send_spi1[1]=0; //24bit address
+send_spi1[1]=0; //24bit address lsb
+HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector
+*/
+
+
+HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+
+
+
+
 
 /*
 for(i=0;i<128;i++){			// read values from stored
@@ -198,9 +309,17 @@ for (i=0;i<512;i++)	{gfx_char[i]=gfx_char[i];
 
 
 }    //font replace
+//    Merge menu times   here    char , int8 ,int16  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
+
+
+
+
+
+
+//   produce extra menu pages here /////////////////////////////////////////////////////////////////////////////////
 uint16_t lut_temp2=0;
 uint16_t lut_temp3=0;
 for  (i=0;i<390;i++){					// get a few more pages
@@ -221,7 +340,7 @@ printf("Hello everybody");
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
+  while (1)																																																		//   while loop
   {
     /* USER CODE END WHILE */
 
@@ -274,11 +393,13 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 
 		  adc_temp1[0]=HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
 		  adc_temp1[1] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
-		  adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
+		//  adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
 		  adc_values[0]=	  adc_temp1[0]>>7;
 		  adc_values[1]=	  adc_temp1[1]>>7;
-		  adc_values[2]=	  adc_temp1[2]>>7;
+		//  adc_values[2]=	  adc_temp1[2]>>7;
 		  HAL_ADCEx_InjectedStop(&hadc1) ;
+
+
 		  //HAL_ADC_Start_DMA(&hadc1, adc_source, 512);
 
 
@@ -300,10 +421,56 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 
 
 	  if (sample_pointB!=sample_pointD) bank_write=1; // set start of buffer ,grab , works ok
-	  if (bank_write){
 
-	  	sampling();
-	  /*	HAL_SPI_Transmit(&hspi2,(uint8_t *)248,1,1);
+
+	  	if (adc_flag) {
+	  		HAL_ADC_Stop_DMA(&hadc1); // a lot more stable this way , also sampling time no more than /8 +  144 or no go
+	  		HAL_ADC_Start_DMA(&hadc1, adc_source, 1024); //dma start ,needs this and adc start ,set sampling time
+
+	  			uint16_t* click=&adc_source[0];
+
+	  			for (i=0;i<512;i++)
+	  			{
+
+	  				uint16_t crap_hold=*click;
+
+	  			uint16_t crap_hold1=*(++click);
+	  		click++;
+
+	  	//			uint16_t crap_hold=adc_source[i*2];
+
+	  				 // 				uint16_t crap_hold1=adc_source[(i*2)+1];
+
+
+
+
+	  				input_holder[i] = (crap_hold+crap_hold1 )>>1;
+	  				adc_flag=0;
+	  			}
+
+
+
+
+
+
+
+
+
+	  if (bank_write){							// wait for adc
+
+
+
+
+	  		//sample_point=sample_point&768 ;
+	  		sampling();
+
+
+	  	}   // should trigger this after adc reads also reset sample_point here
+
+
+
+
+	  	/*	HAL_SPI_Transmit(&hspi2,(uint8_t *)248,1,1);
 	  	HAL_SPI_Transmit(&hspi2,(uint8_t *)64,1,1);
 	  	HAL_SPI_Transmit(&hspi2,(uint8_t *)0,1,1);
 	  */
@@ -391,7 +558,7 @@ static void MX_ADC1_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
@@ -419,9 +586,9 @@ static void MX_ADC1_Init(void)
 
   /** Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
   */
-  sConfigInjected.InjectedChannel = ADC_CHANNEL_4;
+  sConfigInjected.InjectedChannel = ADC_CHANNEL_0;
   sConfigInjected.InjectedRank = 1;
-  sConfigInjected.InjectedNbrOfConversion = 3;
+  sConfigInjected.InjectedNbrOfConversion = 2;
   sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_56CYCLES;
   sConfigInjected.ExternalTrigInjecConvEdge = ADC_EXTERNALTRIGINJECCONVEDGE_NONE;
   sConfigInjected.ExternalTrigInjecConv = ADC_INJECTED_SOFTWARE_START;
@@ -435,17 +602,8 @@ static void MX_ADC1_Init(void)
 
   /** Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
   */
-  sConfigInjected.InjectedChannel = ADC_CHANNEL_5;
+  sConfigInjected.InjectedChannel = ADC_CHANNEL_2;
   sConfigInjected.InjectedRank = 2;
-  if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
-  */
-  sConfigInjected.InjectedChannel = ADC_CHANNEL_6;
-  sConfigInjected.InjectedRank = 3;
   if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK)
   {
     Error_Handler();
@@ -487,6 +645,44 @@ static void MX_I2C2_Init(void)
   /* USER CODE BEGIN I2C2_Init 2 */
 
   /* USER CODE END I2C2_Init 2 */
+
+}
+
+/**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI1_Init(void)
+{
+
+  /* USER CODE BEGIN SPI1_Init 0 */
+
+  /* USER CODE END SPI1_Init 0 */
+
+  /* USER CODE BEGIN SPI1_Init 1 */
+
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
+
+  /* USER CODE END SPI1_Init 2 */
 
 }
 
@@ -718,6 +914,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET);
+
   /*Configure GPIO pin : LED_Pin */
   GPIO_InitStruct.Pin = LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -725,70 +924,31 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : CS1_Pin */
+  GPIO_InitStruct.Pin = CS1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(CS1_GPIO_Port, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
 /* USER CODE BEGIN 4 */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)   // get data after conversion
 {
-	for (i=0;i<512;i++)
-	{input_holder[i] = adc_source[i];
+adc_flag=1;
 
-	}
+
 }
 
-
-/*
-void analogInputloop(void) { // might make menuselect a master override for everything  if chnaged then halt writing new values until screen refreshed
-		menuSelect = (7 - (adc_values[0] >>1))<<4;
-		menuSelectX=15 - (adc_values[1] );
-		tempValueA=adc_values[2];
-		counterVarB = menuSelectX + menuSelect; // select mem page 10*8  and location pointer  77
-	if (counterVarB != tempValue[120]) {
-		modEnable = 1;
-	//	lcd.setCursor((menuSelectX * 2), 1);
-	} else
-		modEnable = 0;   //compared to stored value
-	tempValue[120] = counterVarB;
- tempValueA=(tempValueA*11) >> 4;
-	if (tempValueA>10) tempValueA=10;
- tempValue[counterVarB] = tempValueA; // read and store pots 0-200 ,writemenu to single pos ,
-	if ((modEnable) || (firstRound))
-		tempValueB[counterVarB] = tempValue[counterVarB]; // needs replicate values after moving menupot to avoidwriting new values needs to move twice not good
-	valueCurrent = tempValue[counterVarB]; // incoming value  10*8 blocks
-	valueOriginal = tempValueB[counterVarB]; // read original stored value    might just make  all separate regardless
-	if (valueCurrent != valueOriginal) {
-		tempValueB[counterVarB] = valueCurrent;
-		//  potValues[counterVarB] = 10 - (valueCurrent);  // potvalues 0- 63 and 180 up
-	}    //perfect now   , change to 0-9 here
-	potValues[counterVarB]=potValues[counterVarB]+
-	firstRound = 0;
-} // loop for reading analog inputs
-*/
 
 
 
 // if (counterVarB==n_lcd)lcd_blink = !lcd_blink;
 
 
-/*
-	if (n_lcd > 18) {
-		row_toggle = !row_toggle;
-		n_lcd = 1;
-	}
-	lcddata = spell[(n_lcd) + (row_toggle * 18)]; // when n=1 changes
-	if (command_toggle == 4) {
-		command_toggle = 0;
-		lcd_blink = !lcd_blink;
-	} // top row seems to be slower from potValues 8
-	//if (n == 31)   lcddata = spell[(n >> 1)+ (row_toggle*17)] ; // needs to be here or it loops wrong, maybe not
-	if (n_lcd > 16) {
-		rs_toggle = 0;
-		lcddata = command[command_toggle]; // 0-3 command set
-		command_toggle++;
-	} else
-		rs_toggle = 1;  // sending commands after printing
-*/
+
 
 
 /*

@@ -646,12 +646,48 @@ play_holder2[i]=sample_Accu[2];
 
 } // end of osc , doing some sound
 
-HAL_ADC_Stop_DMA(&hadc1); // a lot more stable this way , also sampling time no more than /8 +  144 or no go
 
-
-HAL_ADC_Start_DMA(&hadc1, adc_source, 512); //dma start ,needs this and adc start ,set sampling time
 
 int32_t filter_Accu;
+
+uint16_t temp3_hold[3]={2000,2000,2000};
+
+//uint16_t* click=&input_holder[0];
+
+uint16_t crap_hold=2000;
+
+				uint16_t crap_hold1=2000;
+				uint16_t crap_hold2=2000;
+
+
+
+
+for (i=0;i<512;i++)
+			{
+
+
+
+
+				crap_hold=((input_holder[i]*7)+crap_hold2)>>3;
+					crap_hold1=((crap_hold*7)+crap_hold1)>>3;
+					input_holder[i] =((crap_hold1*7)+crap_hold2)>>3;
+
+
+			}
+
+/*
+for (i=0;i<510;i++){
+	temp3_hold[0]=((temp3_hold[2]*7)+input_holder[i])>>3;
+	temp3_hold[1]=((temp3_hold[0]*7)+input_holder[i+1])>>3;
+	temp3_hold[2]=((temp3_hold[1]*7)+input_holder[i+2])>>3;
+
+	input_holder[i]=temp3_hold[0];
+	input_holder[i+1]=temp3_hold[1];
+	input_holder[i+2]=temp3_hold[2];
+
+
+}
+*/
 
 
 int32_t feedback_out=filter_out[3];
@@ -665,7 +701,12 @@ if (		(note_toggler[i>>5]	)==(1<<(i&31)	)) 				{adsr_temp =0;  trigger_counter++
 //if (feedback_out>0xFFFF) feedback_out=0xFFFF; else if (feedback_out<-65535) feedback_out=-65535;  // limiter to 16 bits
 sample_Accu[1]=input_holder[i];
 
-sample_Accu[1]=(sample_Accu[1]-1020)<<15; // shit to correct level
+
+
+sample_Accu[1]=(sample_Accu[1]-2020)<<14; // shift to correct level
+
+
+
 //sample_Accu[1]=sample_Accu[1]-60000;
 //sample_Accu[1]=play_holder1[i];  // sine input
 
@@ -728,7 +769,7 @@ filter_Accu=0;
  if (filter_Accu>0xFFFF) filter_Accu=0xFFFF; else if (filter_Accu<-65535) filter_Accu=-65535;  // limiter to 16 bits
 
 
- play_sample[i_total]=(filter_Accu>>6)+1023;   // final output disable for now
+ play_sample[i_total]=(filter_Accu>>6)+1272;   // final output disable for now 2544
 
  //play_sample[i_total]=(input_holder[i]);  // works good
 

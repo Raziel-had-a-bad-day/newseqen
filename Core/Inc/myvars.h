@@ -23,6 +23,7 @@ const uint32_t flash_page=0x800;
 
 
 
+
 uint32_t x;  // calc timer note
 uint32_t y;
 uint16_t pwmVel;
@@ -119,7 +120,7 @@ int _write(int file, char *ptr, int len)
 
 	return len;
 }
-const char* menu_items[]  =  {"menu_edit","yes","no,square","sine","triangle,saw",				// menu_loc has reference potSource locations
+const char* menu_items[]  =  {"menu_edit","yes","no,square","sine","triangle,saw",				// menu_loc has reference potSource locations , might convert to 10 length char uint8
 		"OSC1_Notes","OSC2_Notes","OSC3_Notes",
 		"OSC1_pitch","OSC2_pitch","OSC3_pitch",
 		"OSC1_attack","OSC2_attack","OSC3_attack",
@@ -132,7 +133,7 @@ const char* menu_items[]  =  {"menu_edit","yes","no,square","sine","triangle,saw
 		"LFO1_out","LFO2_out","LFO3_out","LFO4_out","LFO5_out","LFO6_out"
 
 };
-const uint16_t menu_loc[]  ={511,511,511,511,511,511,511,511,  // potSource ref for menu_items[]  ,  maybe above 512 its text reference(not yet) , also 0-128 is just characters ,128-143 notes 1 , 208-223 notes 2
+const uint16_t menu_loc[]  ={511,511,511,511,511,511,511,511,  // potSource vale pointer for menu_items[]  ,  maybe above 512 its text reference(not yet) , also 0-128 is just characters ,128-143 notes 1 , 208-223 notes 2
 		200,201,202,	//pitch
 		148,148,148,  // no new ref yet
 		149,149,149,	 // no new ref yet
@@ -304,6 +305,7 @@ static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 void display_init(void);
 
@@ -422,7 +424,7 @@ uint16_t adsr_time[11];
 uint16_t note_channel[31]={ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  // 10 notes , 10 velocity 20->16bit , 10 mask toggle
  unsigned short mask_result;
 
-static uint16_t adc_source[512] ;  // for soem reason static maybe important , also 16 bit most def
+static uint16_t adc_source[1025] ;  // for soem reason static maybe important , also 16 bit most def
 const uint8_t lfo_mask[20]={255,170,85,252,240,192,128,136,238,15,0,0,0,0,0,0,0}; // lfo dif masks
 uint16_t sample_lp;  //low pass accu
 uint8_t sample_lpbuf[512]; // sample average buff
@@ -629,7 +631,9 @@ uint16_t enc2_tempc; //enc2 holder duh
 uint8_t disp_refresh;  // full screen refresh
 uint16_t input_holder[512];    // hold adc incoming data, vref sits around 1020 with a cap
 uint16_t input_count; // adc input couinter
-
+uint8_t adc_flag=0;  // sets flag for to run sampling()
+uint8_t return_spi1[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+uint8_t status_reg[2]={0,1};
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 
