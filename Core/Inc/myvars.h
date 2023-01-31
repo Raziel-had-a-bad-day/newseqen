@@ -634,6 +634,11 @@ uint16_t input_count; // adc input couinter
 uint8_t adc_flag=0;  // sets flag for to run sampling()
 uint8_t return_spi1[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 uint8_t status_reg[2]={0,1};
+ uint16_t  time_final[2]={0,0};  // tick timer
+ uint16_t time_proc=0; // tick start
+uint16_t  error_count=0;
+
+
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 

@@ -333,14 +333,14 @@ for  (i=0;i<390;i++){					// get a few more pages
 menuSelect=0;
 // fill up sample
 firstbarLoop=0;
-printf("Hello everybody");
+
 
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)																																																		//   while loop
+  while (1)																																																		//   while loop , random 20+ms freeze around 0.5 sec
   {
     /* USER CODE END WHILE */
 
@@ -349,20 +349,28 @@ printf("Hello everybody");
 	  loop_counter2++;//
 
 	  // if (menu_page<320) lcd_feedback();  //curious no issues with lcd without this  , maybe spell writing
-if 	((loop_counter2&7)==6)      {analoginputloopb();} // this is ok , plenty quick
-if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour
+	  if (mem_count==255) mem_count=0; else mem_count++;  // write to first
+	  if 	((loop_counter2&7)==6)      {analoginputloopb();} // this is ok , plenty quick , no freeze here
+
+
+if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
 
 	mem_buf=potSource[mem_count];
 	// read values from stored
+
+
 	HAL_I2C_Mem_Write(&hi2c2, 160, ((1+(mem_count>>6))<<6)+(mem_count&63), 2, &mem_buf, 1, 1000);  // "&hi2c2"  actual register address
-	HAL_Delay(5);
-	if (mem_count==255) mem_count=0; else mem_count++;  // write to first
+	//HAL_Delay(5); // this is slow , no bueno
+
+
+
+
 	loop_counter2=0; //reset
 
 }
 
 
-	  if (disp_end==1)	 {  // displaybuffer after each full screen update on spi
+	  if (disp_end==1)	 {  // displaybuffer after each full screen update on spi  ,, no freezes here
 
 		  { if (loop_counter3)  enc2_tempc=enc2_dir; else enc2_dir=enc2_tempc; }    //hold enc till finished , this to clean up characters for now ,works ok
 		  loop_counter3=!loop_counter3;  //blinker flips on each full page refresh
@@ -373,14 +381,15 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 	  }
 
 
-	  if (init<6)				// after 6 its done for good
+	  if (init<6)				// after 6 its done for good   // no freeze here
 {
 	  for (i=0;i<6;i++) {display_init();}  //1-2ms ?  change length if flickering ,maybe initial data
 } else {display_update(); }  // send spi line data every loop cycle , self contained, single 8pixel line 18*256steps
 
+
 	  ///////////////////////////////////////////////////////////////////////////////
 
-	  if (loop_counter == 255)	{ // grab adc readings + 3ms , 32 step
+	  if (loop_counter == 255)	{ // grab adc readings + 3ms , 32 step  // no freeze
 
 
 
@@ -389,7 +398,7 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 		  HAL_ADCEx_InjectedStart(&hadc1) ;  // start injected mode normal conversion
 		  uint16_t adc_temp1[4]={0,0,0,0};
 
-		  HAL_ADC_PollForConversion(&hadc1,10);  // works but  slow ,blocking
+		  HAL_ADC_PollForConversion(&hadc1,1);  // works but  slow ,blocking very slow, set quick time out
 
 		  adc_temp1[0]=HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
 		  adc_temp1[1] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
@@ -416,14 +425,19 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 	  	     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin,(seq_pos & 1)); // easy skip ?
 	  	    // very inconsistent
 
-	  if (sample_point>511) sample_pointD=0; // loop when zero cross , good but limited, works ok
-	  if (sample_point<511)  sample_pointD=512;
+	 // if (sample_point>511) sample_pointD=0; // loop when zero cross , good but limited, works ok
+	//  if (sample_point<511)  sample_pointD=512;
 
 
-	  if (sample_pointB!=sample_pointD) bank_write=1; // set start of buffer ,grab , works ok
+	//  if (sample_pointB!=sample_pointD) bank_write=1; // set start of buffer ,grab , works ok
 
 
-	  	if (adc_flag) {
+
+
+
+
+	  	//	adc_flag=0;
+	  		if (adc_flag) {
 	  		HAL_ADC_Stop_DMA(&hadc1); // a lot more stable this way , also sampling time no more than /8 +  144 or no go
 	  		HAL_ADC_Start_DMA(&hadc1, adc_source, 1024); //dma start ,needs this and adc start ,set sampling time
 
@@ -441,33 +455,20 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 
 	  				 // 				uint16_t crap_hold1=adc_source[(i*2)+1];
 
-
-
-
 	  				input_holder[i] = (crap_hold+crap_hold1 )>>1;
 	  				adc_flag=0;
 	  			}
+	  		}
+
+	while  (bank_write)                         {							// wait for adc , priority
 
 
 
-
-
-
-
-
-
-	  if (bank_write){							// wait for adc
-
-
-
-
+		  //HAL_Delay(4);
 	  		//sample_point=sample_point&768 ;
 	  		sampling();
 
-
 	  	}   // should trigger this after adc reads also reset sample_point here
-
-
 
 
 	  	/*	HAL_SPI_Transmit(&hspi2,(uint8_t *)248,1,1);
@@ -475,16 +476,11 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 	  	HAL_SPI_Transmit(&hspi2,(uint8_t *)0,1,1);
 	  */
 
-	  } //works ok, write opp bank
+	   //works ok, write opp bank
 
 
 
-
-
-	    }  // while loop
-
-
-
+	    }  // while loop , total 250/350  cycles/   5/7ms   , max allowed is 13ms
 
 
   /* USER CODE END 3 */

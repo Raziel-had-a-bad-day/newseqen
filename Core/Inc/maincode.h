@@ -17,7 +17,7 @@ uint8_t spi_store[5];
 	spi_store[2]=((spi_hold&15)<<4)&255;
 
 // send this to spi for now
-		HAL_SPI_Transmit(&hspi2, (uint8_t *)spi_store, 3, 100);  // working good
+		HAL_SPI_Transmit(&hspi2, (uint8_t *)spi_store, 3, 5);  // working good
 
 
 //HAL_Delay(10);
@@ -27,11 +27,19 @@ uint8_t spi_store[5];
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)    // unreliable
 
 {
+	time_proc++;
+	//if (((sample_point==511) || (sample_point==1022)) && (bank_write)  ) error_count++;
 
+	if (sample_point==511) {bank_write=1; sample_pointD=0; time_proc=0;  }
+	if (sample_point==1022) {bank_write=1; sample_pointD=512;time_proc=0; }
 	sample_point=sample_point & 1023;// this is 1
 	play_hold=play_sample[sample_point]; // this is 2
 
-		if(TIM3==htim->Instance)			// nothing here is consistent
+
+
+
+
+	if(TIM3==htim->Instance)			// nothing here is consistent
 {
 
 
@@ -214,7 +222,7 @@ default : init_b=init-6;displayBuffer ();spi_hold=spell[init_b];break; //initial
 }
 
 
-if (init<6)	{HAL_Delay(30);spi_hold=disp[init] ;  init_b=cursor_menu[2]; } //delay needs to go
+if (init<6)	{HAL_Delay(3);spi_hold=disp[init] ;  init_b=cursor_menu[2]; } //delay needs to go
 
 init++;   // after 6 it quits the rest is not needed
 spi_send=1;SPI_command();spi_send=0;spi_enable=0;
@@ -278,7 +286,7 @@ if (gfx_skip==19)  {gfx_counter[2]=(gfx_counter[2]+1) &63; gfx_counter[3]=0;gfx_
 		spi_store[2]=((spi_hold&15)<<4)&255;
 
 	// send this to spi for now
-			HAL_SPI_Transmit(&hspi2, (uint8_t *)spi_store, 3, 100);  // working good ,blocking
+			HAL_SPI_Transmit(&hspi2, (uint8_t *)spi_store, 3, 3);  // working good ,blocking , never set time too high  or figure other option maybe DMA
 
 
 disp_end=gfx_skip+gfx_counter[2]+gfx_counter[3];			// vsynch for displaybuffer
@@ -379,12 +387,17 @@ if (disp_stepper==15) disp_stepper=0; else disp_stepper++;				// count to 16
 
 void sampling(void){						// 18 ms of data
 
+//	if (time_proc>580) time_final=time_proc;
 
-uint8_t t_ac;
+if (time_proc>300)  	time_final[0]=time_proc;
+	uint8_t t_ac;
 
 uint8_t mask_i;
 uint8_t mask_k;
 uint8_t adsr_mult[5];
+bank_write=0;
+//time_proc=0;   //millis
+
 //adc_read();
 //uint16_t isr_tempo=isrMask; // get tempo value
 sample_pointB=sample_pointD;
@@ -430,7 +443,7 @@ int8_t ring_mod=0;
 // some good phasin and delays here
 uint8_t cross_fade[2];
 uint8_t fader[17]={0,1,5,11,19,28,39,51,64,76,88,99,108,116,122,126,127}; // sine curve for cross fade
-
+adc_values[2]= 15; //force for now
 if(adc_values[2]&16)     	{cross_fade[1]=127-fader[adc_values[2]&15]; cross_fade[2]=127;}  else {cross_fade[2]=fader[adc_values[2]&15]; cross_fade[1]=127;} //calculate crossfader
 
 // doing lfo calc here as it is slow only for now
@@ -517,12 +530,12 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 
 	note_holdB=potValues[80+seq_loop[2]]+(potValues[74]);  //
 
-	note_holdB=(note_holdB-4)+(lfo_out[2][i_frac]>>11);  //no go with float
+	//note_holdB=(note_holdB-4)+(lfo_out[2][i_frac]>>11);  //no go with float, disabler as lfo produces garbage
 
 
 
 	note_holdB=MajorNote[note_holdB];
-
+	//note_holdB=11; // works ok with single note @24 but   fails on other
 	sine_adder=sine_lut[note_holdB];	//sets freq ,1.0594  * 16536 =17518  ,
 	sine_adder= (sine_adder*1200)>>10;  // modify different sample size , just need single cycle length and thats it
 		mask_result =0;
@@ -538,11 +551,11 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 
 		for (mask_i=0;mask_i<5;mask_i++)	{							// calc detune , slow ,also creates notes
 
-		if (note_channel[mask_i]) {tune_Accu=sample_Noteadd[MajorNote[note_channel[mask_i]]];   note_tuned[mask_i]=(tune_Accu);       } // relies on note channel clear , not good , clear not channel straight after
+	if (note_channel[mask_i]) {tune_Accu=sample_Noteadd[MajorNote[note_channel[mask_i]]];   note_tuned[mask_i]=(tune_Accu);       } // relies on note channel clear , not good , clear not channel straight after
 
 	}
 
-
+		//note_tuned[3]=2751;
 	} // end of note calcualte
 
   // calc freq 1/isr or 1/16 per note ,need for pitch bend and so on , change depending on decay
@@ -622,8 +635,8 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 									//if (sample_accus[2]<0) sample_Accu[2]=+sample_accus[2]; else sample_Accu[2]=sample_accus[2]; // convert to triangle ?
 									sample_Accu[0]=sample_accus[2]>>7; // needs cut a bit
 
-							sample_Accu[0] = ((sine_out+sample_Accu[0])*cross_fade[1]);   // sine input
-
+							sample_Accu[0] = ((sine_out+sample_Accu[0])*cross_fade[1]);   // sine input plus other
+							//sample_Accu[0] = (sine_out*cross_fade[1]);  // sine out only
 									//if (sample_accus[3]<0) sample_Accu[3]=+sample_accus[3]; else sample_Accu[3]=sample_accus[3]; // convert to triangle
 									sample_Accu[3]=sample_accus[3];
 									sample_Accu[2] = (sample_Accu[3]*cross_fade[2]);			//27b, 2 out f2  might do a crossfade here using pot 3
@@ -635,11 +648,11 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 
 if (sine_counterB==0) 	sine_temp2=sine_adder;
 
-	sine_counterB=sine_counterB+sine_temp2 ;  // sine up counter per cycle , however sine adder nees to wait
+	sine_counterB=sine_counterB+sine_temp2 ;  // sine up counter per cycle , however sine adder needs to wait
 	if (sine_counterB>>7) sine_zero=0; else sine_zero=1;
 
 if (sine_counterB>(sine_length<<5)) sine_counterB=0; //fixed for now
-sine_count(); // calc sine
+sine_count(); // calc sine   distortion out when hcagning note
 play_holder1[i]=sample_Accu[0];  // write to bank
 play_holder2[i]=sample_Accu[2];
 
@@ -662,7 +675,7 @@ uint16_t crap_hold=2000;
 
 
 
-for (i=0;i<512;i++)
+for (i=0;i<512;i++) // 15-20 tmr cycles (174)
 			{
 
 
@@ -690,7 +703,7 @@ for (i=0;i<510;i++){
 */
 
 
-int32_t feedback_out=filter_out[3];
+int32_t feedback_out=filter_out[3];   // 191 sample time
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators , filters and final out
 	i_total=i+sample_pointB;
 i_frac=(i>>6);
@@ -699,17 +712,20 @@ i_frac=(i>>6);
 if (		(note_toggler[i>>5]	)==(1<<(i&31)	)) 				{adsr_temp =0;  trigger_counter++; trigger_counter=trigger_counter&1023  ;}
 
 //if (feedback_out>0xFFFF) feedback_out=0xFFFF; else if (feedback_out<-65535) feedback_out=-65535;  // limiter to 16 bits
-sample_Accu[1]=input_holder[i];
+//sample_Accu[1]=input_holder[i];
 
 
 
-sample_Accu[1]=(sample_Accu[1]-2020)<<14; // shift to correct level
+//sample_Accu[1]=(sample_Accu[1]-2020)<<14; // shift to correct level
 
 
 
 //sample_Accu[1]=sample_Accu[1]-60000;
-//sample_Accu[1]=play_holder1[i];  // sine input
+sample_Accu[1]=play_holder1[i];  // sine input
+sample_Accu[3]=play_holder2[i] >>5; // sine
 
+// this section is about 100 tmr cycles
+/*
 freq_point[0]=freq_pointer[0] [i_frac];; // load up coeffs
 //freq_point[1]=freq_pointer[1] [i_frac];
 freq_point[2]=freq_pointer[2] [i_frac];  // ok , array was too short
@@ -739,14 +755,14 @@ if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;
 		//sample_Accu[0] =sample_Accu[1];
 
 		//filter 2
-		//sample_Accu[3]=play_holder2[i] >>5; // sine
+		sample_Accu[3]=play_holder2[i] >>5; // sine
 
 
 				if (freq_point[2]>1) freq_point[2]=1;
 
 				freq_point[3]=1-freq_point[2];
 				filter_accus[6]=sample_Accu[3];
-				filter_accus[6]= filter_accus[6]*adsr_level[3]; // add adsr envelope
+			//	filter_accus[6]= filter_accus[6]*adsr_level[3]; // add adsr envelope
 
 				filter_accus[7]=(filter_accus[6]*freq_point[2])+(filter_accus[7]*freq_point[3]);
 				filter_accus[8]=(filter_accus[7]*freq_point[2])+(filter_accus[8]*freq_point[3]);
@@ -756,27 +772,35 @@ if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;
 				sample_Accu[2] =filter_accus[10]; //out
 				filter_accus[12]=filter_accus[10]; //write back new value
 
-
+*/
 filter_Accu=0;
 //filter_Accu=(sample_Accu[0]+sample_Accu[2])>>8; //filter + drum out
 
 
 //filter_Accu=(sample_Accu[1]+sample_Accu[3])>>8; //filter + drum out ,clean out
- filter_Accu=sample_Accu[1]>>8;
+ filter_Accu=sample_Accu[1]>>7;
+
+// filter_Accu=sample_Accu[2]>>11;
 //filter_Accu=(sample_Accu[1]>>7)+(sample_Accu[3]>>8); //filter + drum out
  if (one_shot!=199)   one_shot++;  //play one attack then stop
 
  if (filter_Accu>0xFFFF) filter_Accu=0xFFFF; else if (filter_Accu<-65535) filter_Accu=-65535;  // limiter to 16 bits
 
 
- play_sample[i_total]=(filter_Accu>>6)+1272;   // final output disable for now 2544
+ play_sample[i_total]=(filter_Accu>>6)+1024;   // final output disable for now 2544
 
  //play_sample[i_total]=(input_holder[i]);  // works good
 
 } // end of filer
 
 
-bank_write=0;
+//time_final=time_proc;   // in samples
+
+if (bank_write) {time_final[1]=time_proc; error_count++;};  // tick timer in samples ,normal max 20 but some 230
+
+
+
+//bank_write=0;   /// total 320 sample time (39khz)
 }
 
 
