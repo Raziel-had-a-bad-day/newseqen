@@ -1,0 +1,112 @@
+Configuration	newseqen
+STM32CubeMX 	6.6.1
+Date	02/02/2023
+MCU	STM32F411CEYx
+
+
+
+PERIPHERALS	MODES	FUNCTIONS	PINS
+ADC1	IN0	ADC1_IN0	PA0-WKUP
+ADC1	IN2	ADC1_IN2	PA2
+ADC1	IN9	ADC1_IN9	PB1
+I2C2	I2C	I2C2_SCL	PB10
+I2C2	I2C	I2C2_SDA	PB9
+SPI1	Full-Duplex Master	SPI1_MISO	PA6
+SPI1	Full-Duplex Master	SPI1_MOSI	PA7
+SPI1	Full-Duplex Master	SPI1_SCK	PA5
+SPI2	Transmit Only Master	SPI2_MOSI	PB15
+SPI2	Transmit Only Master	SPI2_SCK	PB13
+SYS	SysTick	SYS_VS_Systick	VP_SYS_VS_Systick
+TIM2	Encoder Mode	TIM2_CH1	PA15
+TIM2	Encoder Mode	TIM2_CH2	PA1
+TIM3	Internal Clock	TIM3_VS_ClockSourceINT	VP_TIM3_VS_ClockSourceINT
+TIM3	PWM Generation CH3	TIM3_CH3	PB0
+TIM4	Encoder Mode	TIM4_CH1	PB6
+TIM4	Encoder Mode	TIM4_CH2	PB7
+
+
+
+Pin Nb	PINs	FUNCTIONs	LABELs
+A2	PA15	TIM2_CH1	
+C4	PB6	TIM4_CH1	
+C5	PB9	I2C2_SDA	
+D4	PB7	TIM4_CH2	
+D5	PC13-ANTI_TAMP	GPIO_Output	LED
+E1	PB15	SPI2_MOSI	
+E3	PB10	I2C2_SCL	
+E5	PA2	ADC1_IN2	
+F3	PA7	SPI1_MOSI	
+F4	PA6	SPI1_MISO	
+F5	PA5	SPI1_SCK	
+F6	PA0-WKUP	ADC1_IN0	
+G1	PB13	SPI2_SCK	
+G4	PB1	ADC1_IN9	
+G5	PB0	TIM3_CH3	
+G6	PA4	GPIO_Output	CS1
+G7	PA1	TIM2_CH2	
+PERIPHERALS	MODES	FUNCTIONS	PINS
+ADC1	IN0	ADC1_IN0	PA0-WKUP
+ADC1	IN2	ADC1_IN2	PA2
+ADC1	IN9	ADC1_IN9	PB1
+I2C2	I2C	I2C2_SCL	PB10
+I2C2	I2C	I2C2_SDA	PB9
+SPI1	Full-Duplex Master	SPI1_MISO	PA6
+SPI1	Full-Duplex Master	SPI1_MOSI	PA7
+SPI1	Full-Duplex Master	SPI1_SCK	PA5
+SPI2	Transmit Only Master	SPI2_MOSI	PB15
+SPI2	Transmit Only Master	SPI2_SCK	PB13
+SYS	SysTick	SYS_VS_Systick	VP_SYS_VS_Systick
+TIM2	Encoder Mode	TIM2_CH1	PA15
+TIM2	Encoder Mode	TIM2_CH2	PA1
+TIM3	Internal Clock	TIM3_VS_ClockSourceINT	VP_TIM3_VS_ClockSourceINT
+TIM3	PWM Generation CH3	TIM3_CH3	PB0
+TIM4	Encoder Mode	TIM4_CH1	PB6
+TIM4	Encoder Mode	TIM4_CH2	PB7
+
+
+
+Pin Nb	PINs	FUNCTIONs	LABELs
+A2	PA15	TIM2_CH1	
+C4	PB6	TIM4_CH1	
+C5	PB9	I2C2_SDA	
+D4	PB7	TIM4_CH2	
+D5	PC13-ANTI_TAMP	GPIO_Output	LED
+E1	PB15	SPI2_MOSI	
+E3	PB10	I2C2_SCL	
+E5	PA2	ADC1_IN2	
+F3	PA7	SPI1_MOSI	
+F4	PA6	SPI1_MISO	
+F5	PA5	SPI1_SCK	
+F6	PA0-WKUP	ADC1_IN0	
+G1	PB13	SPI2_SCK	
+G4	PB1	ADC1_IN9	
+G5	PB0	TIM3_CH3	
+G6	PA4	GPIO_Output	CS1
+G7	PA1	TIM2_CH2	
+
+
+
+SOFTWARE PROJECT
+
+Project Settings : 
+Project Name : newseqen
+Project Folder : C:\Users\Bobon\Documents\GitHub\newseqen
+Toolchain / IDE : STM32CubeIDE
+Firmware Package Name and Version : STM32Cube FW_F4 V1.27.1
+
+
+Code Generation Settings : 
+STM32Cube MCU packages and embedded software packs : Copy only the necessary library files
+Generate peripheral initialization as a pair of '.c/.h' files per peripheral : No
+Backup previously generated files when re-generating : No
+Delete previously generated files when not re-generated : Yes
+Set all free pins as analog (to optimize the power consumption) : No
+
+
+Toolchains Settings : 
+Compiler Optimizations : 
+
+
+
+
+

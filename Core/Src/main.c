@@ -24,12 +24,22 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "myvars.h"			// variables
+#include "luts.h"    // big tables
 #include <stdlib.h>
 #include <string.h>
+#include "arm_math.h"
+
 //#define __FPU_PRESENT   1
 
 /* Use ARM MATH for Cortex-M4 */
-//#define ARM_MATH_CM4
+//#define "arm_math.h"    cmsis
+//#include "math.h"   standard
+//#include <string.h>
+//#include "stdio.h"
+//#include <string.h>       for some errors with strings
+//#include <stdlib.h>
+//#include "myvars.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -260,11 +270,21 @@ potValues[i]=mem_buf>>2;
 } // reads stored values for potvalues
 */
 
-uint8_t potSource2[65];
-uint8_t potSource3[65];
-HAL_I2C_Mem_Read(&hi2c2, 160, (1<<6), 2,&potSource, 64,1000);		// all good
-HAL_I2C_Mem_Read(&hi2c2, 160, (2<<6), 2,&potSource2,64,1000);
-HAL_I2C_Mem_Read(&hi2c2, 160, (3<<6), 2,&potSource3,64,1000);
+uint8_t potSource2[64];
+
+
+
+for(i=0;i<4;i++){
+HAL_I2C_Mem_Read(&hi2c2, 160, 64+(i*64), 2,&potSource2, 64,1000);		// all good readin eeprom  values
+
+memcpy (potSource+(i*64),potSource2,sizeof(potSource2));   //this works  ok now
+
+
+}
+
+
+//HAL_I2C_Mem_Read(&hi2c2, 160, 127, 2,potSource+128,64,1000);
+
 
 for(i=0;i<1024;i++){
 //	gfx_ram[i]=gfx_char[((i>>5)&7)+((i>>8)<<3)]; // test input fill  8*128 v+h just normal characters
@@ -272,15 +292,9 @@ for(i=0;i<1024;i++){
 //gfx_ram[i&63] [i>>6]  =250;
 }
 
-for(i=0;i<64;i++){
-	potSource[i+64]=potSource2[i];  //load up from eeprom
-}
 
-for(i=0;i<64;i++){
-	potSource[i+128]=potSource3[i];
-}
 
-for(i=0;i<180;i++){
+for(i=0;i<180;i++){			// write potvalues ,for display
 	potValues[i]=potSource[i]>>4;
 }
 
@@ -349,17 +363,19 @@ firstbarLoop=0;
 	  loop_counter2++;//
 
 	  // if (menu_page<320) lcd_feedback();  //curious no issues with lcd without this  , maybe spell writing
-	  if (mem_count==255) mem_count=0; else mem_count++;  // write to first
+
 	  if 	((loop_counter2&7)==6)      {analoginputloopb();} // this is ok , plenty quick , no freeze here
 
 
 if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
-
+	  if (mem_count==255) mem_count=0; else mem_count++;  // write to first this was moved for no logical reason ?
 	mem_buf=potSource[mem_count];
+	if (mem_buf>160) mem_buf=160;   // just in case
+
 	// read values from stored
 
 
-	HAL_I2C_Mem_Write(&hi2c2, 160, ((1+(mem_count>>6))<<6)+(mem_count&63), 2, &mem_buf, 1, 1000);  // "&hi2c2"  actual register address
+	HAL_I2C_Mem_Write(&hi2c2, 160, ((1+(mem_count>>6))<<6)+(mem_count&63), 2, &mem_buf, 1, 100);  // "&hi2c2"  actual register address
 	//HAL_Delay(5); // this is slow , no bueno
 
 
