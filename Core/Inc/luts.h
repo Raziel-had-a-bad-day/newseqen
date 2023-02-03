@@ -1,9 +1,18 @@
-const uint16_t disp_lut [32] [16]= {							 // menu look up using char , this is default but will be dynamic
+const char*  test_menu[]= { "Tempo"," ", "Loop pos"," ","Notes 1"," ","Notes 2"," ","Loop"
+
+};    // variable menu setup , needs to be correct , edit here
 
 
-		{208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223}, // 16 notes for drums and other tones 80 - 95
+
+
+
+
+const uint16_t  disp_lut [32] [16] = {							 // menu look up using char , this is default but will be dynamic  ,use variable names ,NO MORE NUMBERs!
+
 
 		{128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143},  // 16 notes 0-15
+		{144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159}, // 16 notes for drums and other tones 80 - 95
+	/*
 		{64  ,64 ,148 ,149 ,64,'P',64,200,64,201,64,202,64,'T',237,64},	// 20,21    attack sustain  maybe follow a diff system ,attach+decay then sustain+release 237 tempo
 		{64,258,64,268,64,330,64,512,513,514,515,516,517,518,519,520},  //lfo1
 
@@ -11,8 +20,12 @@ const uint16_t disp_lut [32] [16]= {							 // menu look up using char , this is
 
 		{64,260,64,270,64,332,64,64,64,64,64,64,64,64,64,64},   // lfo 3
 		{64,'S',64,'D',64,'O',64,64,64,64,64,64,64,64,64,64 },	// lfo gain
-
-
+*/
+		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
+		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
+		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
+		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
+		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
 		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
 
 	//	{84 ,121, 112, 101, 78, 111, 116, 64,240,241,242,243,244,245,246,247},	//feedback
@@ -50,12 +63,12 @@ const uint16_t disp_lut [32] [16]= {							 // menu look up using char , this is
 
 };
 const char* menu_items[]  =  {"menu_edit","yes","no,square","sine","triangle,saw",				// menu_loc has reference potSource locations , might convert to 10 length char uint8
-		"OSC1_Notes","OSC2_Notes","OSC3_Notes",
+		"Notes1","Notes2","Notes3",
 		"OSC1_pitch","OSC2_pitch","OSC3_pitch",
 		"OSC1_attack","OSC2_attack","OSC3_attack",
 		"OSC1_decay","OSC2_decay","OSC3_decay",
 		"LFO1_wave","LFO2_wave","LFO3_wave","LFO4_wave","LFO5_wave","LFO6_wave",
-		"LFO1_speed"," LFO2_speed","LFO3_speed","LFO4_speed","LFO5_speed","LFO6_speed",
+		"LFO1_rate"," LFO2_rate","LFO3_rate","LFO4_rate","LFO5_rate","LFO6_rate",
 		"LFO1_depth","LFO2_depth","LFO3_depth","LFO4_depth","LFO5_depth","LFO6_depth",
 		"LFO1_gain","LFO2_gain","LFO3_gain","LFO4_gain","LFO5_gain","LFO6_gain",
 		"LFO1_offset","LFO2_offset","LFO3_offset","LFO4_offset","LFO5_offset","LFO6_offset",
@@ -75,12 +88,12 @@ const uint16_t menu_loc[]  ={511,511,511,511,511,511,511,511,  // potSource vale
 
 }; //56
 
+const char rom_table1 [] =  {"seq.notes1[0] seq.notes1[1] seq.notes1[2] seq.notes1[3] seq.notes1[4] seq.notes1[5] seq.notes1[6] seq.notes1[7] seq.notes1[8] seq.notes1[9] "
+	"seq.notes1[10],seq.notes1[11],seq.notes1[12],seq.notes1[13],seq.notes1[14],seq.notes1[15],"
+	"seq.notes2[0],seq.notes2[1],seq.notes2[2],seq.notes2[3],seq.notes2[4],seq.notes2[5],seq.notes2[6],seq.notes2[7],seq.notes2[8],seq.notes2[9],"
+		"seq.notes2[10],seq.notes2[11],seq.notes2[12],seq.notes2[13],seq.notes2[14],seq.notes2[15],seq.pos,seq.tempo"
 
-
-
-
-
-
+};
 
 
 

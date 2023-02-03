@@ -26,7 +26,7 @@
 #include "myvars.h"			// variables
 #include "luts.h"    // big tables
 #include <stdlib.h>
-#include <string.h>
+#include "string.h"
 #include "arm_math.h"
 
 //#define __FPU_PRESENT   1
@@ -84,6 +84,7 @@ static void MX_TIM4_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_SPI1_Init(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -244,47 +245,20 @@ HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 
 
 
-
-
-/*
-send_spi1[0]=0x20; //sector erase
-send_spi1[1]=0; //24bit address msb
-send_spi1[1]=0; //24bit address
-send_spi1[1]=0; //24bit address lsb
-HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector
-*/
-
-
 HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
 
-
-
-
-
-/*
-for(i=0;i<128;i++){			// read values from stored
-mem_buf=0;
-HAL_I2C_Mem_Read(&hi2c1, 160, ((1+(i>>6))<<6)+(i&63), 2,  &mem_buf, 1, 1000); // add 160 is correct  // only single byte works for now
-potSource[i]=mem_buf;
-potValues[i]=mem_buf>>2;
-} // reads stored values for potvalues
-*/
 
 uint8_t potSource2[64];
 
 
 
-for(i=0;i<4;i++){
+for(i=0;i<5;i++){     // 256
 HAL_I2C_Mem_Read(&hi2c2, 160, 64+(i*64), 2,&potSource2, 64,1000);		// all good readin eeprom  values
 
 memcpy (potSource+(i*64),potSource2,sizeof(potSource2));   //this works  ok now
 
 
 }
-
-
-//HAL_I2C_Mem_Read(&hi2c2, 160, 127, 2,potSource+128,64,1000);
-
 
 for(i=0;i<1024;i++){
 //	gfx_ram[i]=gfx_char[((i>>5)&7)+((i>>8)<<3)]; // test input fill  8*128 v+h just normal characters
@@ -294,9 +268,24 @@ for(i=0;i<1024;i++){
 
 
 
-for(i=0;i<180;i++){			// write potvalues ,for display
+for(i=0;i<260;i++){			// write potvalues ,for display
 	potValues[i]=potSource[i]>>4;
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////// variable fill
+
+memcpy(&seq,potSource,46 );  // load from potSource
+
+
+for(i=0;i<10;i++){
+	if (i<8){    memcpy(&note[i],potSource+46+(i*14),14 );}  //grab note settings ,112 total , works ok
+
+	memcpy(&LFO[i],potSource+158+(i*5),5 );  // + 50
+	memcpy(&ADSR[i],potSource+208+(i*5),5 );  // +50  ,
+
+}
+
+
+
 
 float tempo_hold;  // calculate tempo look up
 for (i=0;i<161;i++) {
@@ -369,11 +358,23 @@ firstbarLoop=0;
 
 if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
 	  if (mem_count==255) mem_count=0; else mem_count++;  // write to first this was moved for no logical reason ?
-	mem_buf=potSource[mem_count];
-	if (mem_buf>160) mem_buf=160;   // just in case
+
+
 
 	// read values from stored
 
+memcpy(potSource,&seq,sizeof(seq)); // about 45 bytes
+
+for(i=0;i<10;i++){
+	if (i<8){    memcpy(potSource+46+(i*14),&note[i],14 );}  //grab note settings ,112 total , works
+
+	memcpy(potSource+158+(i*5),&LFO[i],5 );  // + 50
+	memcpy(potSource+208+(i*5),&ADSR[i],5 );  // +50  ,
+
+}	// copy vars into potSource
+
+mem_buf=potSource[mem_count];
+//if (mem_buf>160) mem_buf=160;   // just in case , may be a problem
 
 	HAL_I2C_Mem_Write(&hi2c2, 160, ((1+(mem_count>>6))<<6)+(mem_count&63), 2, &mem_buf, 1, 100);  // "&hi2c2"  actual register address
 	//HAL_Delay(5); // this is slow , no bueno
@@ -431,14 +432,14 @@ if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 	  	loop_counter=0;
 	  }
 
-	  if ((seq_pos==7) && (lcd_send==0)) {lcd_send=1;} // runs just once
+	  if ((seq.pos==7) && (lcd_send==0)) {lcd_send=1;} // runs just once
 	  /*
 	   if (promValue<64) promValue=promValue+1 ; else promValue=0;  // fetch eeprom   nogo
 	  	  if ((promValues[promValue] ) !=(potValues[promValue]))  EEPROM.write(promValue,(potValues[promValue]));   //  not too happy can totally kill speed  will have to put elsewhere
 	  	  promValues[promValue] =potValues[promValue];
 	  	   */
 
-	  	     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin,(seq_pos & 1)); // easy skip ?
+	  	     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin,(seq.pos & 1)); // easy skip ?
 	  	    // very inconsistent
 
 	 // if (sample_point>511) sample_pointD=0; // loop when zero cross , good but limited, works ok

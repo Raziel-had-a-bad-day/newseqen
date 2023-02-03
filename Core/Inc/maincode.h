@@ -1,3 +1,48 @@
+
+void menu_parses(void){
+
+	uint8_t menu_pass=0;   // variable output
+	char menu_string[10];   // incoming string holder (single)
+
+	char menu_string2[10];   // output string
+	uint8_t menu_pos1=0;    // menu parsing position
+
+	const char *menu_out1[]={"Tempo","Seq pos","Loop pos","Notes 1" , "Notes 2"," "}; // used for test but also  output comments
+	strcpy(menu_string,test_menu[menu_pos1]);    // copy from list
+
+for (i=0;i<6;i++){    	// test a single menu entry
+
+	strcpy(menu_string2,menu_out1[i]);
+	switch (i) {
+	case 0 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=seq.tempo;  }  ;break; // compare and if true pass var
+	case 1 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=seq.pos;  }  ;break;
+	case 2 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=seq.loop[i&7];  }  ;break;
+	case 3 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=seq.notes1[i&15];  }  ;break;
+	case 4 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=seq.notes2[i&15];  }  ;break;
+	case 5 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=254;  }  ;break;     // space
+	default: menu_pass=255;break;       // no match
+	}
+
+
+}
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void SPI_command(void){
 // pins are all good , SPI is always the problem!!!
 if ((spi_enable==0)&& (spi_send==1)){				//if data sent and next byte is ready ,creates the actual bytes sent
@@ -349,9 +394,9 @@ uint16_t store_x;
 store_c=feedback_line[disp_stepper];//gets potvalues pointer from menus or feedback line , per character
 	}
 
-if (disp_stepper>10) store_c=feedback_line[disp_stepper];  /// just the lcd out  values at end of line 8
-
-
+//if (disp_stepper>10) store_c=feedback_line[disp_stepper];  /// just the lcd out  values at end of line 8
+if ((disp_stepper>11) &&  (disp_stepper<15)) store_c=potSource[368+disp_stepper]+48;  /// just the lcd out  values at end of line 8
+if (disp_stepper>14) store_c=feedback_line[disp_stepper];  /// just the lcd out  values at end of line 8
 	// all this can be simplified
 	 if (store_c==64) store_c=47;  //EMPTY SPACE
 	if ((store_c>127)&& (store_c<255))  {lcd_out3=potSource[store_c-128] ;     store_c= potValues[store_c&127]+48;															}		// NORMAL POTVALUES 0-127
@@ -406,7 +451,7 @@ sample_pointB=sample_pointD;
 unsigned short tempo_start=0;  // enabled when i=isrMask;
 
 uint16_t i_total;
-uint16_t tempo_mod=tempo_lut[potSource[109]];  // set tempo,speed from lut 40-200bpm  ,changed to 4x for note lenght
+uint16_t tempo_mod=tempo_lut[seq.tempo];  // set tempo,speed from lut 40-200bpm  ,changed to 4x for note lenght
 
 uint8_t l;			// 35.002khz(0.02857ms) sample, 1 sample is temp count (16x=0.00045712) , *16=1 note ,at 300 (437bpm),(1/(0.00002857*tempo count*16)=1beat in s
 float freq_temp;	// (1/(bpm/60)) /0.00045712=tempo count ie 1093.8 for 120bpm
@@ -425,9 +470,9 @@ for (i=0;i<16;i++) {  note_toggler[i]=0; }
 
 //lcd_out3=adc_values[0]+adc_values[1]+adc_values[2]; // 3 digit read out , works ok,, [2] works but thats it
 //lcd_out3=lcd_out3+180;
-potSource[150]=(lcd_out3/100)*16;  // still works
-potSource[151]=((lcd_out3 %100)/10)*16;		 // 0-160 to 0-10
-potSource[152]=(lcd_out3%10)*16;
+potSource[380]=(lcd_out3/100)*16;  // still works   , potsource ref is located in feedback line var
+potSource[381]=((lcd_out3 %100)/10)*16;		 // 0-160 to 0-10
+potSource[382]=(lcd_out3%10)*16;
 
 
 
@@ -450,8 +495,8 @@ if(adc_values[2]&16)     	{cross_fade[1]=127-fader[adc_values[2]&15]; cross_fade
 
 // doing lfo calc here as it is slow only for now
 ////////////////////adsr/////////////////////////////////////////
-if	 (ADSR[0].attack_trigger==0) {		adsr_att=(161-potSource[20] ) *0.02 ; // for now all of them from this only , speed , 0-16  // rarely read
-ADSR[0].sustain_data=((161-potSource[21])*0.01);  // length and level this is ok is running 1/16 ish				ADSR[0].attack_data=ADSR[0].attack_data-ADSR[0].sustain_data;
+if	 (ADSR[0].attack_trigger==0) {		adsr_att=(161-ADSR[0].attack ) *0.02 ; // for now all of them from this only , speed , 0-16  // rarely read
+ADSR[0].sustain_data=((161-ADSR[0].decay)*0.01);  // length and level this is ok is running 1/16 ish				ADSR[0].attack_data=ADSR[0].attack_data-ADSR[0].sustain_data;
 adsr_att=adsr_att*adsr_att;
 ADSR[0].sustain_data=ADSR[0].sustain_data*ADSR[0].sustain_data;
 
@@ -464,10 +509,10 @@ ADSR[0].attack_data=0;
 for (i=0;i<256;i++) {
 
 	if     (ADSR[0].attack_data<1000)    																		{ADSR[0].attack_data=ADSR[0].attack_data+adsr_att;					ADSR[0].buffer_temp=ADSR[0].attack_data; } //0-1000
-	 if  ((ADSR[0].attack_data<1500)  && (ADSR[0].attack_data>999))  										{ADSR[0].attack_data=ADSR[0].attack_data+adsr_att;					ADSR[0].buffer_temp=1500-(ADSR[0].attack_data-500);  }  // 1000-500
-	 if ((ADSR[0].attack_data>1499)   && 		(ADSR[0].attack_data<2000)) 																{		ADSR[0].buffer_temp=500; 	ADSR[0].attack_data=ADSR[0].attack_data+ADSR[0].sustain_data;}
-	if ((ADSR[0].attack_data>1999)  &&  (ADSR[0].attack_data<2500)	)																							{ADSR[0].attack_data=ADSR[0].attack_data+ADSR[0].sustain_data	;	ADSR[0].buffer_temp=2500-ADSR[0].attack_data; } //500-0;
-	if (ADSR[0].attack_data>3000)   																																			{ADSR[0].buffer_temp=1; ADSR[0].attack_data=4000; }     // THE END
+	 if  ((ADSR[0].attack_data<1500)  && (ADSR[0].attack_data>999))  					{ADSR[0].attack_data=ADSR[0].attack_data+adsr_att;					ADSR[0].buffer_temp=1500-(ADSR[0].attack_data-500);  }  // 1000-500
+	 if ((ADSR[0].attack_data>1499)   && 		(ADSR[0].attack_data<2000)) 			{		ADSR[0].buffer_temp=500; 	ADSR[0].attack_data=ADSR[0].attack_data+ADSR[0].sustain_data;}
+	if ((ADSR[0].attack_data>1999)  &&  (ADSR[0].attack_data<2500)	)					{ADSR[0].attack_data=ADSR[0].attack_data+ADSR[0].sustain_data	;	ADSR[0].buffer_temp=2500-ADSR[0].attack_data; } //500-0;
+	if (ADSR[0].attack_data>3000)   																			{ADSR[0].buffer_temp=1; ADSR[0].attack_data=4000; }     // THE END
 
 adsr_lut[i]= ADSR[0].buffer_temp*0.001;
 }
@@ -480,67 +525,67 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 
 	i_total=i+sample_pointB;
 	i_frac=i>>6;   //   0-8 steps
-	note_plain=potValues[seq_pos & 7 ];
+	note_plain=seq.notes1[seq.pos & 7 ];
 potValues[i&255]=potSource[i&255]>>4; //just to update values
 	if (tempo_count>=tempo_mod) { next_isr=(next_isr+1)& 4095;tempo_count=0;  }  else {tempo_count++; }  //trigger next note , actual next step for isrCount(future)  8ms,trying to fix slow down here  8000 too  much, adsr clears note info
 // tempo_count is about 1000-400
 	tempo_start=0;
-	if ((next_isr>>4) != (seq_pos)) { 					// next note step 140ms
-		seq_pos=(next_isr>>4); // seq pos =256 max , isr = 1/16 of a note, note lenght is 1-4
+	if ((next_isr>>4) != (seq.pos)) { 					// next note step 140ms
+		seq.pos=(next_isr>>4); // seq pos =256 max , isr = 1/16 of a note, note lenght is 1-4
 		tempo_start=1;
 // record note triggers or seq_changes position ,NEEDS TO BE OFF FOR NOTE 0
 }
 
 
-	if(tempo_start  )    // Calculates only on note change, gotta change seq_pos somehow  , only activates when change in seq pos
+	if(tempo_start  )    // Calculates only on note change, gotta change seq.pos somehow  , only activates when change in seq pos
 	{
 	//printf("\n");//	ITM_SendChar( 65 );   //  Send ASCII code 65 = ’A’
-	//printf("%d" ,note_channel[10]);
+	//printf("%d" ,note[].pitch[10]);
 
 
-		potValues[32]=(adc_values[0]>>2)&15; //assigned pots to start of loopers 0-16,works
-		potValues[33]=(adc_values[1]>>2)&15;
+		note[2].timeshift=(adc_values[0]>>2)&15; //assigned pots to start of loopers 0-16,works
+		note[3].timeshift=(adc_values[1]>>2)&15;
 
 
-		seq_loop[2]=((potValues[32]+(seq_pos&7))&15); // calc  8 note loop positions sets looping point in sequence
+		seq.loop[2]=((note[2].timeshift+(seq.pos&7))&15); // calc  8 note loop positions sets looping point in sequence
 
-		//seq_loop[3]=(potValues[33]+(( seq_pos&31 ) >>2)) & 15;  // quater speed
-			seq_loop[3]=((potValues[33]+(seq_pos&15))&15); //sets looping point in sequence this is full 16 note
+		//seq.loop[3]=(note[3].timeshift+(( seq.pos&31 ) >>2)) & 15;  // quater speed
+			seq.loop[3]=((note[3].timeshift+(seq.pos&15))&15); //sets looping point in sequence this is full 16 note
 
-			seq_loop[4]=((potValues[32]+(seq_pos&7))&15);
+			seq.loop[4]=((note[2].timeshift+(seq.pos&7))&15);
 
-		//seq_loop[4]=((potValues[32]+((seq_pos&15)>>1))&15); // half speed
+		//seq.loop[4]=((note[2].timeshift+((seq.pos&15)>>1))&15); // half speed
 
-		note_channel[2]=potValues[80+seq_loop[2]]+potValues[72];  //loop 8 notes from pos and x times
-		note_channel[3]=potValues[seq_loop[3]];  //loop 8 notes from pos and x times ,might disable normal adsr completely
-	if (note_channel[3]) 		{note_channel[3]=note_channel[3]+potValues[73];	adsr_retrigger[3]=1; note_toggler[i>>5]=1<<(i&31   )   ; } // stay at zero for off
-//	if ((note_channel[3]) && (adsr_retrigger[3]==1))		adsr_retrigger[3]=0;   // while note on , turn of trigger
-//	if ((note_channel[3]) && (adsr_retrigger[3]==0))	  adsr_retrigger[3]=1;
+		note[2].pitch=seq.notes2[seq.loop[2]]+note[2].transpose;  //loop 8 notes from pos and x times
+		note[3].pitch=seq.notes1[seq.loop[3]];  //loop 8 notes from pos and x times ,might disable normal adsr completely
+	if (note[3].pitch) 		{note[3].pitch=note[3].pitch+note[3].transpose;	adsr_retrigger[3]=1; note_toggler[i>>5]=1<<(i&31   )   ; } // stay at zero for off
+//	if ((note[].pitch[3]) && (adsr_retrigger[3]==1))		adsr_retrigger[3]=0;   // while note on , turn of trigger
+//	if ((note[].pitch[3]) && (adsr_retrigger[3]==0))	  adsr_retrigger[3]=1;
 
-//	if (!note_channel[3]) 	adsr_retrigger[3]=0;  // end note
-
-
-	//note_channel[3]=(note_channel[3]-4)+(lfo_out[2]>>11);
-
-	//if (((seq_pos&7)==0) && (adsr_toggle[6]==2))		{adsr_retrigger[6]=1; } else adsr_retrigger[6]=0; // delete
+//	if (!note[].pitch[3]) 	adsr_retrigger[3]=0;  // end note
 
 
-	note_channel[5]=potValues[80+(seq_pos&15)];  // sample
+	//note[].pitch[3]=(note[].pitch[3]-4)+(lfo_out[2]>>11);
+
+	//if (((seq.pos&7)==0) && (adsr_toggle[6]==2))		{adsr_retrigger[6]=1; } else adsr_retrigger[6]=0; // delete
 
 
-	if ((note_channel[5]) && (adsr_toggle[5]==2)) {note_holdB=note_channel[5]; one_shot=0;}  // grab note when on ,one shot also , also delete
+	//note[5].pitch=potValues[80+(seq.pos&15)];  // sample
 
 
-	note_holdB=potValues[80+seq_loop[2]]+(potValues[74]);  //
+	//if ((note[5].pitch) && (adsr_toggle[5]==2)) {note[5].pitch=note[5].pitch; one_shot=0;}  // grab note when on ,one shot also , also delete
 
-	//note_holdB=(note_holdB-4)+(lfo_out[2][i_frac]>>11);  //no go with float, disabler as lfo produces garbage
+
+	note[5].pitch=seq.notes2[seq.loop[2]]+(note[5].transpose);  //
 
 
 
-	note_holdB=MajorNote[note_holdB];
-	//note_holdB=11; // works ok with single note @24 but   fails on other
-	sine_adder=sine_lut[note_holdB];	//sets freq ,1.0594  * 16536 =17518  ,
-	sine_adder= (sine_adder*1200)>>10;  // modify different sample size , just need single cycle length and thats it
+
+
+	note[5].pitch=MajorNote[note[5].pitch];
+	//note[5].pitch=11; // works ok with single note @24 but   fails on other
+	note[5].tuned=sine_lut[note[5].pitch];	//sets freq ,1.0594  * 16536 =17518  ,
+	note[5].tuned= (note[5].tuned*1200)>>10;  // modify different sample size , just need single cycle length and thats it
 		mask_result =0;
 
 /*
@@ -554,7 +599,7 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 
 		for (mask_i=0;mask_i<5;mask_i++)	{							// calc detune , slow ,also creates notes
 
-	if (note_channel[mask_i]) {tune_Accu=sample_Noteadd[MajorNote[note_channel[mask_i]]];   note_tuned[mask_i]=(tune_Accu);       } // relies on note channel clear , not good , clear not channel straight after
+	if (note[mask_i].pitch) {tune_Accu=sample_Noteadd[MajorNote[note[mask_i].pitch]];   note[mask_i].tuned=(tune_Accu);       } // relies on note channel clear , not good , clear not channel straight after
 
 	}
 
@@ -572,7 +617,7 @@ freq2_temp=0;
 //uint8_t i_frac2=(i_frac+7)&7;  //previous value can change shape  , not  bad effect
 
 		for (l=0;l<10;l++){   //current lfo setup , messy
-			LFO[l].rate=potSource[130+l];   //grab dat for now
+			//LFO[l].rate=potSource[130+l];   //grab dat for now
 			freq_temp=LFO[l].rate +1;  // rate. this needs a little log
 			freq2_temp=freq_temp*freq_temp;
 			freq_temp=freq2_temp/64;
@@ -586,7 +631,7 @@ freq2_temp=0;
 		freq_temp=lfo_accu[l][i_frac]; // 0-255 limit + above zero
 		freq_temp=freq_temp*0.000383495;  // 0-255 , chang this for depth
 		freq2_temp =arm_sin_f32(freq_temp); // seems ok   , cmsis is ok
-		freq_temp=freq2_temp*potSource[140+l]*51;   // depth
+		freq_temp=freq2_temp*LFO[l].depth*51;   // depth
 		if (freq_temp>8195)  freq_temp=8195;
 		if (freq_temp<-8195)  freq_temp=-8195;   // clip to 13bit
 		lfo_out[l] [i_frac]=freq_temp+8195; // ok now     , 8 steps per i loop , 14 bit
@@ -614,27 +659,27 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	i_frac=(i>>6);
 // every step   1,110,928   >>20  ,per note
 // New oscillators , sync, trigger input , waveshape ,zero cross
-	sample_accus[0] = sample_accus[0] + note_tuned[0]; //careful with signed bit shift,better compare
+	sample_accus[0] = sample_accus[0] + note[0].tuned; //careful with signed bit shift,better compare
 
 	if (sample_accus[0]>524287) sample_accus[0] =-sample_accus[0] ; // faster >  than &  ,strange
 
 
 
-	sample_accus[1] = sample_accus[1] + note_tuned[1];  // normal adder full volume
-		//	if (!(note_channel[0]))   sample_accus[1] =0;  // turn off with vel now , maybe use mask
+	sample_accus[1] = sample_accus[1] + note[1].tuned;  // normal adder full volume
+		//	if (!(note[].pitch[0]))   sample_accus[1] =0;  // turn off with vel now , maybe use mask
 			if (sample_accus[1]>524287) sample_accus[1] =-sample_accus[1] ; // faster >  than &  ,strange
 
-			sample_accus[2] = sample_accus[2] + note_tuned[2];
-			//		if (!(note_channel[0]))   sample_accus[2] =0;  // turn off with vel now , maybe use mask
+			sample_accus[2] = sample_accus[2] + note[2].tuned;
+			//		if (!(note[].pitch[0]))   sample_accus[2] =0;  // turn off with vel now , maybe use mask
 					if (sample_accus[2]>524287) sample_accus[2] =-sample_accus[2] ; // faster >  than &  ,strange
 
-					sample_accus[3] = sample_accus[3] + note_tuned[3]; // bouncing somewhere
+					sample_accus[3] = sample_accus[3] + note[3].tuned; // bouncing somewhere
 					//sample_accus[3] = sample_accus[3] +4000;
-					//	if (!(note_channel[0]))   sample_accus[3] =0;  // turn off with vel now , maybe use mask
+					//	if (!(note[].pitch[0]))   sample_accus[3] =0;  // turn off with vel now , maybe use mask
 							if (sample_accus[3]>524287) sample_accus[3] =-sample_accus[3] ; // faster >  than &  ,strange
 
-							sample_accus[4] = sample_accus[4] + note_tuned[4];
-								//	if (!(note_channel[4]))   sample_accus[4] =0;  // turn off with vel now , maybe use mask
+							sample_accus[4] = sample_accus[4] + note[4].tuned;
+								//	if (!(note[].pitch[4]))   sample_accus[4] =0;  // turn off with vel now , maybe use mask
 									if (sample_accus[4]>524287) sample_accus[4] =-sample_accus[4] ; // faster >  than &  ,strange
 
 									sample_Accu[2] = 0;sample_Accu[0] =0;sample_Accu[3] =0; //all zeroed
@@ -652,7 +697,7 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	//	sample_Accu=sample_Accu-(1<<21);
 
 
-if (sine_counterB==0) 	sine_temp2=sine_adder;
+if (sine_counterB==0) 	sine_temp2=note[5].tuned;
 
 	sine_counterB=sine_counterB+sine_temp2 ;  // sine up counter per cycle , however sine adder needs to wait
 	if (sine_counterB>>7) sine_zero=0; else sine_zero=1;
@@ -844,8 +889,8 @@ void mask_calc(uint8_t mask_select,uint8_t mask_speed){    //calculate mask outp
 uint8_t mask_temp;
 uint8_t mask_tempB;
 
-//(lfo_mask[mask_select]>>((seq_pos>>mask_speed) &7)& 1) ;
-mask_temp=(seq_pos>>mask_speed) &7 ; // 0-8
+//(lfo_mask[mask_select]>>((seq.pos>>mask_speed) &7)& 1) ;
+mask_temp=(seq.pos>>mask_speed) &7 ; // 0-8
 mask_tempB=	lfo_mask[mask_select]>>mask_temp;
 
 
@@ -917,6 +962,6 @@ printf("\n");
 //	}// print all into 64bytes 4bit+4bit
 	//printf("%d",bsr_out);
 //	printf(",");
-//	printf("%d",note_channel[11]);
+//	printf("%d",note[].pitch[11]);
 
 }

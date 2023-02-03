@@ -23,8 +23,8 @@ const uint32_t flash_page=0x800;
 
 uint32_t x;  // calc timer note
 uint32_t y;
-uint16_t pwmVel;
-uint16_t pwmVelB;
+//uint16_t pwmVel;
+//uint16_t pwmVelB;
 //const uint8_t tempoLUT[];  // lookup table for tempo instead of calculate
 const uint8_t MajorNote[]= { 0,2,4,6,7,9,11,13,14,16,18,19,21,23,25,26,28,30,31,33,35,37,38,40,42,43,45} ;  // major
 const uint8_t MinorNote[]={ 0,2,3,5,7,8,10,12,14,15,17,19,20,22,24,26,27,29,31,32,34,36,38,39,41,43,44,46}; // minor
@@ -46,7 +46,7 @@ const uint16_t freq_lut[]={4186,4434,4698,4978,5274,5587,5919,6271,6644,7039,745
 
 
 uint16_t enc2_lut[180];   // lut to skip cells ,filled in on main
-uint16_t feedback_line[17]={'F','o','o','d','b','a','c','k','g','_' ,'k',64, 278, 279, 280,64}; // this is variable , last display line for info
+uint16_t feedback_line[17]={'F','o','o','d','b','a','c','k','g','_' ,'k',64, 408, 409, 410,64}; // this is variable , last display line for info needs fix
 uint16_t feedback_pointer;  // pointer for feedback item start position , maybe bit search for less menu data ,dunno
 
 int _write(int file, char *ptr, int len)
@@ -67,23 +67,25 @@ const char menuList[129] = "_Notes_1_NotePtchNotes_2_AttkDcayLFOspeedLFOdepthLFO
 const char menuList2 [129] = "_LPF_1___LPF_2___PITCH_1_PITCH_2_PITCH_3_EMPTY___NotePtchNotes_2_AttkDcayLFOspeedLFOdepthLFO_gainkeepgoinNext page_LFOSWI_______";   // lfo target list, etc
 const char mainNote[29] = "_CDEFGABCDEF>_1234567890+>_x" ; //note string values 7 notes and flat and sharp which are double length ? 11=1  20=0 21-
 uint8_t menulength;
-
-// const char mainNoteLow[] = "cdefgab_^: " ; // note string for off values
-const uint8_t noteSwitch[] = { 255,0,204,51,170,85,240,15,17,252,0 };  // note switching using bitread , alternating pattern on, off, 11001100, 00110011,10101010,01010101,11110000,00001111,00010001,11101110
-const uint16_t lfoGainValues[8] = {}; // gain adder values
-const uint8_t  waveSaw[17] = {  10,31,47,63,79,95,111,127,0,31,47,63,79,95,111,127}; //lfo saw values lut ,not used
-
-const uint8_t waveTri[17] = { 0,15,31,47,63,79,95,111,127,111,95,79,63,47,32,15 }; //lfo triangle values lut ,not used
-
+uint8_t noteTiming;  // set timing shift
 uint8_t potValues [383];  //low res values mostly for display
 
 uint8_t potSource[383]; // high res version of potValues used when needed 40-0, gonna change to 160 just o break things, need more res for lfo
+
+// const char mainNoteLow[] = "cdefgab_^: " ; // note string for off values
+//const uint8_t noteSwitch[] = { 255,0,204,51,170,85,240,15,17,252,0 };  // note switching using bitread , alternating pattern on, off, 11001100, 00110011,10101010,01010101,11110000,00001111,00010001,11101110
+//const uint16_t lfoGainValues[8] = {}; // gain adder values
+//const uint8_t  waveSaw[17] = {  10,31,47,63,79,95,111,127,0,31,47,63,79,95,111,127}; //lfo saw values lut ,not used
+
+//const uint8_t waveTri[17] = { 0,15,31,47,63,79,95,111,127,111,95,79,63,47,32,15 }; //lfo triangle values lut ,not used
+
+
 // lfos speed=150-160 ,lfo_depth=160-170,lfo_gain=170-180;lfo_target=180-190;  80-95=notes,
 
-uint8_t notePos2;
+//uint8_t notePos2;
 //static unsigned short lfoNext;
 
-uint8_t noteTiming;  // set timing shift
+
 //static unsigned short noteTimeFlag;
 //uint8_t noteTimebit[]= {0,170,85,240,15,204,51,153,102,165,90,0}   ;   // bit switch for adjustimg rythm
 //uint16_t noteAccu; //adder for left over timing
@@ -189,7 +191,7 @@ uint8_t noteTiming;  // set timing shift
 //uint8_t midiMemory[70]={}; //midi storage for incoming
 //uint8_t midSettings[]={1,1,0,0}; // midi channel and lfo cc setting
 //uint8_t midiBarcount=0; // note off var rollover on 8
-volatile int  t =0;
+//volatile int  t =0;
 //uint32_t timExe=0;
 //uint8_t timeCount=0; //time execute schedule once per note
 //uint8_t noteTraffic[4]={1,48,0,0}; // remember if note was sent from midi or sequencer : switchone , outNote, midi stored value ,0
@@ -232,7 +234,7 @@ void timerNote2(void);
 void sine_count(void);
 void sampling(void);
 void noteCalc(void);
-
+void menu_parser(void);
 void lfo(void);
 void print_pot(void);
 void analoginputloopb(void);
@@ -387,18 +389,18 @@ uint8_t status_reg[2]={0,1};
  uint16_t time_proc=0; // tick start
 uint16_t  error_count=0;
 
-struct LFO_settings{
+struct LFO_settings{      // use first 5*10 , leave the rest
 
 	uint8_t gain;
-	uint8_t depth;
-	uint8_t rate;
+	uint8_t depth;	//(p140)
+	uint8_t rate; // (p130)
 	uint8_t offset;
 	uint8_t target;      // lfo modulation target  , number for now
 	uint16_t out[10];       // actual output , needs multiple for loop
 };
 
 struct LFO_settings LFO[10];       // create lfo settings
-struct ADSR_settings{
+struct ADSR_settings{   // use initial 5*10  , leave rest
 	uint8_t attack;   // presets
 	uint8_t decay;
 	uint8_t sustain;
@@ -412,6 +414,32 @@ struct ADSR_settings{
 	uint16_t buffer[256];  //this holds the actual envelope  for ADSR for later processing
 };
 struct ADSR_settings ADSR[5];   // adsr data
+struct note_settings{								//default note/osc/patch settings  14*8 bytes (112), use all
+	uint8_t osc;      // waveforms or patches setting
+	uint8_t osc2;		// second wave for decays or stacking
+	uint16_t osc_add;   // this is the add value hold for sine/wav/saw etc depends on wave form
+	uint8_t pitch;
+	uint8_t duration;
+	uint8_t position;   // note position in sequence loop
+	uint8_t transpose;   // pshift note pitch up or down (p 72,73)
+	uint8_t timeshift; // shift position left or right in seuqence for 8 note looper   (pvalues 32,33)
+	uint16_t velocity;				// gain level or output mod
+	uint8_t detune; 					// finetune maybe for lfos or some default tune
+	uint16_t tuned;   // final output after note detune and osc_add calculation , drives the oscillators
+};
+struct note_settings note[7];         // for now 0-4 saw and 5 is sine , add more later (112 byte)
+struct seq_settings {				// 46 bytes need all
+	uint8_t pos;    // actual position of the sequencer atm
+	uint8_t notes1[17];    // all the notes for loop 1  (pvalues 0)
+	uint8_t notes2[17];    // all the notes for loop 2  (pvalues 80)
+	uint8_t loop[10];    // various positions in the loop for notes
+	uint8_t tempo; // (p109)
+};
+
+struct seq_settings seq;                       // sequencer data (46 bytes)
+const char seq_names[] = {'Pos', 'Notes1','Notes2','Loop','Tempo',
+				};
+
 
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
