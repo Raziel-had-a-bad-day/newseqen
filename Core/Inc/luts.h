@@ -2,9 +2,10 @@ const char*  test_menu[]= { "Tempo"," ", "Loop pos"," ","Notes 1"," ","Notes 2",
 
 };    // variable menu setup , needs to be correct , edit here
 
+char default_menu[] ={" 0_SeqPos   0_Decay     0_Sustain    0_Release    0_Rate     0_Depth      0_Attack      1_Depth    2_Rate       2_Depth     0_Notes1       0_Notes2    0_Tempo                            "};   // just for testing text memory , will be modifiable ,  lut
 
-
-
+char *default_menu2[10];    // sorted menu items, not used
+char default_menu3[128]={"____Hello World                                                                                                           ___End"}; // hold all string for output , first page
 
 
 const uint16_t  disp_lut [32] [16] = {							 // menu look up using char , this is default but will be dynamic  ,use variable names ,NO MORE NUMBERs!

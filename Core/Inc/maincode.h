@@ -1,40 +1,155 @@
+void menu_vars(void){
 
-void menu_parses(void){
+	char menu_string[8];   // incoming string holder (single) , dont forget to get the
+	char menu_string2[8];
+	uint8_t var_index=menu_index_in;    //set var index ie  LFO[1].rate
+	//uint8_t menu_count; // point to search result for var
+	uint8_t *menu_vars_var1=NULL;
+	menu_countr =0;
+	memcpy(menu_string, menu_vars_in, 8);    //copy 8 strings from incoing
 
-	uint8_t menu_pass=0;   // variable output
-	char menu_string[10];   // incoming string holder (single)
 
-	char menu_string2[10];   // output string
-	uint8_t menu_pos1=0;    // menu parsing position
+	for (i = 0; i < 27; i++) {      // find menu location
 
-	const char *menu_out1[]={"Tempo","Seq pos","Loop pos","Notes 1" , "Notes 2"," "}; // used for test but also  output comments
-	strcpy(menu_string,test_menu[menu_pos1]);    // copy from list
+		memcpy(menu_string2, menu_titles_final[i], 8);  // copy title list
+		if ((strncmp(menu_string, menu_string2, 8)) == 0) {
+			menu_countr = i;
+			menu_vars_menu=menu_titles_final+menu_countr; // copy pointer, ok
 
-for (i=0;i<6;i++){    	// test a single menu entry
 
-	strcpy(menu_string2,menu_out1[i]);
-	switch (i) {
-	case 0 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=seq.tempo;  }  ;break; // compare and if true pass var
-	case 1 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=seq.pos;  }  ;break;
-	case 2 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=seq.loop[i&7];  }  ;break;
-	case 3 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=seq.notes1[i&15];  }  ;break;
-	case 4 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=seq.notes2[i&15];  }  ;break;
-	case 5 :			if  ((strncmp(menu_string,menu_string2,sizeof(menu_string2)))==0) { menu_pass=254;  }  ;break;     // space
-	default: menu_pass=255;break;       // no match
+		}
+	}
+	switch(menu_countr){
+	case 0:     menu_vars_var1= NULL; break;
+	case 1:     menu_vars_var1= &LFO[var_index].rate   ; break;
+	case 2:     menu_vars_var1= &LFO[var_index].depth    ; break;
+	case 3:     menu_vars_var1= &LFO[var_index].gain    ; break;
+	case 4:     menu_vars_var1= &LFO[var_index].offset    ; break;
+	case 5:     menu_vars_var1= &LFO[var_index].target    ; break;
+	case 6:     menu_vars_var1= NULL   ; break;
+	case 7:     menu_vars_var1= &ADSR[var_index].attack    ; break;
+	case 8:     menu_vars_var1= &ADSR[var_index].decay    ; break;
+	case 9:     menu_vars_var1= &ADSR[var_index].sustain    ; break;
+	case 10:     menu_vars_var1= &ADSR[var_index].release    ; break;
+	case 11:     menu_vars_var1= NULL  ; break;
+	case 12:     menu_vars_var1= &note[var_index].osc    ; break;
+	case 13:     menu_vars_var1= &note[var_index].osc2    ; break;
+	case 14:     menu_vars_var1= &note[var_index].pitch    ; break;
+	case 15:     menu_vars_var1= &note[var_index].duration    ; break;
+	case 16:     menu_vars_var1= &note[var_index].position    ; break;
+	case 17:     menu_vars_var1= &note[var_index].transpose    ; break;
+	case 18:     menu_vars_var1= &note[var_index].timeshift    ; break;
+	case 19:     menu_vars_var1= &note[var_index].velocity   ; break;
+	case 20:     menu_vars_var1= &note[var_index].detune    ; break;
+	case 21:     menu_vars_var1= NULL   ; break;
+	case 22:     menu_vars_var1= &seq.pos    ; break;
+	case 23:     menu_vars_var1= &seq.tempo    ; break;
+	case 24:     menu_vars_var1= &seq.notes1[var_index]   ; break;
+	case 25:     menu_vars_var1= &seq.notes2[var_index]   ; break;
+	case 26:     menu_vars_var1= &seq.loop    ; break;
+	default :		menu_vars_var1= NULL   ; break;
+
 	}
 
+	menu_vars_var=menu_vars_var1;    // copy back ,ok
+
+	//menu_vars_var= menu_vars_var1;
+
+
+
 
 }
 
 
+
+void menu_parser(void){          // parse out menus , shouldn't have to run (in theory) once filled ,only for feedback pointer maybe
+
+
+	char menu_string[8];   // incoming string holder (single)
+	char menu_string2[8];
+
+
+	// strcpy(menu_string2,menu_out1[i]);
+	uint8_t menu_searchsize=sizeof(default_menu)-16;   // this should fairly big always , leave gap at the end
+
+
+	if (string_search>menu_searchsize) string_search=0;    // check if bigger than search area
+
+
+	if ((!string_search) && menu_counter) {string_search=0; menu_title_count=0;
+	return;} // hold counter until menu writing was reset ,ok
+
+	memcpy(menu_string,default_menu+string_search,8);    //copy 8 strings
+	////////////////////////////
+	for (i=0;i<5;i++){    	// test a single menu entry  , for now only the first record
+
+		memcpy(menu_string2,menu_titles4[i],8);
+		if  ((strncmp(menu_string,menu_string2,8))==0) 								// compare and if true pass var,seq
+		{menu_title_lut[menu_title_count]=(string_search<<8)+menu_counter;   // string record  and disp position counter
+		menu_title_count++;
+		menu_counter++;
+			string_search=string_search+8;     // advance search position
+
+			//menu_var_lut[menu_title_count]=&seq;
+			//memcpy(menu_var_lut[menu_title_count],&seq+i,1);
+
+
+			return;}
+
+	}
+	for (i=0;i<4;i++){    	// test a single menu entry
+
+
+		memcpy(menu_string2,menu_titles2[i],8);
+				if  ((strncmp(menu_string,menu_string2,8))==0) 									// compare and if true pass var,adsr
+		{menu_title_lut[menu_title_count]=(string_search<<8)+menu_counter;   // string record  and disp position counter
+		menu_title_count++;
+		menu_counter++;
+		string_search=string_search+8;     // advance search position
+		//menu_var_lut[menu_title_count]=(&ADSR+i);
+		//memcpy(menu_var_lut[menu_title_count],&ADSR+i,1);
+
+		return;}
+
+	}
+	for (i=0;i<5;i++){    	// test a single menu entry
+		memcpy(menu_string2,menu_titles[i],8);
+				if  ((strncmp(menu_string,menu_string2,8))==0) 									// compare and if true pass var,lfo
+		{menu_title_lut[menu_title_count]=(string_search<<8)+menu_counter;   // string record  and disp position counter
+		menu_counter++;
+		menu_title_count++;
+					string_search=string_search+8;     // advance search position
+					//menu_var_lut[menu_title_count]=(&LFO+i);
+					//memcpy(menu_var_lut[menu_title_count],&LFO+i,1);
+
+					return;}
+
+	}
+	for (i=0;i<5;i++){    	// test a single menu entry
+		memcpy(menu_string2,menu_titles3[i],8);
+				if  ((strncmp(menu_string,menu_string2,8))==0) 										// compare and if true pass var, note
+		{menu_title_lut[menu_title_count]=(string_search<<8)+menu_counter;   // string record  and disp position counter
+		//menu_var_lut[menu_title_count]=&note+i;
+		//memcpy(menu_var_lut[menu_title_count],&note+i,1);
+
+		menu_counter++;
+		menu_title_count++;
+					string_search=string_search+8;     // advance search position
+					return; }
+
+	}
+	string_value=255;    // no result use 255 for now
+	//menu_title_lut[menu_title_count]=255;   // record for feedback line
+			//menu_title_count++;
+
+	menu_counter++;  // count empty spaces or fill characters
+	string_search++;
+	return;
+
+
+
+
 }
-
-
-
-
-
-
-
 
 
 
@@ -171,7 +286,8 @@ uint16_t menu_holder;
 //	else menu_holder=disp_lut [(menuSelect)	] [15-adc_values[1]];  // grab disp lut value for pointer if valid then write for now
 
 		//menu_holder=disp_lut [(menuSelect)	] [(15-adc_values[1])];   // value from disp lut
-		menu_holder=disp_lut [menuSelect] [menuSelectX];   // value from disp lut
+		//menu_holder=disp_lut [menuSelect] [menuSelectX];   // value from disp lut
+
 		cursor_menu[1]=0;
 		//cursor_menu[2]=cursor_lookup[enc2_dir];
 		// cursor_menu[2]=cursor_lookup[enc2_dir]; //needed for correct line sequence ,obsolete
@@ -181,8 +297,8 @@ uint16_t menu_holder;
 
 
 
-		if (menu_holder>127)	counterVarB=menu_holder-128; //  points to actual potvalues location from dsip_lut when value is higher than 127 , works ok problem with menu display
-		if (menu_holder>511)	counterVarB=menu_holder-384;		// text pointer , max potvalue address is 142 , fix second page issue later
+		//if (menu_holder>127)	counterVarB=menu_holder-128; //  points to actual potvalues location from dsip_lut when value is higher than 127 , works ok problem with menu display
+		//if (menu_holder>511)	counterVarB=menu_holder-384;		// text pointer , max potvalue address is 142 , fix second page issue later
 
 
 		enc_dir=potSource[counterVarB];
@@ -196,7 +312,10 @@ uint16_t menu_holder;
 	if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite , step multiplier
 	//if (enc_temp<enc_tempB)	 enc_dir++;
 
-  enc2_temp=enc2_lut[enc2_temp];  // force alternative values for skip  , seems to work ok , disable temporarily
+ // enc2_temp=enc2_lut[enc2_temp];  // force alternative values for skip  , seems to work ok , disable temporarily
+
+
+
   if (enc2_temp>383) enc2_temp=383;  //mem overflow somewhere
 	if (enc_dir>160) enc_dir=160;
 			if (enc_dir<0) enc_dir=0;
@@ -213,8 +332,8 @@ uint16_t menu_holder;
 		//	if (enc2_dir>127) menu_page[1]=127; else if (enc2_dir>255)   menu_page[1]=255;				else menu_page[1]=0;
 		//	menu_page[1]= (enc2_dir >>7) <<7;
 
-			menu_page[1]=enc2_dir&384;
-
+			menu_page[1]=enc2_dir&384;  // single  for now
+			menu_page[1]=0; // force a single page for now
 
 			//if (enc2_dir>255) {menu_page[1]=0;display_fill();}
 
@@ -262,8 +381,8 @@ case 81: spi_hold=10;init=81;break;
 
 case 82: spi_hold=384+(init_b>>1);break;  // finish writes
 case 83: spi_hold=spell[init_b&62];break;
-case 84 : spi_hold=spell[(init_b&62)+1];init_b=cursor_menu[2]&63;displayBuffer ();init=76; break; //update cursor and displaybuffer
-default : init_b=init-6;displayBuffer ();spi_hold=spell[init_b];break; //initial menu write either page ,skip after
+case 84 : spi_hold=spell[(init_b&62)+1];init_b=cursor_menu[2]&63;displayBuffer2 ();init=76; break; //update cursor and displaybuffer
+default : init_b=init-6;displayBuffer2 ();spi_hold=spell[init_b];break; //initial menu write either page ,skip after
 }
 
 
@@ -344,14 +463,19 @@ for (n=0;n<2048;n++)	{ //fills up gfx ram or not
 
 enc2_dir=(n>>4)+menu_page[1]; 												// 0-128         +      0,127,255,
 
-displayBuffer();
+
+
+
+
+
+displayBuffer2();
 }
 //enc2_dir=menu_page[1];  // end clean
 }
 
 
 
-void displayBuffer (void){        //  in a constant state of flux
+void displayBuffer (void){        //  in a constant state of flux ,,   old
 
 	if (disp_stepper==0) init_b=enc2_dir; else init_b=111+disp_stepper;  // fetch values for last line or cursor
 
@@ -430,6 +554,58 @@ if (disp_stepper==15) disp_stepper=0; else disp_stepper++;				// count to 16
 }
 
 
+
+
+
+
+
+
+
+void displayBuffer2 (void){
+
+	if (disp_stepper==0) init_b= menu_title_lut[enc2_dir&31]&127;
+	else init_b=111+disp_stepper;  // fetch values for last line or cursor
+
+	if (disp_stepper==0)  memcpy(default_menu3+112, default_menu+(menu_title_lut[enc2_dir&63]>>8),8);   // copy feedback data for reading
+
+		if (disp_stepper==0) memcpy(menu_vars_in,default_menu3+112,8);	// ok
+	if (disp_stepper==0) menu_vars();			//ok
+	if (disp_stepper==0) lcd_out3=*menu_vars_var; // grab value on ptr address , ok
+	if (disp_stepper==1)  {default_menu3[120]=potSource[380]+48; default_menu3[121]=potSource[381]+48; default_menu3[122]=potSource[382]+48; }  // ok
+
+	uint8_t d_count;
+uint16_t init_x=((init_b>>4)<<3);    // normal x8 , try other 64 x16
+uint8_t init_x2=init_x&63;  // 0-64  character address in gfx
+uint8_t init_y=init_b&15;
+uint16_t store_x;
+
+
+store_c= (default_menu3[init_b]-47)&127 ;    // grab char from mem
+
+
+
+
+//store_c= 33; // force
+
+store_x=(store_c*8);  // i line characters , might shrink it and use extr for other  visuals , old code but keep for now
+
+
+if (( !loop_counter3) && (disp_stepper==0))     // blinker for cursor character only  , might just flip the whole last line from prev tables then its x4 faster
+	for (d_count=0;d_count<7;d_count++){
+						gfx_ram[d_count+init_x2] [init_y] = gfx_char[d_count+store_x]^127; //write character to ram ,should be elsewhere , blank is correct
+	}
+else for (d_count=0;d_count<7;d_count++){
+	gfx_ram[d_count+init_x2] [init_y] = gfx_char[d_count+store_x]; //write character to ram ,should be elsewhere , seems affected by later stufff
+}
+
+
+gfx_ram[7+init_x2] [init_y] = 0; // last line is blank between rows or whatever
+
+if (disp_stepper==15) disp_stepper=0; else disp_stepper++;				// count to 16
+
+
+}    // displayBuffer2
+
 void sampling(void){						// 18 ms of data
 
 //	if (time_proc>580) time_final=time_proc;
@@ -470,9 +646,9 @@ for (i=0;i<16;i++) {  note_toggler[i]=0; }
 
 //lcd_out3=adc_values[0]+adc_values[1]+adc_values[2]; // 3 digit read out , works ok,, [2] works but thats it
 //lcd_out3=lcd_out3+180;
-potSource[380]=(lcd_out3/100)*16;  // still works   , potsource ref is located in feedback line var
-potSource[381]=((lcd_out3 %100)/10)*16;		 // 0-160 to 0-10
-potSource[382]=(lcd_out3%10)*16;
+potSource[380]=(lcd_out3/100);  // still works   , potsource ref is located in feedback line var  ,was sendin x16 values
+potSource[381]=((lcd_out3 %100)/10);		 // 0-160 to 0-10
+potSource[382]=(lcd_out3%10);
 
 
 

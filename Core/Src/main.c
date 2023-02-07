@@ -313,13 +313,14 @@ for (i=0;i<512;i++)	{gfx_char[i]=gfx_char[i];
 
 }    //font replace
 //    Merge menu times   here    char , int8 ,int16  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+for (i=0;i<128;i++)	{   // fill up display data
 
+	menu_parser();
+	default_menu3[i]=64;
+		  //default_menu3[i]=(((string_value>>4)+48)&127);
+		 // if (string_value==255) default_menu3[i]=47;
 
-
-
-
-
-
+}
 
 
 //   produce extra menu pages here /////////////////////////////////////////////////////////////////////////////////
@@ -359,11 +360,9 @@ firstbarLoop=0;
 if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
 	  if (mem_count==255) mem_count=0; else mem_count++;  // write to first this was moved for no logical reason ?
 
-
-
 	// read values from stored
 
-memcpy(potSource,&seq,sizeof(seq)); // about 45 bytes
+memcpy(potSource,&seq,46); // about 46 bytes
 
 for(i=0;i<10;i++){
 	if (i<8){    memcpy(potSource+46+(i*14),&note[i],14 );}  //grab note settings ,112 total , works
@@ -379,9 +378,6 @@ mem_buf=potSource[mem_count];
 	HAL_I2C_Mem_Write(&hi2c2, 160, ((1+(mem_count>>6))<<6)+(mem_count&63), 2, &mem_buf, 1, 100);  // "&hi2c2"  actual register address
 	//HAL_Delay(5); // this is slow , no bueno
 
-
-
-
 	loop_counter2=0; //reset
 
 }
@@ -392,7 +388,7 @@ mem_buf=potSource[mem_count];
 		  { if (loop_counter3)  enc2_tempc=enc2_dir; else enc2_dir=enc2_tempc; }    //hold enc till finished , this to clean up characters for now ,works ok
 		  loop_counter3=!loop_counter3;  //blinker flips on each full page refresh
 
-		  for (i=0;i<16;i++) {   displayBuffer();}
+		  for (i=0;i<16;i++) {   displayBuffer2();}
 		  enc2_dir=enc2_tempc;
 
 	  }
@@ -447,11 +443,6 @@ mem_buf=potSource[mem_count];
 
 
 	//  if (sample_pointB!=sample_pointD) bank_write=1; // set start of buffer ,grab , works ok
-
-
-
-
-
 
 	  	//	adc_flag=0;
 	  		if (adc_flag) {
