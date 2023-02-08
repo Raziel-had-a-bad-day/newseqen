@@ -321,7 +321,7 @@ for (i=0;i<128;i++)	{   // fill up display data
 		 // if (string_value==255) default_menu3[i]=47;
 
 }
-
+menu_title_count--;  //count back one
 
 //   produce extra menu pages here /////////////////////////////////////////////////////////////////////////////////
 uint16_t lut_temp2=0;

@@ -55,9 +55,6 @@ void menu_vars(void){
 
 	//menu_vars_var= menu_vars_var1;
 
-
-
-
 }
 
 
@@ -69,84 +66,44 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 	char menu_string2[8];
 
 
+
 	// strcpy(menu_string2,menu_out1[i]);
-	uint8_t menu_searchsize=sizeof(default_menu)-16;   // this should fairly big always , leave gap at the end
+	uint16_t menu_searchsize=sizeof(default_menu)-16;   // this should fairly big always , leave gap at the end
 
 
-	if (string_search>menu_searchsize) string_search=0;    // check if bigger than search area
+	if (string_search>menu_searchsize) {                    //string_search=0;  exit
+		return;    }    // check if bigger than search area
 
 
 	if ((!string_search) && menu_counter) {string_search=0; menu_title_count=0;
 	return;} // hold counter until menu writing was reset ,ok
 
-	memcpy(menu_string,default_menu+string_search,8);    //copy 8 strings
+	memcpy(menu_string,default_menu+string_search,8);    //copy 8 strings created menu array
 	////////////////////////////
-	for (i=0;i<5;i++){    	// test a single menu entry  , for now only the first record
+	for (i=0;i<27;i++){    	// test a single menu entry  , for now only the first record
 
-		memcpy(menu_string2,menu_titles4[i],8);
+		memcpy(menu_string2,menu_titles_final[i],8);
 		if  ((strncmp(menu_string,menu_string2,8))==0) 								// compare and if true pass var,seq
-		{menu_title_lut[menu_title_count]=(string_search<<8)+menu_counter;   // string record  and disp position counter
-		menu_title_count++;
-		menu_counter++;
+		{
+			menu_title_lut[menu_title_count]=(i<<8)+menu_counter;   // search result  and disp position counter
+
+			memcpy(menu_index_list+(menu_title_count<<1),default_menu+string_search-2,2); // get array  index under ,LFO[1]  etc ,ok
+			menu_title_count++;
+			menu_counter++;
+			space_check=0;
 			string_search=string_search+8;     // advance search position
-
-			//menu_var_lut[menu_title_count]=&seq;
-			//memcpy(menu_var_lut[menu_title_count],&seq+i,1);
-
 
 			return;}
 
 	}
-	for (i=0;i<4;i++){    	// test a single menu entry
 
-
-		memcpy(menu_string2,menu_titles2[i],8);
-				if  ((strncmp(menu_string,menu_string2,8))==0) 									// compare and if true pass var,adsr
-		{menu_title_lut[menu_title_count]=(string_search<<8)+menu_counter;   // string record  and disp position counter
-		menu_title_count++;
-		menu_counter++;
-		string_search=string_search+8;     // advance search position
-		//menu_var_lut[menu_title_count]=(&ADSR+i);
-		//memcpy(menu_var_lut[menu_title_count],&ADSR+i,1);
-
-		return;}
-
-	}
-	for (i=0;i<5;i++){    	// test a single menu entry
-		memcpy(menu_string2,menu_titles[i],8);
-				if  ((strncmp(menu_string,menu_string2,8))==0) 									// compare and if true pass var,lfo
-		{menu_title_lut[menu_title_count]=(string_search<<8)+menu_counter;   // string record  and disp position counter
-		menu_counter++;
-		menu_title_count++;
-					string_search=string_search+8;     // advance search position
-					//menu_var_lut[menu_title_count]=(&LFO+i);
-					//memcpy(menu_var_lut[menu_title_count],&LFO+i,1);
-
-					return;}
-
-	}
-	for (i=0;i<5;i++){    	// test a single menu entry
-		memcpy(menu_string2,menu_titles3[i],8);
-				if  ((strncmp(menu_string,menu_string2,8))==0) 										// compare and if true pass var, note
-		{menu_title_lut[menu_title_count]=(string_search<<8)+menu_counter;   // string record  and disp position counter
-		//menu_var_lut[menu_title_count]=&note+i;
-		//memcpy(menu_var_lut[menu_title_count],&note+i,1);
-
-		menu_counter++;
-		menu_title_count++;
-					string_search=string_search+8;     // advance search position
-					return; }
-
-	}
 	string_value=255;    // no result use 255 for now
 	//menu_title_lut[menu_title_count]=255;   // record for feedback line
-			//menu_title_count++;
-
-	menu_counter++;  // count empty spaces or fill characters
+	//menu_title_count++;
+	if (space_check>2)  menu_counter++;
+	space_check++;  // count empty spaces or fill characters
 	string_search++;
 	return;
-
-
 
 
 }
@@ -305,11 +262,23 @@ uint16_t menu_holder;
 
 
 	enc_temp=(TIM2->CNT)>>1;  // read counter tim2 ,divider ok
-	enc2_temp=(TIM4->CNT)>>1;  // read counter tim4
-	enc2_temp=enc2_temp&127; // fix overflow ? , dont need a lot because of skip
+	enc2_store[enc2_store_count]=(TIM4->CNT)&255;  // read counter tim4, noisy
+	uint16_t enc2_store2=0;
+	uint16_t enc2_store3=0;
+	if (enc2_store_count==3) enc2_store_count=0; else enc2_store_count++;
+
+	enc2_store2=enc2_store[0]+enc2_store[1]+enc2_store[2]+enc2_store[3];     // average filter hopefully
+	enc2_store3=enc2_store2>>3;
+	enc2_temp=enc2_store3;
+
+	//enc2_temp=enc2_temp&127; // fix overflow ? , dont need a lot because of skip
+
+
+
+
 
 	if  (enc_temp>enc_tempB)	 enc_dir=enc_dir-(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite
-	if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite , step multiplier
+	if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite , step multiplier setting
 	//if (enc_temp<enc_tempB)	 enc_dir++;
 
  // enc2_temp=enc2_lut[enc2_temp];  // force alternative values for skip  , seems to work ok , disable temporarily
@@ -326,7 +295,11 @@ uint16_t menu_holder;
 			enc_tempB=enc_temp;
 			//if (enc2_dir>383) enc2_dir=383;
 
-			//if  (enc2_temp>enc2_tempB)	 enc2_dir++;   // start settle timer , will do 2 times per turn always
+
+
+
+
+
 			//if (enc2_temp<enc2_tempB)	 enc2_dir--;
 			enc2_dir=enc2_temp; //temp to try source data
 		//	if (enc2_dir>127) menu_page[1]=127; else if (enc2_dir>255)   menu_page[1]=255;				else menu_page[1]=0;
@@ -459,16 +432,28 @@ disp_end=gfx_skip+gfx_counter[2]+gfx_counter[3];			// vsynch for displaybuffer
 }
 void display_fill(void)  {     // full update of gfx memory
 loop_counter3=1;
-for (n=0;n<2048;n++)	{ //fills up gfx ram or not
-
-enc2_dir=(n>>4)+menu_page[1]; 												// 0-128         +      0,127,255,
 
 
+uint16_t store_x;
+uint8_t d_count;
+
+for (n=0;n<256;n++)	{ //just fills with blank character s
 
 
 
+	uint16_t init_x=((n>>4)<<3);    // normal x8 , try other 64 x16
+	uint8_t init_x2=init_x&63;  // 0-64  character address in gfx
+	uint8_t init_y=n&15;
 
-displayBuffer2();
+
+
+	store_x=0;
+	for (d_count=0;d_count<8;d_count++){
+		gfx_ram[d_count+init_x2] [init_y] = gfx_char[d_count+store_x];
+
+	}
+
+//displayBuffer2();
 }
 //enc2_dir=menu_page[1];  // end clean
 }
@@ -563,15 +548,39 @@ if (disp_stepper==15) disp_stepper=0; else disp_stepper++;				// count to 16
 
 void displayBuffer2 (void){
 
-	if (disp_stepper==0) init_b= menu_title_lut[enc2_dir&31]&127;
-	else init_b=111+disp_stepper;  // fetch values for last line or cursor
+	 if (disp_stepper!=0)	init_b=111+disp_stepper;  // write bottom entire line
+	 if ((disp_stepper==1) && (enc2_tempC==enc2_dir) && (enc2_add==0))  { disp_stepper=12;  init_b=120; }   // write only end bits ,ok
 
-	if (disp_stepper==0)  memcpy(default_menu3+112, default_menu+(menu_title_lut[enc2_dir&63]>>8),8);   // copy feedback data for reading
 
-		if (disp_stepper==0) memcpy(menu_vars_in,default_menu3+112,8);	// ok
+
+
+	if ((disp_stepper==0) && (enc2_tempC!=enc2_dir))  {
+
+		if  (enc2_tempC<enc2_dir)	 enc2_add=1;   									// use this to set up or down count for variables , might change
+		if  (enc2_tempC>enc2_dir)	 enc2_add=-1;
+		enc2_tempC=enc2_dir;	   // loop back until change
+		if ((enc_out1>=0)  &&  (enc_out1<=menu_title_count))    {enc_out1=enc_out1+enc2_add;}   // count up or down within limits
+		if (enc_out1<0)  enc_out1=0;
+		if (enc_out1>menu_title_count) enc_out1--;
+		enc2_add=2;
+	}
+
+
+	 if (disp_stepper==0) init_b= menu_title_lut[enc_out1]&127;
+
+
+	 	 uint8_t crap_hold9=menu_title_lut[enc_out1]>>8;   // look up up menu_titles_final
+	 // fetch values for last line or cursor
+
+	if (disp_stepper==0)  memcpy(default_menu3+112, *(menu_titles_final+crap_hold9),8);   // copy feedback data for reading,ok
+	if (disp_stepper==0) memcpy(menu_vars_in,*(menu_titles_final+crap_hold9),8);	// ok
 	if (disp_stepper==0) menu_vars();			//ok
-	if (disp_stepper==0) lcd_out3=*menu_vars_var; // grab value on ptr address , ok
-	if (disp_stepper==1)  {default_menu3[120]=potSource[380]+48; default_menu3[121]=potSource[381]+48; default_menu3[122]=potSource[382]+48; }  // ok
+	if (disp_stepper==0) { lcd_out3=*menu_vars_var; default_menu3[init_b]=((lcd_out3&255)>>5)+48;    }// grab value on ptr address , also write first char , ok
+	if (disp_stepper==10) default_menu3[120]=menu_index_list[enc_out1<<1];   // index char 0-10 normally
+	if (disp_stepper==11) default_menu3[121]=menu_index_list[(enc_out1<<1)+1];
+	if (disp_stepper==12) default_menu3[122]=47;
+
+	 if (disp_stepper==12)  {default_menu3[124]=potSource[380]+48; default_menu3[125]=potSource[381]+48; default_menu3[126]=potSource[382]+48; }  // ok
 
 	uint8_t d_count;
 uint16_t init_x=((init_b>>4)<<3);    // normal x8 , try other 64 x16
@@ -582,10 +591,6 @@ uint16_t store_x;
 
 store_c= (default_menu3[init_b]-47)&127 ;    // grab char from mem
 
-
-
-
-//store_c= 33; // force
 
 store_x=(store_c*8);  // i line characters , might shrink it and use extr for other  visuals , old code but keep for now
 
@@ -601,7 +606,7 @@ else for (d_count=0;d_count<7;d_count++){
 
 gfx_ram[7+init_x2] [init_y] = 0; // last line is blank between rows or whatever
 
-if (disp_stepper==15) disp_stepper=0; else disp_stepper++;				// count to 16
+if (disp_stepper==15) {disp_stepper=0;enc2_add=0;  }     else disp_stepper++;				// count to 16 also make sure full loop before skip lines
 
 
 }    // displayBuffer2

@@ -199,8 +199,10 @@ uint16_t enc_temp;  // hold in for tim2
 uint16_t enc_tempB;  // hold old in
 uint16_t enc2_temp;  // hold in for tim4
 uint16_t enc2_tempB;  // hold old in2
+int8_t enc2_tempC=10;
 uint16_t enc2_dir;    // enc direction2
 int16_t enc_dir;    // enc direction
+int8_t enc2_add=2;   // simple adder 1 or 0 or -1 ,starts on 2    , int !
 uint16_t tempo_count=0; // up counter for tempo reset
  uint8_t bsrr_hold[128]; //store to hold bsrr data ready for transfer in a loop
 uint8_t bs_count=0; //count to 40 on bsrrr
@@ -277,11 +279,11 @@ struct LFO_settings{      // use first 5*10 , leave the rest
 	uint8_t offset;
 	uint8_t target;      // lfo modulation target  , number for now
 	uint16_t out[10];       // actual output , needs multiple for loop,,calculated
-	char menu_titles[];
+
 };
 
 struct LFO_settings LFO[10];       // create lfo settings
-const char *menu_titles[]={"LFO     ", "Rate    ","Depth   " ,"Gain    ", "Offset  ", "Target  "};    //syntax is 5_LFO or 3_rate or  3_Rate
+
 struct ADSR_settings{   // use initial 5*10  , leave rest
 	uint8_t attack;   // presets
 	uint8_t decay;
@@ -294,10 +296,10 @@ struct ADSR_settings{   // use initial 5*10  , leave rest
 	float release_data;
     float buffer_temp;  // temp hold
 	uint16_t buffer[256];  //this holds the actual envelope  for ADSR for later processing
-	char menu_titles2[];
+
 };
 struct ADSR_settings ADSR[5];   // adsr data
-const char *menu_titles2[]={"ADSR    ","Attack  ", "Decay   ","Sustain ","Release "}; //0-5 ,pointers
+
 
 
 struct note_settings{								//default note/osc/patch settings  14*8 bytes (112), use all
@@ -312,11 +314,11 @@ struct note_settings{								//default note/osc/patch settings  14*8 bytes (112)
 	uint8_t detune; 					// finetune maybe for lfos or some default tune
 	uint16_t osc_add;   // this is the add value hold for sine/wav/saw etc depends on wave form,calculated
 	uint16_t tuned;   // final output after note detune and osc_add calculation , drives the oscillators ,calculated
-	char menu_titles3[];
+
 
 };
 struct note_settings note[7];         // for now 0-4 saw and 5 is sine , add more later (112 byte)
-const char *menu_titles3[]={"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpose","Slide   ","Velocity","Detune  ",};
+
 
 struct seq_settings {				// 46 bytes need all
 	uint8_t pos;    // actual position of the sequencer atm ,calculated
@@ -325,15 +327,15 @@ struct seq_settings {				// 46 bytes need all
 	uint8_t notes2[17];    // all the notes for loop 2  (pvalues 80)
 	uint8_t loop[10];    // various positions in the loop for notes
 
-	char menu_titles4[7];
+
 };
 
 struct seq_settings seq;                       // sequencer data (46 bytes)
-const char *menu_titles4[]={"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    "};  //  4-8 digits + underscore and number
-uint8_t string_search=0;   // search position
+
+uint16_t string_search=0;   // search position on created menu
 uint16_t string_value=0;  // holds the variable result from the search result
 uint8_t menu_counter=0;
-
+uint8_t space_check=0;   // look for gaps
 uint16_t menu_title_lut[64];  // hold pointer for feedback line , points to default_menu first character(1<<8)   as well the current display loc(0)  , skip empty areas for now
 
 uint8_t menu_title_count=0;   // holds the counter for menu_title_lut
@@ -349,8 +351,11 @@ char* menu_vars_menu=0;    // return pointer to menu_titles final
 uint8_t * menu_vars_var=0;			// return memory location to var !
 char menu_vars_in[8];  // incoming string ,ok
 uint8_t menu_index_in=0; // gets the struct index ie LFO[1].rate
-uint8_t menu_countr;
-
+char menu_index_list[128];   //  use along the menu_var_lut
+uint8_t menu_countr; //  menu vars
+int8_t enc_out1=1;    // menu_title_lut   cursor position
+uint8_t  enc2_store[5];
+uint8_t enc2_store_count=0;
 
 
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!

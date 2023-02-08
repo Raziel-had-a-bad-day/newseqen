@@ -1,10 +1,8 @@
-const char*  test_menu[]= { "Tempo"," ", "Loop pos"," ","Notes 1"," ","Notes 2"," ","Loop"
 
-};    // variable menu setup , needs to be correct , edit here
 
-char default_menu[] ={" 0_SeqPos   0_Decay     0_Sustain    0_Release    0_Rate     0_Depth      0_Attack      1_Depth    2_Rate       2_Depth     0_Notes1       0_Notes2    0_Tempo                            "};   // just for testing text memory , will be modifiable ,  lut
+char default_menu[] ={" 00SeqPos   00Decay     00Sustain  00Release  00Rate     00Depth      00Attack      01Depth    02Rate       02Depth     00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  14Notes1  15Notes1    7Notes2    0_Tempo     "};   // just for testing text memory , will be modifiable ,  lut
 
-char *default_menu2[10];    // sorted menu items, not used
+
 char default_menu3[128]={"____Hello World                                                                                                           ___End"}; // hold all string for output , first page
 
 
