@@ -104,12 +104,14 @@ static void MX_SPI1_Init(void);
 void display_init(void);
 
 //void adc_read(void);
+
+void gfx_send(void);
 void menu_vars(void);
+void display_process(void);
 void displayBuffer2 (void);  // new version
 void analogInputloop(void);
 void displayLoop(void);
-void displayBuffer(void);
-void timerNote(void);
+;void timerNote(void);
 void timerNote2(void);
 void sine_count(void);
 void sampling(void);
@@ -242,8 +244,12 @@ float  lfo_accu[10]  [10]; //holds last lfo value , simple 0-255 upcount for now
 uint16_t  lfo_out[10] [10];   //8x10 values for lfo
 uint16_t tempo_lut[162]; // tempo look up 40-200bpm
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////GFX
-uint8_t gfx_ram[64][16] ; //holds data for lcd 64*256bit , display 16kbyte/sec so 8fps , maybe use dma for memory transfers
+//uint8_t gfx_ram[64][18] ; //holds data for lcd 64*128bit +2 bytes ver/hor command for lcd
+uint8_t  gfx_ram[1152];
 
+uint16_t  gfx_send_counter=0;   //counts up to 64x18
+uint8_t gfx_send_counter2=0;
+uint8_t gfx_send_counter3=0;
 
 //uint8_t gfx_char[2048]={};
 uint8_t gfx_char1[512] =  {
@@ -356,6 +362,7 @@ uint8_t menu_countr; //  menu vars
 int8_t enc_out1=1;    // menu_title_lut   cursor position
 uint8_t  enc2_store[5];
 uint8_t enc2_store_count=0;
+uint8_t  lcd_temp=0;   //temp hold
 
 
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!

@@ -260,10 +260,15 @@ memcpy (potSource+(i*64),potSource2,sizeof(potSource2));   //this works  ok now
 
 }
 
-for(i=0;i<1024;i++){
-//	gfx_ram[i]=gfx_char[((i>>5)&7)+((i>>8)<<3)]; // test input fill  8*128 v+h just normal characters
-	gfx_ram[i&63] [i>>6]  =gfx_char[8+(i&7)+(((i>>3)*8)&63)];
-//gfx_ram[i&63] [i>>6]  =250;
+for(i=0;i<64;i++){       //   fill with characters also add lcd command ,ok
+
+for 	(n=0;n<18;n++){					// this is ok
+	if (n==0) gfx_ram[(i*18)+n] = 128+(i&31);   // half page
+	if (n==1) gfx_ram[(i*18)+n] = 128+((i>>5)*8);    // change x to 8
+	if (n>1)  gfx_ram[(i*18)+n] = 255;
+
+}
+
 }
 
 
@@ -388,16 +393,16 @@ mem_buf=potSource[mem_count];
 		  { if (loop_counter3)  enc2_tempc=enc2_dir; else enc2_dir=enc2_tempc; }    //hold enc till finished , this to clean up characters for now ,works ok
 		  loop_counter3=!loop_counter3;  //blinker flips on each full page refresh
 
-		  for (i=0;i<16;i++) {   displayBuffer2();}
+		  for (i=0;i<16;i++) {   display_process();   displayBuffer2();}
 		  enc2_dir=enc2_tempc;
-
+		  disp_end=0;   ///reset till next full page
 	  }
 
 
 	  if (init<6)				// after 6 its done for good   // no freeze here
 {
 	  for (i=0;i<6;i++) {display_init();}  //1-2ms ?  change length if flickering ,maybe initial data
-} else {display_update(); }  // send spi line data every loop cycle , self contained, single 8pixel line 18*256steps
+} else {  gfx_send() ; }  // send spi line data every loop cycle , self contained, single 8pixel line 18*256steps
 
 
 	  ///////////////////////////////////////////////////////////////////////////////
