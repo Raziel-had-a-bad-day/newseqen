@@ -247,9 +247,12 @@ uint16_t tempo_lut[162]; // tempo look up 40-200bpm
 //uint8_t gfx_ram[64][18] ; //holds data for lcd 64*128bit +2 bytes ver/hor command for lcd
 uint8_t  gfx_ram[1152];
 
-uint16_t  gfx_send_counter=0;   //counts up to 64x18
-uint8_t gfx_send_counter2=0;
+uint16_t  gfx_send_counter=0;   //counts up to 31x18x2
+uint8_t gfx_send_counter2=0;			// horizontal pos 0-17
 uint8_t gfx_send_counter3=0;
+uint8_t gfx_send_cursor=0;  // send cursor line 0-7
+uint8_t gfx_send_swap=0;  //swap between lines
+uint8_t gfx_send_lines=0; // just count 144   lines
 
 //uint8_t gfx_char[2048]={};
 uint8_t gfx_char1[512] =  {

@@ -229,14 +229,9 @@ void analoginputloopb(void){  //works fine still
 uint16_t menu_holder;
 
 
-	//menuSelect = (7 - (adc_values[0] >>2))<<1;		//x *16  main menu select
-	//menuSelect = (15 - (adc_values[0] >>1));		//x *7  main menu select
-	//menuSelectX=(31 - adc_values[1])>>1;  // Y select inside page
+
 	menuSelect = cursor_menu[2]>>4;		//x *7  main menu select
 		menuSelectX=cursor_menu[2]&15;  // Y select inside page
-
-
-
 
 	//	counterVarB = menuSelectX + menuSelect; // select mem page 10*8  and location pointer  77
 //		if (adc_values[1]>15)	menu_holder=disp_lut [(menuSelect)	+1] [31-adc_values[1]]; // change back to 0-15
@@ -272,9 +267,6 @@ uint16_t menu_holder;
 	enc2_temp=enc2_store3;
 
 	//enc2_temp=enc2_temp&127; // fix overflow ? , dont need a lot because of skip
-
-
-
 
 
 	if  (enc_temp>enc_tempB)	 enc_dir=enc_dir-(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite
@@ -403,26 +395,27 @@ displayBuffer2();
 
 
 void display_process(void){							// keep data processing here
-	if (disp_stepper!=0)	init_b=111+disp_stepper;  // write bottom entire line
 
 
-	if ((disp_stepper==1) && (enc2_tempC==enc2_dir) && (enc2_add==0))     // when enc2_dir  hasn't changed
-	{ disp_stepper=12;  init_b=120;
+	if ((enc2_tempC==enc2_dir) && (!enc2_add))  {
+		if (disp_stepper==5)  {enc2_add=2; 	disp_stepper=13;}   	 // wait till enc2_dir  hasn't changed ,jump and then change feedback
+			}
 
+	if (disp_stepper>1)	init_b=123+(disp_stepper);  // write lcd3
+	if (disp_stepper>4)	init_b=107+(disp_stepper);  // write feedback line
 
-	}   // write only end bits ,,also only change var  here  ,ok
-if ((lcd_temp!=enc_dir)  && (enc2_tempC==enc2_dir) )   {*menu_vars_var=enc_dir;   // enc2_dir =same enc_dir=changed
-lcd_temp=enc_dir;  }
+	if ((lcd_temp!=enc_dir)  && (enc2_tempC==enc2_dir) )   {*menu_vars_var=enc_dir;   // enc2_dir =same enc_dir=changed
+	lcd_temp=enc_dir;  }
 
 
 
 	if ((disp_stepper==0) && (enc2_tempC!=enc2_dir) && (!enc2_add))  {      // wait till loop end , ok
 
-	//if  (enc2_tempC<enc2_dir)	 enc2_add=1;   									// use this to set up or down count for variables , might change
-		//if  (enc2_tempC>enc2_dir)	 enc2_add=-1;    // slow but 1 step at a time
-		if  (enc2_tempC<enc2_dir)	 enc2_add=+(enc2_dir-enc2_tempC);   	//  fast but skips
+	if  (enc2_tempC<enc2_dir)	 enc2_add=1;   									// use this to set up or down count for variables , might change
+		if  (enc2_tempC>enc2_dir)	 enc2_add=-1;    // slow but 1 step at a time
+		//if  (enc2_tempC<enc2_dir)	 enc2_add=+(enc2_dir-enc2_tempC);   	//  fast but skips
 
-		if  (enc2_tempC>enc2_dir)	 enc2_add=-(enc2_tempC-enc2_dir);
+		//if  (enc2_tempC>enc2_dir)	 enc2_add=-(enc2_tempC-enc2_dir);
 
 
 		enc2_tempC=enc2_dir;	   // loop back until change
@@ -433,7 +426,7 @@ lcd_temp=enc_dir;  }
 	}
 
 
-	if ((disp_stepper==0) && (enc2_add==2))			// skip if no input fro enc2 , also maybe wait till enc2 stopped moving
+	if ((disp_stepper==0) && (enc2_add==2))			// skip if no input for enc2 , also maybe wait till enc2 stopped moving
 	{
 
 
@@ -442,26 +435,30 @@ lcd_temp=enc_dir;  }
 	// fetch values for last line or cursor
 
 	 memcpy(default_menu3+112, *(menu_titles_final+crap_hold9),8);   // copy feedback data for reading,ok
-	 memcpy(menu_vars_in,*(menu_titles_final+crap_hold9),8);	// ok
+	 memcpy(menu_vars_in,*(menu_titles_final+crap_hold9),8);	// send back for menu vars ok
 	 menu_index_in=(menu_index_list[(enc_out1<<1)+1])-48 ;menu_vars();		//ok
 
 	    // grab value on ptr address , also write first char , ok
 
-	} else if (disp_stepper==0)
+	}
+
+	if ((disp_stepper==0) || (disp_stepper==1))   // repeat first character
 	{ init_b= menu_title_lut[enc_out1]&127;
 
 	lcd_out3=*menu_vars_var; default_menu3[init_b]=((lcd_out3&255)>>5)+48; lcd_temp=lcd_out3&127; enc_dir=lcd_temp;       } // force enc_dir
 
 
 
-	if (disp_stepper==10) default_menu3[120]=menu_index_list[enc_out1<<1];   // index char 0-10 normally
-	if (disp_stepper==11) default_menu3[121]=menu_index_list[(enc_out1<<1)+1];
-	if (disp_stepper==12) default_menu3[122]=47;
+	if (disp_stepper==11) default_menu3[119]=menu_index_list[enc_out1<<1];   // index char 0-10 normally
+	if (disp_stepper==12) default_menu3[120]=menu_index_list[(enc_out1<<1)+1];
+	//if (disp_stepper==13) default_menu3[122]=47;
 
-	if (disp_stepper==12)  {default_menu3[124]=potSource[380]+48; default_menu3[125]=potSource[381]+48; default_menu3[126]=potSource[382]+48; }  // ok
+	if (disp_stepper==1)  gfx_send_cursor=(init_b>>4)&7 ;   //send cursor line
+	if (disp_stepper==2)  {
 
+		default_menu3[125]=potSource[380]+48; default_menu3[126]=potSource[381]+48; default_menu3[127]=potSource[382]+48; }  // write this straight after start ,ok
 
-}
+	}   // end o void
 
 
 
@@ -469,7 +466,7 @@ lcd_temp=enc_dir;  }
 
 
 void displayBuffer2 (void){       // use only writing characters  ,nothing more  , init_b for selecting location
-
+														//when scrolling maybe use this only until  settled
 
 
 	uint8_t d_count;
@@ -484,7 +481,7 @@ store_c= (default_menu3[init_b]-47)&127 ;    // grab char from mem
 store_x=(store_c*8);  // i line characters , might shrink it and use extr for other  visuals , old code but keep for now
 
 
-		if (( !loop_counter3) && (disp_stepper==0))     // blinker for cursor character only  , might just flip the whole last line from prev tables then its x4 faster
+		if ( (disp_stepper==0))     // blinker for cursor character only  , might just flip the whole last line from prev tables then its x4 faster
 			for (d_count=0;d_count<8;d_count++){
 				gfx_ram[init_y+(d_count*18) ]= gfx_char[d_count+store_x]^127; //write character to ram ,should be elsewhere , blank is correct
 			}
@@ -494,7 +491,7 @@ store_x=(store_c*8);  // i line characters , might shrink it and use extr for ot
 
 
 
-if (disp_stepper==15) {disp_stepper=0;enc2_add=0;  }     else disp_stepper++;				// count to 16 also make sure full loop before skip lines
+if (disp_stepper==13) {disp_stepper=0;enc2_add=0;  }     else disp_stepper++;				// count to 16 also make sure full loop before skip lines
 
 
 }    // displayBuffer2

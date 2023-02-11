@@ -3,7 +3,7 @@
 char default_menu[] ={" 00SeqPos   00Decay     00Sustain  00Release  00Rate     00Depth      00Attack      01Depth    02Rate       02Depth     00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  14Notes1  15Notes1    7Notes2    0_Tempo     "};   // just for testing text memory , will be modifiable ,  lut
 
 
-char default_menu3[128]={"____Hello World                                                                                                           ___End"}; // hold all string for output , first page
+char default_menu3[128]={"______________                                                                                                           _______"}; // hold all string for output , first page
 
 
 const uint16_t  disp_lut [32] [16] = {							 // menu look up using char , this is default but will be dynamic  ,use variable names ,NO MORE NUMBERs!

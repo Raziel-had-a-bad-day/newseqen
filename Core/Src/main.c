@@ -390,21 +390,49 @@ mem_buf=potSource[mem_count];
 
 	  if (disp_end==1)	 {  // displaybuffer after each full screen update on spi  ,, no freezes here
 
-		  { if (loop_counter3)  enc2_tempc=enc2_dir; else enc2_dir=enc2_tempc; }    //hold enc till finished , this to clean up characters for now ,works ok
-		  loop_counter3=!loop_counter3;  //blinker flips on each full page refresh
-
-		  for (i=0;i<16;i++) {   display_process();   displayBuffer2();}
-		  enc2_dir=enc2_tempc;
+		  for (i=0;i<14;i++) {   display_process();   displayBuffer2();}
+		  gfx_send_swap=1;   // enable line swapping
 		  disp_end=0;   ///reset till next full page
+
+
+		  if (!disp_stepper) break;
 	  }
 
 
 	  if (init<6)				// after 6 its done for good   // no freeze here
 {
 	  for (i=0;i<6;i++) {display_init();}  //1-2ms ?  change length if flickering ,maybe initial data
-} else {  gfx_send() ; }  // send spi line data every loop cycle , self contained, single 8pixel line 18*256steps
+}
+
+	  if (init > 5) {
+		  uint16_t gfx_send_temp;
 
 
+		  if (gfx_send_swap==2) gfx_send_lines++;		// this is ok for now
+		  if (gfx_send_swap==1)  { gfx_send_counter=gfx_send_cursor*144; gfx_send_swap=2; } // jump to cursor pixel line
+		  if (gfx_send_lines==144)   { gfx_send_lines=0; gfx_send_counter=1008; gfx_send_swap=0;}  // skip to last char line
+
+
+		  while (n < 18) {
+				gfx_send();   // run 1 pixel line ( maybe 6ms, 100ms refresh with skip  )
+				n++;
+			}
+			n = 0;
+
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+	  // send spi line data every loop cycle ,
 	  ///////////////////////////////////////////////////////////////////////////////
 
 	  if (loop_counter == 255)	{ // grab adc readings + 3ms , 32 step  // no freeze
