@@ -2,7 +2,7 @@ void menu_vars(void){
 
 	char menu_string[8];   // incoming string holder (single) , dont forget to get the
 	char menu_string2[8];
-	uint8_t var_index=menu_index_in;    //set var index ie  LFO[1].rate
+	uint8_t var_index=menu_index_in&15;    //set var index ie  LFO[1].rate
 	//uint8_t menu_count; // point to search result for var
 	uint8_t *menu_vars_var1=NULL;
 	menu_countr =0;
@@ -51,7 +51,7 @@ void menu_vars(void){
 
 	}
 
-	menu_vars_var=menu_vars_var1;    // copy back ,ok
+	menu_vars_var=menu_vars_var1;    // copy back address  ,ok
 
 	//menu_vars_var= menu_vars_var1;
 
@@ -62,21 +62,21 @@ void menu_vars(void){
 void menu_parser(void){          // parse out menus , shouldn't have to run (in theory) once filled ,only for feedback pointer maybe
 
 
-	char menu_string[8];   // incoming string holder (single)
-	char menu_string2[8];
+	char menu_string[8]="xxxxxxxx";   // incoming string holder (single)
+	char menu_string2[8]="hhhhhhhh";
 
 
 
 	// strcpy(menu_string2,menu_out1[i]);
-	uint16_t menu_searchsize=sizeof(default_menu)-16;   // this should fairly big always , leave gap at the end
+	uint16_t menu_searchsize=sizeof(default_menu)-8;   // this should fairly big always , leave gap at the end , atm 480
 
 
-	if (string_search>menu_searchsize) {                    //string_search=0;  exit
+	if (string_search>menu_searchsize) {                    //this is ok
 		return;    }    // check if bigger than search area
 
 
-	if ((!string_search) && menu_counter) {string_search=0; menu_title_count=0;
-	return;} // hold counter until menu writing was reset ,ok
+//	if ((!string_search) && menu_counter) {string_search=0; menu_title_count=0;
+//	return;} // hold counter until menu writing was reset ,ok
 
 	memcpy(menu_string,default_menu+string_search,8);    //copy 8 strings created menu array
 	////////////////////////////
@@ -85,9 +85,11 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 		memcpy(menu_string2,menu_titles_final[i],8);
 		if  ((strncmp(menu_string,menu_string2,8))==0) 								// compare and if true pass var,seq
 		{
-			menu_title_lut[menu_title_count]=(i<<8)+menu_counter;   // search result  and disp position counter
+			menu_title_lut[menu_title_count]=(i<<8)+menu_counter;   // search result  and disp lcd position counter
 
-			memcpy(menu_index_list+(menu_title_count<<1),default_menu+string_search-2,2); // get array  index under ,LFO[1]  etc ,ok
+			memcpy(menu_index_list+(menu_title_count*2),default_menu+string_search-2,2); // get array  index under ,LFO[1]  etc ,ok
+
+
 			menu_title_count++;
 			menu_counter++;
 			space_check=0;
@@ -97,10 +99,10 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 
 	}
 
-	string_value=255;    // no result use 255 for now
+	//string_value=255;    // no result use 255 for now
 	//menu_title_lut[menu_title_count]=255;   // record for feedback line
 	//menu_title_count++;
-	if (space_check>2)  menu_counter++;
+	if (space_check>1)  menu_counter++;   //this is ok
 	space_check++;  // count empty spaces or fill characters
 	string_search++;
 	return;
@@ -265,15 +267,16 @@ uint16_t menu_holder;
 	enc2_store2=enc2_store[0]+enc2_store[1]+enc2_store[2]+enc2_store[3];     // average filter hopefully
 	enc2_store3=enc2_store2>>3;
 	enc2_temp=enc2_store3;
-
+	//enc2_temp=(TIM4->CNT) ;   //force
 	//enc2_temp=enc2_temp&127; // fix overflow ? , dont need a lot because of skip
 
 
-	if  (enc_temp>enc_tempB)	 enc_dir=enc_dir-(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite
-	if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite , step multiplier setting
-	//if (enc_temp<enc_tempB)	 enc_dir++;
+	//if  (enc_temp>enc_tempB)	 enc_dir=enc_dir-(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite
+	//if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+(disp_multi[enc2_dir>>4]);   // start settle timer , will do 2 times per turn always, wire opposite , step multiplier setting
+	if  (enc_temp>enc_tempB)	 enc_dir=enc_dir-1;
+	if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+1;
 
- // enc2_temp=enc2_lut[enc2_temp];  // force alternative values for skip  , seems to work ok , disable temporarily
+
 
 
 
@@ -302,11 +305,11 @@ uint16_t menu_holder;
 
 			//if (enc2_dir>255) {menu_page[1]=0;display_fill();}
 
-					if ((enc2_temp>127) && (enc2_tempB<=127)) display_fill();    // need to optimize
-					if ((enc2_temp<=127) && (enc2_tempB>127)) display_fill();
-					if ((enc2_temp>255) && (enc2_tempB<=255)) display_fill();
-					if ((enc2_temp<=255) && (enc2_tempB>255)) display_fill();
-					if ((enc2_temp>383) && (enc2_tempB<=383)) display_fill();
+				//	if ((enc2_temp>127) && (enc2_tempB<=127)) display_fill();    // need to optimize
+				//	if ((enc2_temp<=127) && (enc2_tempB>127)) display_fill();
+				//	if ((enc2_temp>255) && (enc2_tempB<=255)) display_fill();
+				//	if ((enc2_temp<=255) && (enc2_tempB>255)) display_fill();
+				//	if ((enc2_temp>383) && (enc2_tempB<=383)) display_fill();
 					//if ((enc2_temp<=383) && (enc2_tempB>383)) display_fill();
 					//if ((enc2_temp<127) && (enc2_tempB>384)) display_fill();
 					//if ((enc2_temp<=511) && (enc2_tempB<127)) display_fill();
@@ -436,16 +439,23 @@ void display_process(void){							// keep data processing here
 
 	 memcpy(default_menu3+112, *(menu_titles_final+crap_hold9),8);   // copy feedback data for reading,ok
 	 memcpy(menu_vars_in,*(menu_titles_final+crap_hold9),8);	// send back for menu vars ok
-	 menu_index_in=(menu_index_list[(enc_out1<<1)+1])-48 ;menu_vars();		//ok
+
+	 char temp_char[]="  ";
+	 memcpy(temp_char,menu_index_list+((enc_out1*2)),2);   // copy char to char,ok
+	 menu_index_in=atoi(temp_char)			;   // convert char to int,ok
+	 menu_index_in=menu_index_in&15;  //for now , needs another limiter
+
+	 menu_vars();		//test  for vars ok
 
 	    // grab value on ptr address , also write first char , ok
 
 	}
 
 	if ((disp_stepper==0) || (disp_stepper==1))   // repeat first character
-	{ init_b= menu_title_lut[enc_out1]&127;
+	{ init_b= menu_title_lut[enc_out1]&127;    // max 127 for now , max is two pages
 
-	lcd_out3=*menu_vars_var; default_menu3[init_b]=((lcd_out3&255)>>5)+48; lcd_temp=lcd_out3&127; enc_dir=lcd_temp;       } // force enc_dir
+	lcd_out3=*menu_vars_var;
+	default_menu3[init_b]=((lcd_out3&255)>>4)+48; lcd_temp=lcd_out3&127; enc_dir=lcd_temp;       } // force enc_dir
 
 
 
@@ -622,9 +632,9 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 
 		//seq.loop[4]=((note[2].timeshift+((seq.pos&15)>>1))&15); // half speed
 
-		note[2].pitch=seq.notes2[seq.loop[2]]+note[2].transpose;  //loop 8 notes from pos and x times
-		note[3].pitch=seq.notes1[seq.loop[3]];  //loop 8 notes from pos and x times ,might disable normal adsr completely
-	if (note[3].pitch) 		{note[3].pitch=note[3].pitch+note[3].transpose;	adsr_retrigger[3]=1; note_toggler[i>>5]=1<<(i&31   )   ; } // stay at zero for off
+		note[2].pitch=(seq.notes2[seq.loop[2]]>>4)+(note[2].transpose>>4);  //loop 8 notes from pos and x times
+		note[3].pitch=(seq.notes1[seq.loop[3]]>>4);  //loop 8 notes from pos and x times ,might disable normal adsr completely
+	if (note[3].pitch) 		{note[3].pitch=note[3].pitch+(note[3].transpose>>4);	adsr_retrigger[3]=1; note_toggler[i>>5]=1<<(i&31   )   ; } // stay at zero for off
 //	if ((note[].pitch[3]) && (adsr_retrigger[3]==1))		adsr_retrigger[3]=0;   // while note on , turn of trigger
 //	if ((note[].pitch[3]) && (adsr_retrigger[3]==0))	  adsr_retrigger[3]=1;
 
@@ -642,13 +652,13 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	//if ((note[5].pitch) && (adsr_toggle[5]==2)) {note[5].pitch=note[5].pitch; one_shot=0;}  // grab note when on ,one shot also , also delete
 
 
-	note[5].pitch=seq.notes2[seq.loop[2]]+(note[5].transpose);  //
+	note[5].pitch=(seq.notes2[seq.loop[2]]>>4)+(note[5].transpose>>4);  //
 
 
 
 
 
-	note[5].pitch=MajorNote[note[5].pitch];
+	note[5].pitch=MajorNote[note[5].pitch];    //this is for sine skip mask
 	//note[5].pitch=11; // works ok with single note @24 but   fails on other
 	note[5].tuned=sine_lut[note[5].pitch];	//sets freq ,1.0594  * 16536 =17518  ,
 	note[5].tuned= (note[5].tuned*1200)>>10;  // modify different sample size , just need single cycle length and thats it

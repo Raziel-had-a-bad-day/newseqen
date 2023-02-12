@@ -1,98 +1,12 @@
 
 
-char default_menu[] ={" 00SeqPos   00Decay     00Sustain  00Release  00Rate     00Depth      00Attack      01Depth    02Rate       02Depth     00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  14Notes1  15Notes1    7Notes2    0_Tempo     "};   // just for testing text memory , will be modifiable ,  lut
+char default_menu[] ={" 00SeqPos   00Tempo    02Transpos 03Transpos 05Transpos 00Rate     00Depth    01Rate     01Depth    02Rate     02Depth           "
+		"  00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
+		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes1                              "};   // just for testing text memory , will be modifiable ,  lut
+//  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
 
+char default_menu3[150]={"_                                                                                                                               "}; // hold all string for output , first page
 
-char default_menu3[128]={"______________                                                                                                           _______"}; // hold all string for output , first page
-
-
-const uint16_t  disp_lut [32] [16] = {							 // menu look up using char , this is default but will be dynamic  ,use variable names ,NO MORE NUMBERs!
-
-
-		{128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143},  // 16 notes 0-15
-		{144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159}, // 16 notes for drums and other tones 80 - 95
-	/*
-		{64  ,64 ,148 ,149 ,64,'P',64,200,64,201,64,202,64,'T',237,64},	// 20,21    attack sustain  maybe follow a diff system ,attach+decay then sustain+release 237 tempo
-		{64,258,64,268,64,330,64,512,513,514,515,516,517,518,519,520},  //lfo1
-
-		{64,259,64,269,64,331,64,64 ,64,64,64,64,64,64,64,64},	// lfo 2
-
-		{64,260,64,270,64,332,64,64,64,64,64,64,64,64,64,64},   // lfo 3
-		{64,'S',64,'D',64,'O',64,64,64,64,64,64,64,64,64,64 },	// lfo gain
-*/
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},   // feedback
-
-	//	{84 ,121, 112, 101, 78, 111, 116, 64,240,241,242,243,244,245,246,247},	//feedback
-
-		//		{176,177,178,64,179,180,181,64,182,183,184,64,185,186,187,64},						//p4 tone mods
-
-			//	{98 ,97, 114, 64, 80, 105, 116, 99, 104,64,200,201,202,203,64,64}, //p5  bug with 66?
-
-		//{192,64,193,64,194,64,195,64,196,64,197,64,198,64,199,64},					// keychange
-				{'L','F','O','1','=',330,64,64,64,64,64,64,64,64,64,64},
-				{'L','F','O','2','=',331,64,64,64,64,64,64,64,64,64,64},
-				{'L','F','O','3','=',332,64,64,64,64,64,64,64,64,64,64},
-				{'L','F','O','4','=',333,64,64,64,64,64,64,64,64,64,64},
-				{'L','F','O','5','=',334,64,64,64,64,64,64,64,64,64,64},
-				{'L','F','O','6','=',335,64,64,64,64,64,64,64,64,64,64},
-				//{'L','F','O','6','=',552,553,554,555,556,557,558,559,64,64,64},
-				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},					//p6 empty
-				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-				{'s','t','a','r','t',64,64,64,64,64,64,64,64,64,64,64},
-				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-				{64,64,274,64,275,64,64,64,64,64,64,64,64,64,64,64},
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},					//p6
-		{64,64,64,64,64,64,64,64,64,64,64,64,'E','n','d',64},
-		{64,64,64,64,64,64,64,64,64,64,64,64,'E','n','d',64},			//p8
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-		{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-				{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-				{64,64,64,64,64,64,64,64,64,64,64,64,'E','n','d',64},
-						{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-						{64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64},
-
-
-};
-const char* menu_items[]  =  {"menu_edit","yes","no,square","sine","triangle,saw",				// menu_loc has reference potSource locations , might convert to 10 length char uint8
-		"Notes1","Notes2","Notes3",
-		"OSC1_pitch","OSC2_pitch","OSC3_pitch",
-		"OSC1_attack","OSC2_attack","OSC3_attack",
-		"OSC1_decay","OSC2_decay","OSC3_decay",
-		"LFO1_wave","LFO2_wave","LFO3_wave","LFO4_wave","LFO5_wave","LFO6_wave",
-		"LFO1_rate"," LFO2_rate","LFO3_rate","LFO4_rate","LFO5_rate","LFO6_rate",
-		"LFO1_depth","LFO2_depth","LFO3_depth","LFO4_depth","LFO5_depth","LFO6_depth",
-		"LFO1_gain","LFO2_gain","LFO3_gain","LFO4_gain","LFO5_gain","LFO6_gain",
-		"LFO1_offset","LFO2_offset","LFO3_offset","LFO4_offset","LFO5_offset","LFO6_offset",
-		"LFO1_out","LFO2_out","LFO3_out","LFO4_out","LFO5_out","LFO6_out"
-
-};
-const uint16_t menu_loc[]  ={511,511,511,511,511,511,511,511,  // potSource vale pointer for menu_items[]  ,  maybe above 512 its text reference(not yet) , also 0-128 is just characters ,128-143 notes 1 , 208-223 notes 2
-		200,201,202,	//pitch
-		148,148,148,  // no new ref yet
-		149,149,149,	 // no new ref yet
-		300,301,302,303,304,305,   // lfo wave not used yet
-		258,259,260,261,262,263,   //lfo speed
-		268,269,270,271,272,273,  // lfo depth
-		310,311,312,313,314,315, // lfo gain not used
-		320,321,322,323,324,325,  // lfo offset not used
-		330,331,332,333,334,335  // lfo target not used yet
-
-}; //56
-
-const char rom_table1 [] =  {"seq.notes1[0] seq.notes1[1] seq.notes1[2] seq.notes1[3] seq.notes1[4] seq.notes1[5] seq.notes1[6] seq.notes1[7] seq.notes1[8] seq.notes1[9] "
-	"seq.notes1[10],seq.notes1[11],seq.notes1[12],seq.notes1[13],seq.notes1[14],seq.notes1[15],"
-	"seq.notes2[0],seq.notes2[1],seq.notes2[2],seq.notes2[3],seq.notes2[4],seq.notes2[5],seq.notes2[6],seq.notes2[7],seq.notes2[8],seq.notes2[9],"
-		"seq.notes2[10],seq.notes2[11],seq.notes2[12],seq.notes2[13],seq.notes2[14],seq.notes2[15],seq.pos,seq.tempo"
-
-};
 
 
 

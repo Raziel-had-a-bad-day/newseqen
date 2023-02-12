@@ -318,25 +318,16 @@ for (i=0;i<512;i++)	{gfx_char[i]=gfx_char[i];
 
 }    //font replace
 //    Merge menu times   here    char , int8 ,int16  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-for (i=0;i<128;i++)	{   // fill up display data
+for (n=0;n<256;n++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
 
-	menu_parser();
-	default_menu3[i]=64;
-		  //default_menu3[i]=(((string_value>>4)+48)&127);
-		 // if (string_value==255) default_menu3[i]=47;
-
+	menu_parser();  // run it closer to default_menu size ,times
+	default_menu3[n>>1]=64;
 }
 menu_title_count--;  //count back one
 
 //   produce extra menu pages here /////////////////////////////////////////////////////////////////////////////////
 uint16_t lut_temp2=0;
 uint16_t lut_temp3=0;
-for  (i=0;i<390;i++){					// get a few more pages
-
-	if (disp_lut [i>>4] [i&15] <95) lut_temp2=lut_temp2+1;    // skip space or characters
-
-	else {enc2_lut[lut_temp3] =i;  lut_temp3++;}     // goes to 511
-}
 
 
 menuSelect=0;
@@ -355,14 +346,14 @@ firstbarLoop=0;
 
     /* USER CODE BEGIN 3 */
 	  loop_counter++ ;
-	  loop_counter2++;//
+	  loop_counter2++;// this pretty slow now thanks to gfx , no skips though
 
 	  // if (menu_page<320) lcd_feedback();  //curious no issues with lcd without this  , maybe spell writing
 
 	  if 	((loop_counter2&7)==6)      {analoginputloopb();} // this is ok , plenty quick , no freeze here
 
 
-if (loop_counter2==9096) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
+if (loop_counter2==1024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
 	  if (mem_count==255) mem_count=0; else mem_count++;  // write to first this was moved for no logical reason ?
 
 	// read values from stored
@@ -421,14 +412,6 @@ mem_buf=potSource[mem_count];
 
 
 	}
-
-
-
-
-
-
-
-
 
 
 
