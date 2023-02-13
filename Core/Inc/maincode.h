@@ -1,24 +1,22 @@
-void menu_vars(void){
+uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name and index , out goes variable reference pointer
 
-	char menu_string[8];   // incoming string holder (single) , dont forget to get the
+
 	char menu_string2[8];
-	uint8_t var_index=menu_index_in&15;    //set var index ie  LFO[1].rate
-	//uint8_t menu_count; // point to search result for var
+	var_index=var_index&15;    //set var index ie  LFO[1].rate
+	uint8_t menu_countr=0; //  menu vars
 	uint8_t *menu_vars_var1=NULL;
-	menu_countr =0;
-	memcpy(menu_string, menu_vars_in, 8);    //copy 8 strings from incoing
 
-
-	for (i = 0; i < 27; i++) {      // find menu location
+	for (i = 0; i < 28; i++) {      // find menu location
 
 		memcpy(menu_string2, menu_titles_final[i], 8);  // copy title list
 		if ((strncmp(menu_string, menu_string2, 8)) == 0) {
 			menu_countr = i;
-			menu_vars_menu=menu_titles_final+menu_countr; // copy pointer, ok
-
 
 		}
 	}
+
+	if (menu_vars_index_limit[menu_countr]<var_index) var_index=menu_vars_index_limit[menu_countr];   // make sure it stays right
+
 	switch(menu_countr){
 	case 0:     menu_vars_var1= NULL; break;
 	case 1:     menu_vars_var1= &LFO[var_index].rate   ; break;
@@ -39,22 +37,22 @@ void menu_vars(void){
 	case 16:     menu_vars_var1= &note[var_index].position    ; break;
 	case 17:     menu_vars_var1= &note[var_index].transpose    ; break;
 	case 18:     menu_vars_var1= &note[var_index].timeshift    ; break;
-	case 19:     menu_vars_var1= &note[var_index].velocity   ; break;
+	case 19:     menu_vars_var1= &note[var_index].velocity   ; break; // 16 bit
 	case 20:     menu_vars_var1= &note[var_index].detune    ; break;
 	case 21:     menu_vars_var1= NULL   ; break;
 	case 22:     menu_vars_var1= &seq.pos    ; break;
 	case 23:     menu_vars_var1= &seq.tempo    ; break;
 	case 24:     menu_vars_var1= &seq.notes1[var_index]   ; break;
 	case 25:     menu_vars_var1= &seq.notes2[var_index]   ; break;
-	case 26:     menu_vars_var1= &seq.loop    ; break;
+	case 26:     menu_vars_var1= &seq.loop [var_index]    ; break;
+	case 27:     menu_vars_var1= &LFO[var_index].target_index    ; break;
 	default :		menu_vars_var1= NULL   ; break;
 
 	}
-
-	menu_vars_var=menu_vars_var1;    // copy back address  ,ok
+    // copy back address  ,ok
 
 	//menu_vars_var= menu_vars_var1;
-
+	return menu_vars_var1;
 }
 
 
@@ -66,21 +64,15 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 	char menu_string2[8]="hhhhhhhh";
 
 
-
-	// strcpy(menu_string2,menu_out1[i]);
 	uint16_t menu_searchsize=sizeof(default_menu)-8;   // this should fairly big always , leave gap at the end , atm 480
 
 
 	if (string_search>menu_searchsize) {                    //this is ok
 		return;    }    // check if bigger than search area
 
-
-//	if ((!string_search) && menu_counter) {string_search=0; menu_title_count=0;
-//	return;} // hold counter until menu writing was reset ,ok
-
 	memcpy(menu_string,default_menu+string_search,8);    //copy 8 strings created menu array
 	////////////////////////////
-	for (i=0;i<27;i++){    	// test a single menu entry  , for now only the first record
+	for (i=0;i<28;i++){    	// test a single menu entry  , for now only the first record
 
 		memcpy(menu_string2,menu_titles_final[i],8);
 		if  ((strncmp(menu_string,menu_string2,8))==0) 								// compare and if true pass var,seq
@@ -109,12 +101,24 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 
 
 }
+void lfo_target_parse(void){    // records ptr for target options , works ok
+
+		for (n=0;n<10;n++){
+
+			if (LFO[n].target) {  // test if above zero
+			if (LFO[n].target>27)    LFO[n].target=27;   // test  limit and block self
+			if (LFO[n].target==5) 	LFO[n].target=6;  // skip up so it doesnt self
 
 
+			if (LFO[n].target_index>menu_vars_index_limit[LFO[n].target_index]  )   // test limit
+			{	LFO[n].target_index=menu_vars_index_limit[LFO[n].target_index]; }
 
+			LFO[n].out_ptr= menu_vars(menu_titles_final[LFO[n].target] , LFO[n].target_index    );     // write ptr
 
+			}
+		}
 
-
+	}
 
 
 void SPI_command(void){
@@ -126,11 +130,7 @@ uint8_t spi_store[5];
 	//clk_pin=(i&1)^1;
 		//bsrr_long=0;
 		if (spi_hold>>8) spi_byte=248; else {spi_byte=250;}  //start with msb ,dont forget flip around at end, 250 =data ,248= command if below 8bit
-/*		bsrr_long=spi_byte<<16; // top byte for command 24-16, then 2 bytes of data 16-0
-		spi_hold=(spi_hold&255);
-		bsrr_long=bsrr_long+((spi_hold>>4)<<12); // 4 bits to top
-		bsrr_long=bsrr_long+((spi_hold&15)<<4);	// 4 bits to top
-*/
+
 	spi_store[0]=spi_byte&255;
 	spi_store[1]=((spi_hold>>4)<<4)&255;
 	spi_store[2]=((spi_hold&15)<<4)&255;
@@ -146,88 +146,30 @@ uint8_t spi_store[5];
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)    // unreliable
 
-{
-	time_proc++;
-	//if (((sample_point==511) || (sample_point==1022)) && (bank_write)  ) error_count++;
+	{
+		time_proc++;
+		//if (((sample_point==511) || (sample_point==1022)) && (bank_write)  ) error_count++;
 
-	if (sample_point==511) {bank_write=1; sample_pointD=0;  }
-	if (sample_point==1022) {bank_write=1; sample_pointD=512; }
-	sample_point=sample_point & 1023;// this is 1
-	play_hold=play_sample[sample_point]; // this is 2
+		if (sample_point==511) {bank_write=1; sample_pointD=0;  }
+		if (sample_point==1022) {bank_write=1; sample_pointD=512; }
+		sample_point=sample_point & 1023;// this is 1
+		play_hold=play_sample[sample_point]; // this is 2
 
-
-
-
-
-	if(TIM3==htim->Instance)			// nothing here is consistent
-{
+		if(TIM3==htim->Instance)			// nothing here is consistent
+	{
 
 
-TIM3->CCR3=play_hold ;  // keep readin sample storage
+	TIM3->CCR3=play_hold ;  // keep readin sample storage
 
-/* if ((sample_point&7)==6) {
-	if (spi_send==2){ GPIOB->BSRR =bsrr_seq[bsrr_counter];bsrr_counter++;}  // send spi when loaded up , this works , too fast however will fail
-	if ((bsrr_counter==49) && (spi_send==2)) {bsrr_counter=0; spi_send=0;}
-}
-*/
+
+	sample_point++; //this needs to be here or too fast and wrong sample rate
+
+	}
+
+	}
 
 
 
-
-
-//if (sample_point&1) {  // this is needed   , slow down also read only when not written to
-
-	//bsr_out=bsrr_hold[bs_count+ (menu_store*80)]; // send port data to holder
-
-	// if (lcd_send) GPIOB->BSRR =(bsr_out<<10) + (~(bsr_out) <<26);  // write to port but not too early
-
-//if (spi_enable) {GPIOB->BSRR =(bsrr_hold[samp_temp]<<13)+(~(bsrr_hold[samp_temp])<<29); }  // send spi data when enabled
-
-			//	if (spi_enable){ HAL_GPIO_WritePin(MOSI_GPIO_Port, MOSI_Pin,((bsrr_hold[samp_temp]>>1))); HAL_GPIO_WritePin(CLK_GPIO_Port, CLK_Pin,((bsrr_hold[samp_temp])&1));}
-
-
-//samp_temp++;
-//if ((samp_temp)==48) {spi_enable=0;spi_send=0;samp_temp=0;}  // finish , enable next char
-			//	 HAL_GPIO_WritePin(RS1_GPIO_Port, RS1_Pin,1);
-		 	 	//  HAL_Delay(1);
-
-
-
-
-//if (bs_count==255
-	//	)  { bs_count=0; menu_store=(menuSelect>>2); } else bs_count++; // menu select, higher count just spills over  159 chamge to 128 2*64
-//}
-sample_point++; //this needs to be here or too fast and wrong sample rate
-
-}
-
-}
-
-
- /*void adc_read(void){		HAL_ADC_Start(&hadc1);				//disabled
-		if (HAL_ADC_PollForConversion(&hadc1, 1) == HAL_OK)      // 1ms time out
-				{
-		adc_values[0] = HAL_ADC_GetValue(&hadc1);
-					}  // get value
-		 HAL_ADC_Start(&hadc1); // need for every conversion
-		if (HAL_ADC_PollForConversion(&hadc1, 1) == HAL_OK)      // 1ms time out
-				{
-		adc_values[1] = HAL_ADC_GetValue(&hadc1);
-					}  // get value
-	 	HAL_ADC_Start(&hadc1);
-		if (HAL_ADC_PollForConversion(&hadc1, 1) == HAL_OK)      // 1ms time out
-				{
-			adc_values[2] = HAL_ADC_GetValue(&hadc1);
-				}  // get value this works
-		HAL_ADC_Start(&hadc1);
-		if (HAL_ADC_PollForConversion(&hadc1, 1) == HAL_OK)      // 1ms time out
-						{
-					adc_values[4] = HAL_ADC_GetValue(&hadc1);
-						}  // get value this this on e is blank
-		//HAL_ADC_Stop(&hadc1);
-//for (i=0;i<3;i++){ adc_values[i]= (adc_values[i]>>8) &15; } // reduce value to 4 bit
-}
-*/
 void analoginputloopb(void){  //works fine still
 uint16_t menu_holder;
 
@@ -236,12 +178,6 @@ uint16_t menu_holder;
 	menuSelect = cursor_menu[2]>>4;		//x *7  main menu select
 		menuSelectX=cursor_menu[2]&15;  // Y select inside page
 
-	//	counterVarB = menuSelectX + menuSelect; // select mem page 10*8  and location pointer  77
-//		if (adc_values[1]>15)	menu_holder=disp_lut [(menuSelect)	+1] [31-adc_values[1]]; // change back to 0-15
-//	else menu_holder=disp_lut [(menuSelect)	] [15-adc_values[1]];  // grab disp lut value for pointer if valid then write for now
-
-		//menu_holder=disp_lut [(menuSelect)	] [(15-adc_values[1])];   // value from disp lut
-		//menu_holder=disp_lut [menuSelect] [menuSelectX];   // value from disp lut
 
 		cursor_menu[1]=0;
 		//cursor_menu[2]=cursor_lookup[enc2_dir];
@@ -250,11 +186,8 @@ uint16_t menu_holder;
 
 		//cursor_menu[2]=(16-adc_values[1]);
 
-
-
 		//if (menu_holder>127)	counterVarB=menu_holder-128; //  points to actual potvalues location from dsip_lut when value is higher than 127 , works ok problem with menu display
 		//if (menu_holder>511)	counterVarB=menu_holder-384;		// text pointer , max potvalue address is 142 , fix second page issue later
-
 
 		//enc_dir=potSource[counterVarB];
 
@@ -278,9 +211,6 @@ uint16_t menu_holder;
 	if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+1;
 
 
-
-
-
   if (enc2_temp>383) enc2_temp=383;  //mem overflow somewhere
 	if (enc_dir>160) enc_dir=160;
 			if (enc_dir<0) enc_dir=0;
@@ -290,30 +220,13 @@ uint16_t menu_holder;
 				//	enc_dir=0;
 			enc_tempB=enc_temp;
 			//if (enc2_dir>383) enc2_dir=383;
-
-
-
-
-
-
-			//if (enc2_temp<enc2_tempB)	 enc2_dir--;
+		//if (enc2_temp<enc2_tempB)	 enc2_dir--;
 			enc2_dir=enc2_temp; //temp to try source data
 		//	if (enc2_dir>127) menu_page[1]=127; else if (enc2_dir>255)   menu_page[1]=255;				else menu_page[1]=0;
 		//	menu_page[1]= (enc2_dir >>7) <<7;
 
 			menu_page[1]=enc2_dir&384;  // single  for now
 			menu_page[1]=0; // force a single page for now
-
-			//if (enc2_dir>255) {menu_page[1]=0;display_fill();}
-
-				//	if ((enc2_temp>127) && (enc2_tempB<=127)) display_fill();    // need to optimize
-				//	if ((enc2_temp<=127) && (enc2_tempB>127)) display_fill();
-				//	if ((enc2_temp>255) && (enc2_tempB<=255)) display_fill();
-				//	if ((enc2_temp<=255) && (enc2_tempB>255)) display_fill();
-				//	if ((enc2_temp>383) && (enc2_tempB<=383)) display_fill();
-					//if ((enc2_temp<=383) && (enc2_tempB>383)) display_fill();
-					//if ((enc2_temp<127) && (enc2_tempB>384)) display_fill();
-					//if ((enc2_temp<=511) && (enc2_tempB<127)) display_fill();
 
 
 					enc2_tempB=enc2_temp; // to effective as counter not getting reset
@@ -328,12 +241,9 @@ potValues[counterVarB]=(potSource[counterVarB]>>4) & 15 ;  // reduce values for 
 }
 void display_init(void){
 	//uint8_t sp2_command=0xf8+(0<<1);
-
-
 		 // uint16_t disp[]={  304,304,304,270,257,268,384,258,51,51,52,53,54,55,56,57,58,0};  // normal characters
 		 uint16_t disp[]={  304,268,257,262,308,310,310,51,51,52,53,54,55,56,57,58,0};  // this should work for gd 310 is extended instruction
 		  if (spi_send==0){         // sets data byte
-
 
 switch(init){     //Remember every line advances +char on display ,,all this is mostly unneeded
 
@@ -345,9 +255,11 @@ if (init<6)	{HAL_Delay(3);spi_hold=disp[init]  ; } //delay needs to go
 
 init++;   // after 6 it quits the rest is not needed
 spi_send=1;SPI_command();spi_send=0;spi_enable=0;
+
+
 		  }
 
-
+		//  if (init==5) display_fill();
 }
 
 
@@ -365,13 +277,20 @@ void gfx_send(void){         // send spi to lcd from gfx ram
 					spi_store[1]=((spi_store3>>4)<<4);
 					spi_store[2]=((spi_store3&15)<<4);
 
-						//HAL_SPI_Transmit_DMA(&hdma_spi2_tx, spi_store, 3);    // ca 0.1ms in theory so one line should be about 2ms
+
 						HAL_SPI_Transmit(&hspi2,spi_store,3,3);  // ok
 					if (gfx_send_counter2==17 ) { gfx_send_counter2=0;    } else gfx_send_counter2++; // check elsewhere if changing gfx_send_counter
 			if (gfx_send_counter==1151 ) { gfx_send_counter=0; disp_end=1; gfx_send_counter2=0;    } else gfx_send_counter++;
 
 		}
+void gfx_clear(void){     // simple gfx ram clear ,beside feedback
 
+	 for (n=0;n<1152 ;n=n+18)    {
+				for (i=2;i<18;i++){ gfx_ram[n+i] =0;
+				}
+
+                }
+}
 
 void display_fill(void)  {     // full update of gfx memory
 loop_counter3=1;
@@ -385,6 +304,7 @@ for (n=0;n<fill_counter;n++)	{ //just fills with blank character s
 	disp_stepper=1;
 
 	init_b=n;
+//display_process();
 displayBuffer2();
 
 
@@ -444,9 +364,9 @@ void display_process(void){							// keep data processing here
 	 char temp_char[]="  ";
 	 memcpy(temp_char,menu_index_list+((enc_out1*2)),2);   // copy char to char,ok
 	 menu_index_in=atoi(temp_char)			;   // convert char to int,ok
-	 menu_index_in=menu_index_in&15;  //for now , needs another limiter
+	 //menu_index_in=menu_index_in&15;  //for now , needs another limiter
 
-	 menu_vars();		//test  for vars ok
+	 menu_vars_var=menu_vars(menu_vars_in,menu_index_in);		//test  for vars ok
 
 	    // grab value on ptr address , also write first char , ok
 
@@ -479,6 +399,7 @@ void display_process(void){							// keep data processing here
 void displayBuffer2 (void){       // use only writing characters  ,nothing more  , init_b for selecting location
 														//when scrolling maybe use this only until  settled
 
+init_b=init_b&127;
 
 	uint8_t d_count;
 uint16_t init_x=(init_b & 15)+2 ;    // +2 important  0-15 hor
@@ -830,9 +751,9 @@ for (i=0;i<510;i++){
 }
 */
 
+time_proc=0;
 
-
-for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators , filters and final out
+for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators , filters and final out ,slow 133
 	i_total=i+sample_pointB;
 i_frac=(i>>6);
 
@@ -880,9 +801,9 @@ if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;
 
 
 
-		//	filter_accus[1]=sample_Accu[1]+((filter_hold[0])*0.5); // saw
+		filter_accus[1]=sample_Accu[1]; // saw
 	//	filter_accus[1]=	filter_accus[1]*adsr_level[3][i_frac];
-		filter_accus[1]=	filter_accus[1]*adsr_level[3];
+		//filter_accus[1]=	filter_accus[1]*adsr_level[3];
 
 		filter_accus[2]=(filter_accus[1]*freq_point[0])+(filter_accus[2]*freq_point[1]);					// maybe allow bandpass insted of lpf
 		filter_accus[3]=(filter_accus[2]*freq_point[0])+(filter_accus[3]*freq_point[1]);
@@ -900,7 +821,7 @@ if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;
 				if (freq_point[2]>1) freq_point[2]=1;
 
 				freq_point[3]=1-freq_point[2];
-				filter_accus[6]=sample_Accu[3];
+				filter_accus[6]=( sample_Accu[3]>>13)*LFO[1].out[i>>6];
 			//	filter_accus[6]= filter_accus[6]*adsr_level[3]; // add adsr envelope
 
 				filter_accus[7]=(filter_accus[6]*freq_point[2])+(filter_accus[7]*freq_point[3]);
@@ -913,11 +834,11 @@ if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;
 
 
 filter_Accu=0;
-//filter_Accu=(sample_Accu[0]+sample_Accu[2])>>8; //filter + drum out
+filter_Accu=(sample_Accu[0]+sample_Accu[2])>>8; //filter + drum out
 
 
 //filter_Accu=(sample_Accu[1]+sample_Accu[3])>>8; //filter + drum out ,clean out
- filter_Accu=sample_Accu[1]>>7;
+ //filter_Accu=sample_Accu[1]>>7;
 
 // filter_Accu=sample_Accu[2]>>11;
 //filter_Accu=(sample_Accu[1]>>7)+(sample_Accu[3]>>8); //filter + drum out
@@ -936,7 +857,7 @@ filter_Accu=0;
 //time_final=time_proc;   // in samples
 
 if (bank_write)   error_count++;  // if bank write is high it means too much stall here
-
+time_final[0]=time_proc;
 
 
 //bank_write=0;   /// total 320 sample time (39khz)

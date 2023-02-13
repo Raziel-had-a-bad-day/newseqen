@@ -91,9 +91,10 @@ static void MX_SPI1_Init(void);
 void display_init(void);
 
 //void adc_read(void);
-
+void gfx_clear(void);
+void lfo_target_parse(void);
 void gfx_send(void);
-void menu_vars(void);
+uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ); // string +index , returns pointer to struct
 void display_process(void);
 void displayBuffer2 (void);  // new version
 void analogInputloop(void);
@@ -112,7 +113,7 @@ void display_gfx(void);
 void SPI_command(void);
 void display_update(void);
 void display_fill(void);
-//void velocityLFO(void);
+
 uint8_t seq_pos; // sequencer position linked to isrCount for now but maybe change
 
 void  mask_calc(uint8_t mask_select,uint8_t mask_speed);
@@ -268,9 +269,10 @@ struct LFO_settings{      // use first 5*10 , leave the rest
 	uint8_t depth;	//(p140)
 	uint8_t gain;
 	uint8_t offset;
-	uint8_t target;      // lfo modulation target  , number for now
+	uint8_t target;      // lfo modulation target  , number for now , 0-16(index) + (0-27)<<4, variable ptr
+	uint8_t target_index;
 	uint16_t out[10];       // actual output , needs multiple for loop,,calculated
-
+	uint8_t* out_ptr;   // address from target (mostly 8 bit,mostly )
 };
 
 struct LFO_settings LFO[10];       // create lfo settings
@@ -316,7 +318,7 @@ struct seq_settings {				// 46 bytes need all
 	uint8_t tempo; // (p109)
 	uint8_t notes1[17];    // all the notes for loop 1  (pvalues 0)
 	uint8_t notes2[17];    // all the notes for loop 2  (pvalues 80)
-	uint8_t loop[10];    // various positions in the loop for notes
+	uint8_t loop[10];    // looping start point in a sequence   0-15
 
 
 };
@@ -332,23 +334,19 @@ uint16_t menu_title_lut[65];  // hold pointer for feedback line , points to defa
 uint8_t menu_title_count=0;   // holds the counter for menu_title_lut
 uint32_t  menu_var_lut[65];    // hold pointers for variables
 
-const char* menu_titles_final[]= {"LFO     ", "Rate    ","Depth   " ,"Gain    ", "Offset  ", "Target  ","ADSR    ",
-		"Attack  ", "Decay   ","Sustain ","Release ",
-		"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",
-		"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    "
-};   // 27 *8
 
 char* menu_vars_menu=0;    // return pointer to menu_titles final
 uint8_t * menu_vars_var=0;			// return memory location to var !
 char menu_vars_in[8];  // incoming string ,ok
 uint8_t menu_index_in=0; // gets the struct index ie LFO[1].rate
 char menu_index_list[128];   //  use along the menu_var_lut uses double the records !! gets weird when using 256
-uint8_t menu_countr; //  menu vars
+
 int8_t enc_out1=1;    // menu_title_lut   cursor position
 uint8_t  enc2_store[5];
 uint8_t enc2_store_count=0;
 uint8_t  lcd_temp=0;   //temp hold
 uint8_t spi2_send_enable=0;
+
 
 
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!

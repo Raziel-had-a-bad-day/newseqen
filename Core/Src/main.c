@@ -283,8 +283,8 @@ memcpy(&seq,potSource,46 );  // load from potSource
 for(i=0;i<10;i++){
 	if (i<8){    memcpy(&note[i],potSource+46+(i*14),14 );}  //grab note settings ,112 total , works ok
 
-	memcpy(&LFO[i],potSource+158+(i*5),5 );  // + 50
-	memcpy(&ADSR[i],potSource+208+(i*5),5 );  // +50  ,
+	memcpy(&LFO[i],potSource+158+(i*5),6 );  // + 60
+	memcpy(&ADSR[i],potSource+218+(i*5),5 );  // +50  ,
 
 }
 
@@ -308,8 +308,8 @@ for (i=0;i<320;i++)	{	// write C into whole section,useful ornot
 	spell[i]=67;
 
 }
-
-display_fill();
+gfx_clear();
+//display_fill();
 // build display, enc_lut2, works good
 
 for (i=0;i<512;i++)	{gfx_char[i]=gfx_char[i];
@@ -354,7 +354,7 @@ firstbarLoop=0;
 
 if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
 	  if (mem_count==255) mem_count=0; else mem_count++;  // write to first this was moved for no logical reason ?
-
+	  lfo_target_parse(); //
 	// read values from stored
 
 memcpy(potSource,&seq,46); // about 46 bytes
@@ -362,8 +362,8 @@ memcpy(potSource,&seq,46); // about 46 bytes
 for(i=0;i<10;i++){
 	if (i<8){    memcpy(potSource+46+(i*14),&note[i],14 );}  //grab note settings ,112 total , works
 
-	memcpy(potSource+158+(i*5),&LFO[i],5 );  // + 50
-	memcpy(potSource+208+(i*5),&ADSR[i],5 );  // +50  ,
+	memcpy(potSource+158+(i*5),&LFO[i],6 );  // + 60
+	memcpy(potSource+218+(i*5),&ADSR[i],5 );  // +50  ,
 
 }	// copy vars into potSource
 
@@ -395,14 +395,14 @@ mem_buf=potSource[mem_count];
 }
 
 	  if (init > 5) {    //  around 3 cycles per single transmit  , plenty quick as is , spi lcd can really slow things down
-		  time_proc=0;
+
 
 		  if (gfx_send_swap==2) gfx_send_lines++;		// this is ok for now
 		  if (gfx_send_swap==1)  { gfx_send_counter=gfx_send_cursor*144; gfx_send_swap=2; } // jump to cursor pixel line
 		  if (gfx_send_lines==144)   { gfx_send_lines=0; gfx_send_counter=1008; gfx_send_swap=0;}  // skip to last char line
 				gfx_send();    // don't loop this without using dma  , just makes things really slow
 
-				time_final[0]=time_proc;
+
 
 	}
 
