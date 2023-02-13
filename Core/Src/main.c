@@ -84,7 +84,6 @@ static void MX_TIM4_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_SPI1_Init(void);
-
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -155,7 +154,7 @@ HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
 TIM2->CNT=32000;
 HAL_ADC_Start(&hadc1);
 HAL_ADC_Start_DMA(&hadc1, adc_source, 1024); //dma start ,needs this and adc start ,set sampling time to very long or it will fail
-
+//HAL_DMA_Init(&hdma_spi2_tx);
 
 HAL_I2C_MspInit(&hi2c2);
 uint8_t send_spi1[5]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
@@ -353,7 +352,7 @@ firstbarLoop=0;
 	  if 	((loop_counter2&7)==6)      {analoginputloopb();} // this is ok , plenty quick , no freeze here
 
 
-if (loop_counter2==1024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
+if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
 	  if (mem_count==255) mem_count=0; else mem_count++;  // write to first this was moved for no logical reason ?
 
 	// read values from stored
@@ -381,7 +380,7 @@ mem_buf=potSource[mem_count];
 
 	  if (disp_end==1)	 {  // displaybuffer after each full screen update on spi  ,, no freezes here
 
-		  for (i=0;i<14;i++) {   display_process();   displayBuffer2();}
+		  for (i=0;i<14;i++) {   display_process();   displayBuffer2();} // 5 cycles max for the lot or  0.2ms
 		  gfx_send_swap=1;   // enable line swapping
 		  disp_end=0;   ///reset till next full page
 
@@ -395,21 +394,15 @@ mem_buf=potSource[mem_count];
 	  for (i=0;i<6;i++) {display_init();}  //1-2ms ?  change length if flickering ,maybe initial data
 }
 
-	  if (init > 5) {
-		  uint16_t gfx_send_temp;
-
+	  if (init > 5) {    //  around 3 cycles per single transmit  , plenty quick as is , spi lcd can really slow things down
+		  time_proc=0;
 
 		  if (gfx_send_swap==2) gfx_send_lines++;		// this is ok for now
 		  if (gfx_send_swap==1)  { gfx_send_counter=gfx_send_cursor*144; gfx_send_swap=2; } // jump to cursor pixel line
 		  if (gfx_send_lines==144)   { gfx_send_lines=0; gfx_send_counter=1008; gfx_send_swap=0;}  // skip to last char line
+				gfx_send();    // don't loop this without using dma  , just makes things really slow
 
-
-		  while (n < 18) {
-				gfx_send();   // run 1 pixel line ( maybe 6ms, 100ms refresh with skip  )
-				n++;
-			}
-			n = 0;
-
+				time_final[0]=time_proc;
 
 	}
 
@@ -961,6 +954,10 @@ adc_flag=1;
 
 
 }
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)   // when finished sending
+	{
+	    spi2_send_enable=1;
+	}
 
 
 

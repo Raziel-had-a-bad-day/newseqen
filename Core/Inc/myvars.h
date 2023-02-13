@@ -348,6 +348,7 @@ int8_t enc_out1=1;    // menu_title_lut   cursor position
 uint8_t  enc2_store[5];
 uint8_t enc2_store_count=0;
 uint8_t  lcd_temp=0;   //temp hold
+uint8_t spi2_send_enable=0;
 
 
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!

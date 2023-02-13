@@ -30,4 +30,10 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<variableList>
+		<variable>
+			<name>CMSIS_Dep</name>
+			<value>file:/C:/Users/Bobon/Documents/STM32/CMSIS_5-develop/CMSIS/DSP/Include</value>
+		</variable>
+	</variableList>
 </projectDescription>

@@ -136,7 +136,8 @@ uint8_t spi_store[5];
 	spi_store[2]=((spi_hold&15)<<4)&255;
 
 // send this to spi for now
-		HAL_SPI_Transmit(&hspi2, (uint8_t *)spi_store, 3, 5);  // working good
+	HAL_SPI_Transmit(&hspi2, (uint8_t *)spi_store, 3,3
+			);  // working good
 
 
 //HAL_Delay(10);
@@ -364,8 +365,8 @@ void gfx_send(void){         // send spi to lcd from gfx ram
 					spi_store[1]=((spi_store3>>4)<<4);
 					spi_store[2]=((spi_store3&15)<<4);
 
-						HAL_SPI_Transmit(&hspi2, spi_store, 3, 3);    // ca 0.1ms in theory so one line should be about 2ms
-
+						//HAL_SPI_Transmit_DMA(&hdma_spi2_tx, spi_store, 3);    // ca 0.1ms in theory so one line should be about 2ms
+						HAL_SPI_Transmit(&hspi2,spi_store,3,3);  // ok
 					if (gfx_send_counter2==17 ) { gfx_send_counter2=0;    } else gfx_send_counter2++; // check elsewhere if changing gfx_send_counter
 			if (gfx_send_counter==1151 ) { gfx_send_counter=0; disp_end=1; gfx_send_counter2=0;    } else gfx_send_counter++;
 
@@ -506,12 +507,12 @@ if (disp_stepper==13) {disp_stepper=0;enc2_add=0;  }     else disp_stepper++;			
 
 }    // displayBuffer2
 
-void sampling(void){						// 18 ms of data
+void sampling(void){						// 330 atm or 8.5ms
 
 //	if (time_proc>580) time_final=time_proc;
 
 
-time_proc=0;
+//time_proc=0;
 
 
 
@@ -934,8 +935,8 @@ filter_Accu=0;
 
 //time_final=time_proc;   // in samples
 
-if (bank_write) {time_final[1]=time_proc; error_count++;};  // tick timer in samples ,normal max 20 but some 230
-if (time_proc>100)  	time_final[0]=time_proc;
+if (bank_write)   error_count++;  // if bank write is high it means too much stall here
+
 
 
 //bank_write=0;   /// total 320 sample time (39khz)
@@ -1014,30 +1015,7 @@ sine_frac=sine_counterB & 31;  // grab last 5 bits, actual position for linear i
 }
 
 
-void print_pot(void){
+void print_pot(void){}
 
 
-/*
-	printf("%d",bsr_out);
-printf(",");
-printf("%d",spi_byte);
-printf(",");
-printf("%d",clk_pin);
-printf(",");
-printf("%d",i);
-printf("\n");
-*/
-	//for (n_t=0;n_t<128;n_t+=1) {
-//printf("%d",(potValues[n_t] +(potValues[n_t+1]<<4)));
-	//	printf("%d",bsr_out);
-//printf(",");
-//printf("%d",spi_hold);
-//printf("\n");
-//printf("%d",potSource[n_t]);
-//printf(",");
-//	}// print all into 64bytes 4bit+4bit
-	//printf("%d",bsr_out);
-//	printf(",");
-//	printf("%d",note[].pitch[11]);
 
-}
