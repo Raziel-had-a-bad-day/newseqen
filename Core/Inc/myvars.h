@@ -232,7 +232,7 @@ uint16_t  lfo_out[10] [10];   //8x10 values for lfo
 uint16_t tempo_lut[162]; // tempo look up 40-200bpm
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////GFX
 //uint8_t gfx_ram[64][18] ; //holds data for lcd 64*128bit +2 bytes ver/hor command for lcd
-uint8_t  gfx_ram[1152];
+uint8_t  gfx_ram[1153];
 
 uint16_t  gfx_send_counter=0;   //counts up to 31x18x2
 uint8_t gfx_send_counter2=0;			// horizontal pos 0-17
@@ -325,6 +325,7 @@ struct seq_settings {				// 46 bytes need all
 
 struct seq_settings seq;                       // sequencer data (46 bytes)
 
+
 uint16_t string_search=0;   // search position on created menu
 uint16_t string_value=0;  // holds the variable result from the search result
 uint8_t menu_counter=0;
@@ -346,7 +347,7 @@ uint8_t  enc2_store[5];
 uint8_t enc2_store_count=0;
 uint8_t  lcd_temp=0;   //temp hold
 uint8_t spi2_send_enable=0;
-
+uint8_t target_display=0;   // enabled when cursor is on LFO.target
 
 
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!

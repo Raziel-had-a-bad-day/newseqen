@@ -268,10 +268,13 @@ void gfx_send(void){         // send spi to lcd from gfx ram
 
 			uint8_t spi_store[3];
 			uint8_t spi_store2=0;
-
 			uint8_t spi_store3=gfx_ram[gfx_send_counter];
+	if (gfx_send_counter2>1) {spi_store2=250;
 
-			if (gfx_send_counter2<2) spi_store2=248; else {spi_store2=250;    }//start with msb ,dont forget flip around at end, 250 =data ,248= command if below 8bit
+			}
+
+			else {spi_store2=248;    }//start with msb ,dont forget flip around at end, 250 =data ,248= command if below 8bit
+
 
 					spi_store[0]=spi_store2;
 					spi_store[1]=((spi_store3>>4)<<4);
@@ -280,7 +283,7 @@ void gfx_send(void){         // send spi to lcd from gfx ram
 
 						HAL_SPI_Transmit(&hspi2,spi_store,3,3);  // ok
 					if (gfx_send_counter2==17 ) { gfx_send_counter2=0;    } else gfx_send_counter2++; // check elsewhere if changing gfx_send_counter
-			if (gfx_send_counter==1151 ) { gfx_send_counter=0; disp_end=1; gfx_send_counter2=0;    } else gfx_send_counter++;
+			if (gfx_send_counter==1151 ) { gfx_send_counter=0; disp_end=1; gfx_send_counter2=0;    } else gfx_send_counter++; ;
 
 		}
 void gfx_clear(void){     // simple gfx ram clear ,beside feedback
@@ -322,7 +325,7 @@ void display_process(void){							// keep data processing here
 
 
 	if ((enc2_tempC==enc2_dir) && (!enc2_add))  {
-		if (disp_stepper==5)  {enc2_add=2; 	disp_stepper=13;}   	 // wait till enc2_dir  hasn't changed ,jump and then change feedback
+		if ((disp_stepper==5)&&(!target_display))  {enc2_add=2; 	disp_stepper=17;}   	 // wait till enc2_dir  hasn't changed ,jump and then change feedback
 			}
 
 	if (disp_stepper>1)	init_b=123+(disp_stepper);  // write lcd3
@@ -356,6 +359,9 @@ void display_process(void){							// keep data processing here
 
 
 	uint8_t crap_hold9=menu_title_lut[enc_out1]>>8;   // look up up menu_titles_final
+	if (crap_hold9==5) target_display=1;   // check if LFO.target is on cursor
+	else target_display=0;
+
 	// fetch values for last line or cursor
 
 	 memcpy(default_menu3+112, *(menu_titles_final+crap_hold9),8);   // copy feedback data for reading,ok
@@ -364,9 +370,10 @@ void display_process(void){							// keep data processing here
 	 char temp_char[]="  ";
 	 memcpy(temp_char,menu_index_list+((enc_out1*2)),2);   // copy char to char,ok
 	 menu_index_in=atoi(temp_char)			;   // convert char to int,ok
-	 //menu_index_in=menu_index_in&15;  //for now , needs another limiter
+
 
 	 menu_vars_var=menu_vars(menu_vars_in,menu_index_in);		//test  for vars ok
+
 
 	    // grab value on ptr address , also write first char , ok
 
@@ -378,18 +385,24 @@ void display_process(void){							// keep data processing here
 	lcd_out3=*menu_vars_var;
 	default_menu3[init_b]=((lcd_out3&255)>>4)+48; lcd_temp=lcd_out3&127; enc_dir=lcd_temp;       } // force enc_dir
 
+	if (disp_stepper==11) {default_menu3[120]=menu_index_list[enc_out1<<1];   	default_menu3[121]=menu_index_list[(enc_out1<<1)+1];}   // index display
 
+	if ((target_display) &&   (disp_stepper==11))      // write LFO.target display
+	{
+		uint8_t target_tmp1=*menu_vars_var ;
+		if (target_tmp1>26) target_tmp1=26;    // check in case
+		memcpy(default_menu3+119, *(menu_titles_final+target_tmp1),7);
 
-	if (disp_stepper==11) default_menu3[119]=menu_index_list[enc_out1<<1];   // index char 0-10 normally
-	if (disp_stepper==12) default_menu3[120]=menu_index_list[(enc_out1<<1)+1];
-	//if (disp_stepper==13) default_menu3[122]=47;
+		 		 	}
 
 	if (disp_stepper==1)  gfx_send_cursor=(init_b>>4)&7 ;   //send cursor line
 	if (disp_stepper==2)  {
 
-		default_menu3[125]=potSource[380]+48; default_menu3[126]=potSource[381]+48; default_menu3[127]=potSource[382]+48; }  // write this straight after start ,ok
+		default_menu3[125]=potSource[380]+48;
+		default_menu3[126]=potSource[381]+48; default_menu3[127]=potSource[382]+48; }  // write this straight after start ,ok
 
-	}   // end o void
+
+}   // end o void
 
 
 
@@ -398,13 +411,13 @@ void display_process(void){							// keep data processing here
 
 void displayBuffer2 (void){       // use only writing characters  ,nothing more  , init_b for selecting location
 														//when scrolling maybe use this only until  settled
-
+														// start 2*8 bit then squeeze in 20*6 bit characters
 init_b=init_b&127;
 
 	uint8_t d_count;
-uint16_t init_x=(init_b & 15)+2 ;    // +2 important  0-15 hor
-uint8_t init_x2=(init_b>>4)<<3 ;  // 0-64  character address in gfx
-uint16_t init_y=((init_x2)*18)+init_x;   //   works ok
+uint8_t init_x=(init_b & 15)+2 ;    // +2 important  2-17 hor char pos
+uint8_t init_x2=(init_b>>4)<<3 ;  // 0,8,16-64  vertical pos  gfx
+uint16_t init_y=((init_x2)*18)+init_x;   //   works ok  8  bit  0-1152
 uint16_t store_x;
 
 
@@ -415,15 +428,15 @@ store_x=(store_c*8);  // i line characters , might shrink it and use extr for ot
 
 		if ( (disp_stepper==0))     // blinker for cursor character only  , might just flip the whole last line from prev tables then its x4 faster
 			for (d_count=0;d_count<8;d_count++){
+
 				gfx_ram[init_y+(d_count*18) ]= gfx_char[d_count+store_x]^127; //write character to ram ,should be elsewhere , blank is correct
 			}
+
 		else for (d_count=0;d_count<8;d_count++){
 			gfx_ram[init_y+(d_count*18) ]= gfx_char[d_count+store_x]; //write character to ram ,should be elsewhere , seems affected by later stufff
 		}
 
-
-
-if (disp_stepper==13) {disp_stepper=0;enc2_add=0;  }     else disp_stepper++;				// count to 16 also make sure full loop before skip lines
+if (disp_stepper==17) {disp_stepper=0;enc2_add=0;  }     else disp_stepper++;				// count to 16 also make sure full loop before skip lines
 
 
 }    // displayBuffer2

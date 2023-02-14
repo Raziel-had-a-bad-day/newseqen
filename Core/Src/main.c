@@ -380,7 +380,7 @@ mem_buf=potSource[mem_count];
 
 	  if (disp_end==1)	 {  // displaybuffer after each full screen update on spi  ,, no freezes here
 
-		  for (i=0;i<14;i++) {   display_process();   displayBuffer2();} // 5 cycles max for the lot or  0.2ms
+		  for (i=0;i<18;i++) {   display_process();   displayBuffer2();} // 5 cycles max for the lot or  0.2ms
 		  gfx_send_swap=1;   // enable line swapping
 		  disp_end=0;   ///reset till next full page
 
