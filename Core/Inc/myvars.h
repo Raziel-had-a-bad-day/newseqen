@@ -90,7 +90,8 @@ static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 void display_init(void);
 
-//void adc_read(void);
+void display_clear (void);
+void lfo_target_modify(void);
 void gfx_clear(void);
 void lfo_target_parse(void);
 void gfx_send(void);
@@ -113,7 +114,8 @@ void display_gfx(void);
 void SPI_command(void);
 void display_update(void);
 void display_fill(void);
-
+void display_generate(void);
+void gfx_send_page(void);
 uint8_t seq_pos; // sequencer position linked to isrCount for now but maybe change
 
 void  mask_calc(uint8_t mask_select,uint8_t mask_speed);
@@ -222,7 +224,7 @@ uint8_t seq_loop[7]; //loop positions
 //new stuff///////////////////////////////////////////////////////////////////////////////////////////////////////
 float filter_accus[15];  // hold floats for filter
 float filter_hold[5];  //holds some feedback related stuff
-float freq_point[4] ; // multiplier coeff holder temp
+float freq_point[4]={0,0,0,0} ; // multiplier coeff holder temp
 float freq_pointer[4] [9];  // multiplier coeff holder
 uint8_t i_frac;  // divide i/64
 uint8_t seq_store;  // just an seq_pos holder for adsr
@@ -273,7 +275,7 @@ struct LFO_settings{      // use first 5*10 , leave the rest
 	uint8_t target_index;
 	uint16_t out[10];       // actual output , needs multiple for loop,,calculated
 	uint8_t* out_ptr;   // address from target (mostly 8 bit,mostly )
-};
+	};
 
 struct LFO_settings LFO[10];       // create lfo settings
 
@@ -326,21 +328,25 @@ struct seq_settings {				// 46 bytes need all
 struct seq_settings seq;                       // sequencer data (46 bytes)
 
 
+
 uint16_t string_search=0;   // search position on created menu
 uint16_t string_value=0;  // holds the variable result from the search result
-uint8_t menu_counter=0;
+uint16_t menu_counter=0;  // 127 per page needs plenty
 uint8_t space_check=0;   // look for gaps
-uint16_t menu_title_lut[65];  // hold pointer for feedback line , points to default_menu first character(1<<8)   as well the current display loc(0)  , skip empty areas for now
+
 
 uint8_t menu_title_count=0;   // holds the counter for menu_title_lut
-uint32_t  menu_var_lut[65];    // hold pointers for variables
 
+uint32_t  menu_var_lut[128];    // hold pointers for variables , for now its enougg
 
+uint32_t menu_title_lut[128];  // hold pointer for feedback line , points to default_menu first character(1<<8)   as well the current display loc(0)  , skip empty areas for now
+
+char menu_index_list[256];   //  use along the menu_var_lut uses double the records !! gets weird when using 256
 char* menu_vars_menu=0;    // return pointer to menu_titles final
 uint8_t * menu_vars_var=0;			// return memory location to var !
 char menu_vars_in[8];  // incoming string ,ok
 uint8_t menu_index_in=0; // gets the struct index ie LFO[1].rate
-char menu_index_list[128];   //  use along the menu_var_lut uses double the records !! gets weird when using 256
+uint16_t default_menu3_size=0;    //  just set size of menu
 
 int8_t enc_out1=1;    // menu_title_lut   cursor position
 uint8_t  enc2_store[5];
@@ -348,8 +354,8 @@ uint8_t enc2_store_count=0;
 uint8_t  lcd_temp=0;   //temp hold
 uint8_t spi2_send_enable=0;
 uint8_t target_display=0;   // enabled when cursor is on LFO.target
-
-
+uint8_t sampling_position=0; // tracks loop position in sampling for LFO mainly 0-7
+uint8_t gfx_clear_flag=0;    // important for clearing screen
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 

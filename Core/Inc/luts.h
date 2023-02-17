@@ -1,14 +1,32 @@
 
 
-char default_menu[] ={" 00SeqPos     00Tempo      02Transpos 03Transpos 05Transpos   00Rate     00Depth    00Target      01Rate     01Depth    02Target   "
-		"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
-		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes1   "
-		"02Rate     02Depth    02Target  02Targindx   03Rate     03Depth    03Target  03Targindx "
-		"04Rate     04Depth    04Target  04Targindx   05Rate     05Depth    05Target  05Targindx        "};   // just for testing text memory , will be modifiable ,  lut
+char default_menu[] ={" 00SeqPos     00Tempo      02Transpos 03Transpos 05Transpos  "
+		"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "
+		"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
+		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes1  "
+		"02Rate     02Depth    02Offset      03Rate     03Depth    03Offset    "
+		"04Rate     04Depth    04Offset      05Rate     05Depth    05Offset    "
+		"06Rate     06Depth    06Offset      07Rate     07Depth    07Offset    "
+		"08Rate     08Depth    08Offset      09Rate     09Depth    09Offset    "
+		"00Rate     00Depth    00Offset   00Target  00Targindx        "
+		"01Rate     01Depth    01Offset   01Target  01Targindx        "
+		"02Rate     02Depth    02Offset   02Target  02Targindx        "
+		"03Rate     02Depth    02Offset   03Target  03Targindx        "
+		"04Rate     04Depth    04Offset   04Target  04Targindx        "
+		"05Rate     05Depth    05Offset   05Target  05Targindx        "
+		"06Rate     06Depth    06Offset   06Target  06Targindx        "
+	//	"07Rate     07Depth    07Offset   07Target  07Targindx        "
+		"00Attack   00Decay    00Sustain  00Release          "
+		"01Attack   01Decay    01Sustain  01Release          "};   // just for testing text memory , will be modifiable ,  lut
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
 
-char default_menu3[256]={"_                                                                                                                               "}; // hold all string for output , first page
+char default_menu3[1024]; // hold all string for output  128 per page , needs to resize
 const uint8_t  menu_vars_index_limit[28]= {0,9,9,9,9,9,0,5,5,5,5,0,6,6,6,6,6,6,6,6,6,0,0,0,15,15,9,9} ; // index number limiter ,fixed
+const uint8_t  menu_vars_divider[28] = {0,0,0,0,0,0,0,0,0,0,
+																				0,0,0,0,5,0,4,5,5,1,
+																				0,0,0,4,4,5,5,0,0                                         };   // right shift divider mainly for LFO  , maybe for lcd too
+
+
 const char* menu_titles_final[]= {"LFO     ", "Rate    ","Depth   " ,"Gain    ", "Offset  ", "Target  ","ADSR    ",
 		"Attack  ", "Decay   ","Sustain ","Release ",
 		"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",

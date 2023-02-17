@@ -64,6 +64,7 @@ void Error_Handler(void);
 #define LED_GPIO_Port GPIOC
 #define CS1_Pin GPIO_PIN_4
 #define CS1_GPIO_Port GPIOA
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

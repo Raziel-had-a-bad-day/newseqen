@@ -71,6 +71,7 @@ TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
 #include "maincode.h"			// void
+#include "sampling.h"     // audio process
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -251,80 +252,73 @@ uint8_t potSource2[64];
 
 
 
-for(i=0;i<5;i++){     // 256
-HAL_I2C_Mem_Read(&hi2c2, 160, 64+(i*64), 2,&potSource2, 64,1000);		// all good readin eeprom  values
+	for(i=0;i<5;i++){     // 256
+	HAL_I2C_Mem_Read(&hi2c2, 160, 64+(i*64), 2,&potSource2, 64,1000);		// all good readin eeprom  values
 
-memcpy (potSource+(i*64),potSource2,sizeof(potSource2));   //this works  ok now
-
-
-}
-
-for(i=0;i<64;i++){       //   fill with characters also add lcd command ,ok
-
-for 	(n=0;n<18;n++){					// this is ok
-	if (n==0) gfx_ram[(i*18)+n] = 128+(i&31);   // half page
-	if (n==1) gfx_ram[(i*18)+n] = 128+((i>>5)*8);    // change x to 8
-	if (n>1)  gfx_ram[(i*18)+n] = 255;
-
-}
-
-}
+	memcpy (potSource+(i*64),potSource2,sizeof(potSource2));   //this works  ok now
 
 
+	}
 
-for(i=0;i<260;i++){			// write potvalues ,for display
-	potValues[i]=potSource[i]>>4;
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////// variable fill
+	for(i=0;i<64;i++){       //   fill with characters also add lcd command ,ok
 
-memcpy(&seq,potSource,46 );  // load from potSource
+	for 	(n=0;n<18;n++){					// this is ok
+		if (n==0) gfx_ram[(i*18)+n] = 128+(i&31);   // half page
+		if (n==1) gfx_ram[(i*18)+n] = 128+((i>>5)*8);    // change x to 8
+		if (n>1)  gfx_ram[(i*18)+n] = 255;
 
+	}
 
-for(i=0;i<10;i++){
-	if (i<8){    memcpy(&note[i],potSource+46+(i*14),14 );}  //grab note settings ,112 total , works ok
-
-	memcpy(&LFO[i],potSource+158+(i*5),6 );  // + 60
-	memcpy(&ADSR[i],potSource+218+(i*5),5 );  // +50  ,
-
-}
+	}
 
 
+	for(i=0;i<260;i++){			// write potvalues ,for display
+		potValues[i]=potSource[i]>>4;
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////// variable fill
 
+	memcpy(&seq,potSource,46 );  // load from potSource
+
+	for(i=0;i<10;i++){
+		if (i<8){    memcpy(&note[i],potSource+46+(i*14),14 );}  //grab note settings ,112 total , works ok
+
+		memcpy(&LFO[i],potSource+158+(i*5),6 );  // + 60
+		memcpy(&ADSR[i],potSource+218+(i*5),5 );  // +50  ,
+
+	}
 
 float tempo_hold;  // calculate tempo look up
-for (i=0;i<161;i++) {
 
-tempo_hold=(i+180)*0.0166666666;
 
-tempo_hold=	1/tempo_hold;
-//tempo_hold=	tempo_hold*2187.6*4;      // change for the sake of note length
-tempo_hold=	tempo_hold*2187.6*1;      // change for the sake of note length
-tempo_lut[i]=tempo_hold;
-}
+	for (i=0;i<161;i++) {
+
+	tempo_hold=(i+180)*0.0166666666;
+
+	tempo_hold=	1/tempo_hold;
+	//tempo_hold=	tempo_hold*2187.6*4;      // change for the sake of note length
+	tempo_hold=	tempo_hold*2187.6*1;      // change for the sake of note length
+	tempo_lut[i]=tempo_hold;
+	}
+
 isrMask=571; // def tempo 571=180bpm , 20 ms /isrcount
 
-noteTiming=24;
-for (i=0;i<320;i++)	{	// write C into whole section,useful ornot
-	spell[i]=67;
+	noteTiming=24;
+	for (i=0;i<320;i++)	{	// write C into whole section,useful ornot
+		spell[i]=67;
 
-}
-gfx_clear();
-//display_fill();
-// build display, enc_lut2, works good
+	}
 
-for (i=0;i<512;i++)	{gfx_char[i]=gfx_char[i];
+	gfx_clear();
 
+	for (n=0;n<512;n++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
 
-}    //font replace
-//    Merge menu times   here    char , int8 ,int16  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-for (n=0;n<256;n++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
+		menu_parser();  // run it closer to default_menu size ,times
+		default_menu3[n>>1]=64;
+	}
+	default_menu3_size = strlen(default_menu3);  // grab menu size , this is needed
+	menu_title_count--;  //count back one
+	display_clear ();
 
-	menu_parser();  // run it closer to default_menu size ,times
-	default_menu3[n>>1]=64;
-}
-menu_title_count--;  //count back one
-
-//   produce extra menu pages here /////////////////////////////////////////////////////////////////////////////////
 uint16_t lut_temp2=0;
 uint16_t lut_temp3=0;
 
@@ -378,15 +372,9 @@ mem_buf=potSource[mem_count];
 }
 
 
-	  if (disp_end==1)	 {  // displaybuffer after each full screen update on spi  ,, no freezes here
-
-		  for (i=0;i<18;i++) {   display_process();   displayBuffer2();} // 5 cycles max for the lot or  0.2ms
-		  gfx_send_swap=1;   // enable line swapping
-		  disp_end=0;   ///reset till next full page
+	  if (disp_end==1)	  display_generate();      // run this after gfx draw page finish
 
 
-		  if (!disp_stepper) break;
-	  }
 
 
 	  if (init<6)				// after 6 its done for good   // no freeze here
@@ -399,17 +387,13 @@ mem_buf=potSource[mem_count];
 
 		  if (gfx_send_swap==2) gfx_send_lines++;		// this is ok for now
 		  if (gfx_send_swap==1)  { gfx_send_counter=gfx_send_cursor*144; gfx_send_swap=2; } // jump to cursor pixel line
-		  if (gfx_send_lines==144)   { gfx_send_lines=0; gfx_send_counter=1008; gfx_send_swap=0;}  // skip to last char line
+	      if (gfx_send_lines==144)   { gfx_send_lines=0; gfx_send_counter=1008; gfx_send_swap=0;}  // skip to last char line
 				gfx_send();    // don't loop this without using dma  , just makes things really slow
 
 
 
 	}
 
-
-
-	  // send spi line data every loop cycle ,
-	  ///////////////////////////////////////////////////////////////////////////////
 
 	  if (loop_counter == 255)	{ // grab adc readings + 3ms , 32 step  // no freeze
 
