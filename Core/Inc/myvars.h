@@ -116,6 +116,7 @@ void display_update(void);
 void display_fill(void);
 void display_generate(void);
 void gfx_send_page(void);
+void LFO_source(void);
 uint8_t seq_pos; // sequencer position linked to isrCount for now but maybe change
 
 void  mask_calc(uint8_t mask_select,uint8_t mask_speed);
@@ -215,7 +216,7 @@ uint8_t spi_send=0; // keeps track of send process
 uint8_t init=0; //init counter
 uint16_t init_b;  //  needs to above 256 for ore pages
 uint16_t cursor_menu[3]; // holds cursor position
-uint8_t mem_count; //just count mem address
+uint16_t mem_count; //just count mem address
 uint32_t loop_counter2; //long counter
 uint8_t mem_buf;
 uint16_t menu_page[3]; // switch between pages, keep track when flipping
@@ -242,7 +243,7 @@ uint8_t gfx_send_counter3=0;
 uint8_t gfx_send_cursor=0;  // send cursor line 0-7
 uint8_t gfx_send_swap=0;  //swap between lines
 uint8_t gfx_send_lines=0; // just count 144   lines
-
+float tempo_sync;
 
 float adsr_level[11]  ; //float for vol envelope  ,ps 20 21
 float adsr_att;
@@ -265,7 +266,7 @@ uint8_t status_reg[2]={0,1};
  uint16_t time_proc=0; // tick start
 uint16_t  error_count=0;
 
-struct LFO_settings{      // use first 5*10 , leave the rest
+struct LFO_settings{      // use first 5*10 , leave the rest  , no bueno  32 each
 
 	uint8_t rate; // (p130)
 	uint8_t depth;	//(p140)
@@ -356,6 +357,8 @@ uint8_t spi2_send_enable=0;
 uint8_t target_display=0;   // enabled when cursor is on LFO.target
 uint8_t sampling_position=0; // tracks loop position in sampling for LFO mainly 0-7
 uint8_t gfx_clear_flag=0;    // important for clearing screen
+uint8_t mem_errors=0;   // eeprom error count
+uint8_t mem_verify=0;
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 

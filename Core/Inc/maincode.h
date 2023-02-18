@@ -78,16 +78,10 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 		if  ((strncmp(menu_string,menu_string2,8))==0) 								// compare and if true pass var,seq
 		{
 
-
 			if ((menu_counter>110 )&&(menu_counter<128 )) menu_counter=menu_counter+16;   // skip to second page
-
-
 			if((menu_counter>237)&&(menu_counter<256 )) menu_counter=menu_counter+16; // skip
 			if((menu_counter>365)&&(menu_counter<384 )) menu_counter=menu_counter+16; // skip
-
-
-
-			menu_title_lut[menu_title_count]=  (string_counter <<16)+menu_counter;   // search result  and disp lcd position counter
+			menu_title_lut[menu_title_count]=  (string_counter <<16)+(menu_counter&1023);   // search result  and disp lcd position counter
 
 			memcpy(menu_index_list+(menu_title_count*2),default_menu+string_search-2,2); // get array  index under ,LFO[1]  etc ,ok
 
@@ -101,9 +95,6 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 
 	}
 
-	//string_value=255;    // no result use 255 for now
-	//menu_title_lut[menu_title_count]=255;   // record for feedback line
-	//menu_title_count++;
 	if (space_check>1)  menu_counter++;   //this is ok
 	space_check++;  // count empty spaces or fill characters
 	string_search++;
@@ -118,17 +109,26 @@ void lfo_target_parse(void){    // records ptr for target options , works ok
 			if (LFO[n].target) {  // test if above zero
 				uint8_t target_input=LFO[n].target; // copy to avoid messed up pointer
 
-				if (target_input>26)    target_input=26;   // test  limit and block self
+				if (target_input>23)    target_input=23;   // test  limit and block self
 			if (target_input==5) 	target_input=6;  // skip up so it doesnt self
 			if (target_input==22) 	target_input=23;   //  maybe skip everything that has no generator ,
 			if (target_input==17) 	target_input=18;
+			if (target_input==14) 	target_input=20;
+
+			LFO[n].target=target_input; // write back corrected value
 
 			uint8_t target_index=LFO[n].target_index;
 
 			if (target_index>menu_vars_index_limit[target_index]  )   // test limit
 			{	target_index=menu_vars_index_limit[target_index]; }
+			LFO[n].target_index=target_index;
+			uint8_t*  target_out_ptr= menu_vars(menu_titles_final[target_input] , target_index    );
 
-			LFO[n].out_ptr= menu_vars(menu_titles_final[target_input] , target_index    );     // write ptr
+			if (target_out_ptr)           LFO[n].out_ptr =target_out_ptr;     // write ptr
+
+
+
+
 
 			}
 		}
@@ -141,13 +141,17 @@ void lfo_target_modify(void){					// careful position  ,ok
 	for (n=0;n<10;n++){
 		if (LFO[n].target) {         // check first for enable
 			uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
-			uint8_t right_shift=menu_vars_divider[LFO[n].target]+12;   // grab divider
-			uint8_t  *ptr_to_modify =LFO[n].out_ptr;       // select address , not always 8 bit
-			uint16_t lfo_out_temp=  LFO[n].out [loop_position];
+			uint8_t right_shift=menu_vars_divider[LFO[n].target]+1;   // grab divider
+			uint8_t  *ptr_to_modify =LFO[n].out_ptr;       // select address , not always 8 bit ,ok
+			uint16_t lfo_out_temp=  (LFO[n].out [loop_position])>>6;  // 0-127, 64 default
+			uint8_t lfo_mod1=ptr_to_modify; //ok
 
-			uint32_t  modified_var =  lfo_out_temp*  (*ptr_to_modify)   ;   // grab lfo out *    data to be modfied
-			uint8_t  var_replaced= modified_var>>right_shift;   // scale to 8 bit for now
-			 *ptr_to_modify =var_replaced;   // replace original value
+			uint32_t  modified_var =  lfo_out_temp*  lfo_mod1  ;   // grab lfo out *    data to be modfied
+			//uint8_t  var_replaced= (modified_var>>right_shift)&127;   // scale to 8 bit for now
+			uint8_t  var_replaced= (modified_var>>7);   // scale to 8 bit for now
+		if (var_replaced>159) var_replaced=159;
+
+			*ptr_to_modify =var_replaced;   // replace original value,ok
 
 		}
 
@@ -404,7 +408,7 @@ uint16_t feedback_loc=(init_b&896)+107;
 
 
 
-	uint8_t crap_hold9=menu_title_lut[enc_out1]>>16;   // look up up menu_titles_final
+	uint8_t crap_hold9=(menu_title_lut[enc_out1]>>16)&255;   // look up up menu_titles_final
 	if (crap_hold9==5) target_display=1;   // check if LFO.target is on cursor
 	else target_display=0;
 
@@ -431,7 +435,7 @@ uint16_t feedback_loc=(init_b&896)+107;
 
 		uint16_t init_holder=init_b;
 
-		init_b= menu_title_lut[enc_out1]&65535;    // this only grabs menu_title_count (&255)      , problem maybe here
+		init_b= menu_title_lut[enc_out1];    // this only grabs menu_title_count (&255)      , problem maybe here
 	//	if (init_b>(feedback_loc+3) ) init_b=init_b+16;// skip feedback line
 		if ((init_b&896)!=(init_holder&896)) {display_fill(); gfx_clear_flag=1; } // detect x over , not perfect
 

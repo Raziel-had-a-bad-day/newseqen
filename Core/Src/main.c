@@ -248,15 +248,38 @@ HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
 
 
-uint8_t potSource2[64];
-
+uint8_t potSource2[120];
 
 
 	for(i=0;i<5;i++){     // 256
 	HAL_I2C_Mem_Read(&hi2c2, 160, 64+(i*64), 2,&potSource2, 64,1000);		// all good readin eeprom  values
 
-	memcpy (potSource+(i*64),potSource2,sizeof(potSource2));   //this works  ok now
+	memcpy (potSource+(i*64),potSource2,sizeof(potSource2));   //this works  ok now ,leave it alone
 
+
+	}
+	for(i=0;i<260;i++){			// write potvalues ,for display ,also filter bad data IMPORTANT !!!
+
+		if (potSource[i]>159) potSource[i]=0;
+		potValues[i]=potSource[i]>>4;
+
+	}
+
+
+
+//	 uint8_t* note_array = malloc(112);
+
+
+	uint16_t mem_counter=0;
+	memcpy(&seq,potSource,46 );  // load from potSource  ,, causes problems with memory ,NEEDS TO BE CONTINUOS OR  WILL  GET CORRUPT
+    memcpy(&note,potSource+156,112 );   // this works but keep checking for fragmentation
+
+    for(mem_counter=0;mem_counter<10;mem_counter++){
+
+
+		memcpy(&LFO[mem_counter],potSource+46+(mem_counter*6),6 );  // + 60 ,ok here
+
+		memcpy(&ADSR[mem_counter],potSource+106+(mem_counter*5),5 );  // +50  ,
 
 	}
 
@@ -272,20 +295,6 @@ uint8_t potSource2[64];
 	}
 
 
-	for(i=0;i<260;i++){			// write potvalues ,for display
-		potValues[i]=potSource[i]>>4;
-	}
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////// variable fill
-
-	memcpy(&seq,potSource,46 );  // load from potSource
-
-	for(i=0;i<10;i++){
-		if (i<8){    memcpy(&note[i],potSource+46+(i*14),14 );}  //grab note settings ,112 total , works ok
-
-		memcpy(&LFO[i],potSource+158+(i*5),6 );  // + 60
-		memcpy(&ADSR[i],potSource+218+(i*5),5 );  // +50  ,
-
-	}
 
 float tempo_hold;  // calculate tempo look up
 
@@ -309,11 +318,11 @@ isrMask=571; // def tempo 571=180bpm , 20 ms /isrcount
 	}
 
 	gfx_clear();
-
-	for (n=0;n<512;n++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
+uint16_t pars_counter;
+	for (pars_counter=0;pars_counter<512;pars_counter++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
 
 		menu_parser();  // run it closer to default_menu size ,times
-		default_menu3[n>>1]=64;
+		default_menu3[pars_counter>>1]=64;
 	}
 	default_menu3_size = strlen(default_menu3);  // grab menu size , this is needed
 	menu_title_count--;  //count back one
@@ -347,27 +356,46 @@ firstbarLoop=0;
 
 
 if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
-	  if (mem_count==255) mem_count=0; else mem_count++;  // write to first this was moved for no logical reason ?
+	  if (mem_count>255) mem_count=0; else mem_count++; // write to first this was moved for no logical reason ?
 	  lfo_target_parse(); //
 	// read values from stored
 
-memcpy(potSource,&seq,46); // about 46 bytes
+	memcpy(potSource,&seq,46); // about 35
 
-for(i=0;i<10;i++){
-	if (i<8){    memcpy(potSource+46+(i*14),&note[i],14 );}  //grab note settings ,112 total , works
+	for(i=0;i<10;i++){
+		if (i<8){    memcpy(potSource+156+(i*14),&note[i],14 );}  //grab note settings ,112 total , works
 
-	memcpy(potSource+158+(i*5),&LFO[i],6 );  // + 60
-	memcpy(potSource+218+(i*5),&ADSR[i],5 );  // +50  ,
+		memcpy(potSource+46+(i*6),&LFO[i],6 );  // + 60  ,ok
+		memcpy(potSource+106+(i*5),&ADSR[i],5 );  // +50  ,
 
-}	// copy vars into potSource
+	}	// copy vars into potSource
 
-mem_buf=potSource[mem_count];
-//if (mem_buf>160) mem_buf=160;   // just in case , may be a problem
 
-	HAL_I2C_Mem_Write(&hi2c2, 160, ((1+(mem_count>>6))<<6)+(mem_count&63), 2, &mem_buf, 1, 100);  // "&hi2c2"  actual register address
-	//HAL_Delay(5); // this is slow , no bueno
 
-	loop_counter2=0; //reset
+		uint16_t mem_count2=0;
+	//	mem_buf=0;
+			// mem_verify=0;
+
+
+				 mem_buf=potSource[mem_count];
+				 if (mem_buf>160) mem_buf=160;
+				 mem_count2=((1+(mem_count>>6))<<6)+(mem_count&63);
+				 HAL_I2C_Mem_Read(&hi2c2, 160,mem_count2, 2,&mem_verify, 1,100);
+				 if (mem_verify!=mem_buf) HAL_I2C_Mem_Write(&hi2c2, 160,mem_count2 , 2, &mem_buf, 1, 100);
+
+
+
+
+
+
+
+	 // "&hi2c2"  actual register address  , write only when needed
+
+
+
+//if (mem_buf!=mem_verify)	 mem_errors++;  // check writes
+
+loop_counter2=0; //reset
 
 }
 
@@ -389,8 +417,6 @@ mem_buf=potSource[mem_count];
 		  if (gfx_send_swap==1)  { gfx_send_counter=gfx_send_cursor*144; gfx_send_swap=2; } // jump to cursor pixel line
 	      if (gfx_send_lines==144)   { gfx_send_lines=0; gfx_send_counter=1008; gfx_send_swap=0;}  // skip to last char line
 				gfx_send();    // don't loop this without using dma  , just makes things really slow
-
-
 
 	}
 
