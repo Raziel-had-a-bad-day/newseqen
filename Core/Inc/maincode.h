@@ -135,7 +135,7 @@ void lfo_target_parse(void){    // records ptr for target options , works ok
 
 	}
 
-void lfo_target_modify(void){					// careful position  ,ok
+void lfo_target_modify(void){					// modify original value  careful position  ,ok
 
 
 	for (n=0;n<10;n++){
@@ -143,12 +143,35 @@ void lfo_target_modify(void){					// careful position  ,ok
 			uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
 			uint8_t right_shift=menu_vars_divider[LFO[n].target]+1;   // grab divider
 			uint8_t  *ptr_to_modify =LFO[n].out_ptr;       // select address , not always 8 bit ,ok
-			uint16_t lfo_out_temp=  (LFO[n].out [loop_position])>>6;  // 0-127, 64 default
+			uint16_t lfo_out_temp=  (LFO[n].out [loop_position])>>7;  // 0-127, 64 default
 			uint8_t lfo_mod1=ptr_to_modify; //ok
 
 			uint32_t  modified_var =  lfo_out_temp*  lfo_mod1  ;   // grab lfo out *    data to be modfied
 			//uint8_t  var_replaced= (modified_var>>right_shift)&127;   // scale to 8 bit for now
 			uint8_t  var_replaced= (modified_var>>7);   // scale to 8 bit for now
+		if (var_replaced>159) var_replaced=159;
+
+			*ptr_to_modify =var_replaced;   // replace original value,ok
+
+		}
+
+
+	}
+
+}
+void lfo_target_replace(void){					// sttaight value replace  ,ok
+
+
+	for (n=0;n<10;n++){
+		if (LFO[n].target) {         // check first for enable
+			uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
+			uint8_t right_shift=menu_vars_divider[LFO[n].target]+1;   // grab divider
+			uint8_t  *ptr_to_modify =LFO[n].out_ptr;       // select address , not always 8 bit ,ok
+			uint16_t lfo_out_temp=  (LFO[n].out [loop_position])>>7;  // 0-127, 64 default
+			uint8_t lfo_mod1=ptr_to_modify; //ok
+
+			uint8_t  var_replaced =  lfo_out_temp &255 ;   // grab lfo out *    data to be modfied
+
 		if (var_replaced>159) var_replaced=159;
 
 			*ptr_to_modify =var_replaced;   // replace original value,ok
@@ -440,7 +463,7 @@ uint16_t feedback_loc=(init_b&896)+107;
 		if ((init_b&896)!=(init_holder&896)) {display_fill(); gfx_clear_flag=1; } // detect x over , not perfect
 
 	lcd_out3=*menu_vars_var;
-	default_menu3[init_b]=((lcd_out3&255)>>4)+48; lcd_temp=lcd_out3&127; enc_dir=lcd_temp;       } // force enc_dir
+	default_menu3[init_b]=((lcd_out3&255)>>4)+48; lcd_temp=lcd_out3; enc_dir=lcd_temp;       } // force enc_dir
 
 	if (disp_stepper==11) {default_menu3[feedback_loc+13]=menu_index_list[enc_out1<<1];   	default_menu3[feedback_loc+14]=menu_index_list[(enc_out1<<1)+1];}   // index display
 

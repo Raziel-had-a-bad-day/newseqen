@@ -113,10 +113,10 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	if (note[3].pitch) 		{note[3].pitch=note[3].pitch+(note[3].transpose>>4);	adsr_retrigger[3]=1; note_toggler[i>>5]=1<<(i&31   )   ; } // stay at zero for off
 
 	note[5].pitch=(seq.notes2[seq.loop[2]]>>4)+(note[5].transpose>>4);  //
-		lfo_target_modify();
+		lfo_target_replace();
 
 	note[5].pitch=MajorNote[note[5].pitch];    //this is for sine skip mask
-	note[5].pitch=(note[5].pitch*(note[5].detune))>>7 ; // works ok with single note @24 but   fails on other
+	//note[5].pitch=(note[5].pitch*(note[5].detune))>>7 ; // works ok with single note @24 but   fails on other
 	note[5].tuned=sine_lut[note[5].pitch];	//sets freq ,1.0594  * 16536 =17518  ,
 	note[5].tuned= (note[5].tuned*1200)>>10;  // modify different sample size , just need single cycle length and thats it
 		mask_result =0;
@@ -128,7 +128,7 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 
 	if (note[mask_i].pitch) {
 
-		note[mask_i].pitch=(note[mask_i].pitch*(note[mask_i].detune))>>7 ;
+	//	note[mask_i].pitch=(note[mask_i].pitch ;
 		tune_Accu=sample_Noteadd[MajorNote[note[mask_i].pitch&15]];
 
 
@@ -154,11 +154,14 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 int32_t play_holder1[512];    // data banks
 int32_t play_holder2[512];
 uint8_t sine_zero;
-
+int32_t  sample_temp1;
+int32_t  sample_temp2;
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators
 	i_total=i+sample_pointB;
 	sampling_position=(i>>6);
-	sampling_position=(i>>6);
+
+	if ((i&63)==0)	lfo_target_replace();    // update values , not too bad
+
 // every step   1,110,928   >>20  ,per note
 // New oscillators , sync, trigger input , waveshape ,zero cross
 	sample_accus[0] = sample_accus[0] + note[0].tuned; //careful with signed bit shift,better compare
@@ -186,17 +189,20 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 
 									sample_Accu[2] = 0;sample_Accu[0] =0;sample_Accu[3] =0; //all zeroed
 									//if (sample_accus[2]<0) sample_Accu[2]=+sample_accus[2]; else sample_Accu[2]=sample_accus[2]; // convert to triangle ?
-									sample_Accu[0]=sample_accus[2]>>7; // needs cut a bit
+									sample_temp1=sample_accus[2]>>10; // needs cut a bit  ,default 20bit
 
-							sample_Accu[0] = ((sine_out+sample_Accu[0])*cross_fade[1]);   // sine input plus other
-							//sample_Accu[0] = (sine_out*cross_fade[1]);  // sine out only
-									//if (sample_accus[3]<0) sample_Accu[3]=+sample_accus[3]; else sample_Accu[3]=sample_accus[3]; // convert to triangle
-									sample_Accu[3]=sample_accus[3]>>1;
-									sample_Accu[2] = (sample_Accu[3]*cross_fade[2]);			//27b, 2 out f2  might do a crossfade here using pot 3
+									sample_temp2=sample_temp1*note[2].velocity; // 20+8
+									sample_Accu[0]=sample_temp2;
 
-									//	sample_Accu[5] = sample_Accu[4]+ (sample_accus[4]*4);			// drum and envelope
+									sample_temp1=sine_out*	note[5].velocity;  // sine out is 16bit, add 4 then 16+8
+									sine_out=sample_temp1>>4;
 
-	//	sample_Accu=sample_Accu-(1<<21);
+									sample_Accu[0] = ((sine_out+sample_Accu[0])*cross_fade[1]);   // sine input plus other
+
+									sample_temp1=sample_accus[3]>>8;
+									sample_temp2=sample_temp1*note[3].velocity;    // 64 default 20+8
+									sample_Accu[3] =sample_temp2;
+
 
 
 if (sine_counterB==0) 	sine_temp2=note[5].tuned;
@@ -207,7 +213,7 @@ if (sine_counterB==0) 	sine_temp2=note[5].tuned;
 if (sine_counterB>(sine_length<<5)) sine_counterB=0; //fixed for now
 sine_count(); // calc sine   distortion out when hcagning note
 play_holder1[i]=sample_Accu[0];  // write to bank
-play_holder2[i]=sample_Accu[2];
+play_holder2[i]=sample_Accu[3];
 
 
 } // end of osc , doing some sound
@@ -389,7 +395,7 @@ sine_frac=sine_counterB & 31;  // grab last 5 bits, actual position for linear i
 
 			sine_tempB=sine_tempB*sine_frac; // mult by steps , can overshoot !!
 
-			sine_out=(sine_tempA+sine_tempB);   // add back to start value
+			sine_out=(sine_tempA+sine_tempB);   // add back to start value -20k-20k  or about 16bit
 
 			//sine_tempA=sine_tempA; //needs
 
@@ -406,40 +412,43 @@ float	freq_temp=0;
 float 	freq2_temp=0;
 uint8_t l ;
 float offset=0;
-	float lfo_accu_temp;
-
-
+uint32_t lfo_accu_temp;
+	uint32_t freq3_temp;
+	uint32_t freq4_temp;
 
 for (l=0;l<10;l++){   //current lfo setup , needs sampling position 0-8  and tempo_sync
 
+
+
 	lfo_accu_temp=	lfo_accu[l][sampling_position];  // hold
 
-	freq_temp=LFO[l].rate +1;  // rate. this needs a little log
-		freq2_temp=freq_temp*freq_temp;  // multiply the rate
-			//freq2_temp=freq_temp*64;
-			freq_temp=freq2_temp/64;
-			freq2_temp=freq_temp*tempo_sync ; //correction to one note per cycle ,fixed , maybe loose this
-
-			freq_temp=lfo_accu_temp+ freq2_temp;// get lfo value plus rate , will try to get related to tempo for easier sync , at potS 80?/8192/8notes/ 1 bar
+	freq3_temp=LFO[l].rate +1;  // rate. this needs a little log
+		freq4_temp=freq3_temp*freq3_temp;  // multiply the rate +32 000 max
 
 
-//			if ((tempo_count<50) && ((next_isr&15)==15)) freq_temp=0;   // trying retrigger
-		if (freq_temp>16384) lfo_accu_temp=freq_temp-16384; else lfo_accu_temp=freq_temp; // write back value  counts -16000 to +16000
-		freq_temp=lfo_accu_temp; // 0-255 limit + above zero
-		//freq_temp=freq_temp*0.000383495;  // 0-255 , chang this for depth
-		freq2_temp =arm_sin_f32(freq_temp); // seems ok   , cmsis is ok
-		freq_temp=freq2_temp*(LFO[l].depth*64);   // atm 127*64  max
+			freq3_temp=lfo_accu_temp+ freq4_temp;// get lfo value plus rate , will try to get related to tempo for easier sync , at potS 80?/8192/8notes/ 1 bar
 
-		offset=(LFO[l].offset<<7-8195); // ok
-		freq2_temp=(freq_temp+offset);
+
+///  counts from -16k to +16 k   @ + 0.03125      to   +400    *10    or 13 ms *8 (10 hz ? fastest  )
+		if (freq3_temp>62831) lfo_accu_temp=0; else lfo_accu_temp=freq3_temp; // write back value  counts -16000 to +16000
+
+		lfo_accu[l][sampling_position]=lfo_accu_temp;
+		freq_temp=lfo_accu_temp;
+		freq2_temp=(freq_temp*0.0001);  //0-360
+		freq_temp =arm_sin_f32(freq2_temp); // seems ok   , cmsis is ok  RADIANS !!!!!
+		freq2_temp=freq_temp*LFO[l].depth*51;
+
+		if (!LFO[l].offset)    LFO[l].offset=0;   // set to 64 if its at 0
+ 		offset=(LFO[l].offset<<5)-2048; //  limit now for finetuning
+			freq2_temp=(freq2_temp+offset);
 
 		if (freq2_temp>8195)  freq2_temp=8195;
 		if (freq2_temp<-8195)  freq2_temp=-8195;   // clip to 13bit -/+ 8000
 
-				   lfo_accu_temp	   =freq2_temp; // ok now     , 8 steps per i loop , 14 bit
-				   LFO[l].out[sampling_position]=lfo_accu_temp+8196;
 
-		lfo_accu[l][sampling_position]=lfo_accu_temp;
+				   LFO[l].out[sampling_position]=freq2_temp+8196;
+
+
 		} // lfo gen : 0=f1 , 1=tempo,2=pitch
 
 

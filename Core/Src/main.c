@@ -248,8 +248,7 @@ HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
 
 
-uint8_t potSource2[120];
-
+uint8_t potSource2[120];    // { [0 ... 112] = 64 };
 
 	for(i=0;i<5;i++){     // 256
 	HAL_I2C_Mem_Read(&hi2c2, 160, 64+(i*64), 2,&potSource2, 64,1000);		// all good readin eeprom  values
@@ -265,17 +264,11 @@ uint8_t potSource2[120];
 
 	}
 
-
-
-//	 uint8_t* note_array = malloc(112);
-
-
 	uint16_t mem_counter=0;
 	memcpy(&seq,potSource,46 );  // load from potSource  ,, causes problems with memory ,NEEDS TO BE CONTINUOS OR  WILL  GET CORRUPT
-    memcpy(&note,potSource+156,112 );   // this works but keep checking for fragmentation
+    memcpy(&note,potSource+156,104 );   // this works but keep checking for fragmentation
 
     for(mem_counter=0;mem_counter<10;mem_counter++){
-
 
 		memcpy(&LFO[mem_counter],potSource+46+(mem_counter*6),6 );  // + 60 ,ok here
 
@@ -293,7 +286,7 @@ uint8_t potSource2[120];
 	}
 
 	}
-
+seq.pos=0;
 
 
 float tempo_hold;  // calculate tempo look up
@@ -319,9 +312,10 @@ isrMask=571; // def tempo 571=180bpm , 20 ms /isrcount
 
 	gfx_clear();
 uint16_t pars_counter;
-	for (pars_counter=0;pars_counter<512;pars_counter++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
 
-		menu_parser();  // run it closer to default_menu size ,times
+for (pars_counter=0;pars_counter<512;pars_counter++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
+
+		menu_parser();  // run it closer to default_menu size ,times, if default_menu is corrupt gfx breaks pretty bad
 		default_menu3[pars_counter>>1]=64;
 	}
 	default_menu3_size = strlen(default_menu3);  // grab menu size , this is needed
@@ -363,7 +357,7 @@ if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 	memcpy(potSource,&seq,46); // about 35
 
 	for(i=0;i<10;i++){
-		if (i<8){    memcpy(potSource+156+(i*14),&note[i],14 );}  //grab note settings ,112 total , works
+		if (i<8){    memcpy(potSource+156+(i*13),&note[i],13 );}  //grab note settings ,112 total , works
 
 		memcpy(potSource+46+(i*6),&LFO[i],6 );  // + 60  ,ok
 		memcpy(potSource+106+(i*5),&ADSR[i],5 );  // +50  ,

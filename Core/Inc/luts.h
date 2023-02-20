@@ -1,6 +1,6 @@
 
 
-char default_menu[] ={" 00SeqPos     00Tempo      02Transpos 03Transpos 05Transpos  "
+const char default_menu[] ={" 00SeqPos     00Tempo      02Transpos 03Transpos 05Transpos  "  // was getting corrupted then screwed everything
 		"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "
 		"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
 		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes1  "

@@ -89,7 +89,7 @@ static void MX_TIM2_Init(void);
 static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 void display_init(void);
-
+void lfo_target_replace(void);
 void display_clear (void);
 void lfo_target_modify(void);
 void gfx_clear(void);
@@ -230,7 +230,7 @@ float freq_pointer[4] [9];  // multiplier coeff holder
 uint8_t i_frac;  // divide i/64
 uint8_t seq_store;  // just an seq_pos holder for adsr
 uint16_t trigger_counter;
-float  lfo_accu[10]  [10]; //holds last lfo value , simple 0-255 upcount for now,will change; 10x8
+uint32_t  lfo_accu[10]  [10]; //holds last lfo value , simple 0-255 upcount for now,will change; 10x8
 uint16_t  lfo_out[10] [10];   //8x10 values for lfo
 uint16_t tempo_lut[162]; // tempo look up 40-200bpm
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////GFX
@@ -278,7 +278,7 @@ struct LFO_settings{      // use first 5*10 , leave the rest  , no bueno  32 eac
 	uint8_t* out_ptr;   // address from target (mostly 8 bit,mostly )
 	};
 
-struct LFO_settings LFO[10];       // create lfo settings
+struct LFO_settings LFO[10]={0};       // create lfo settings
 
 struct ADSR_settings{   // use initial 5*10  , leave rest
 	uint8_t attack;   // presets
@@ -294,7 +294,7 @@ struct ADSR_settings{   // use initial 5*10  , leave rest
 	uint16_t buffer[256];  //this holds the actual envelope  for ADSR for later processing
 
 };
-struct ADSR_settings ADSR[5];   // adsr data
+struct ADSR_settings ADSR[5]={0};   // adsr data
 
 
 
@@ -306,14 +306,16 @@ struct note_settings{								//default note/osc/patch settings  14*8 bytes (112)
 	uint8_t position;   // note position in sequence loop
 	uint8_t transpose;   // pshift note pitch up or down (p 72,73)
 	uint8_t timeshift; // shift position left or right in seuqence for 8 note looper   (pvalues 32,33) ,slide
-	uint16_t velocity;				// gain level or output mod
+	uint8_t velocity;				// gain level or output mod
 	uint8_t detune; 					// finetune maybe for lfos or some default tune
 	uint16_t osc_add;   // this is the add value hold for sine/wav/saw etc depends on wave form,calculated
 	uint16_t tuned;   // final output after note detune and osc_add calculation , drives the oscillators ,calculated
 
 
 };
-struct note_settings note[7];         // for now 0-4 saw and 5 is sine , add more later (112 byte)
+struct note_settings note[7]={[0].velocity=64,[1].velocity=64,[2].velocity=64,[3].velocity=64,[4].velocity=64,[5].velocity=64,[6].velocity=64
+															,[0].detune=64,[1].detune=64,[2].detune=64,[3].detune=64,[4].detune=64,[5].detune=64,[6].detune=64};
+//struct note_settings note[7];
 
 
 struct seq_settings {				// 46 bytes need all
