@@ -329,7 +329,18 @@ struct seq_settings {				// 46 bytes need all
 };
 
 struct seq_settings seq;                       // sequencer data (46 bytes)
+struct filter_settings{
+	uint8_t cutoff_1;					//basic cutoff  0-159 prolly lut
+	uint8_t cutoff_2;   // extra bits for cutoff  159
+	uint8_t resonance;			//159
+	uint8_t q_level;					//0-16
+	uint8_t level;			//default 64
+	uint8_t poles;		//1-4
+	uint8_t out_mix; 		// default 64
+	uint8_t feedback;  // 159
 
+};
+struct filter_settings filter[4]={[0].cutoff_1=159,[1].cutoff_1=159,[2].cutoff_1=159,[3].cutoff_1=159,[0].level=64,[1].level=64,[2].level=64,[3].level=64};
 
 
 uint16_t string_search=0;   // search position on created menu

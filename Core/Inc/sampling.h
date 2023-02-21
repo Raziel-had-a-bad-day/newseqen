@@ -121,9 +121,6 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	note[5].tuned= (note[5].tuned*1200)>>10;  // modify different sample size , just need single cycle length and thats it
 		mask_result =0;
 
-
-
-
 		for (mask_i=0;mask_i<5;mask_i++)	{							// calc detune , slow ,also creates notes
 
 	if (note[mask_i].pitch) {
@@ -167,8 +164,6 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	sample_accus[0] = sample_accus[0] + note[0].tuned; //careful with signed bit shift,better compare
 
 	if (sample_accus[0]>524287) sample_accus[0] =-sample_accus[0] ; // faster >  than &  ,strange
-
-
 
 	sample_accus[1] = sample_accus[1] + note[1].tuned;  // normal adder full volume
 		//	if (!(note[].pitch[0]))   sample_accus[1] =0;  // turn off with vel now , maybe use mask

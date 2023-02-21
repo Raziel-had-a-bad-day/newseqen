@@ -6,7 +6,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	uint8_t menu_countr=0; //  menu vars
 	uint8_t *menu_vars_var1=NULL;
 
-	for (i = 0; i < 28; i++) {      // find menu location
+	for (i = 0; i < 36; i++) {      // find menu location
 
 		memcpy(menu_string2, menu_titles_final[i], 8);  // copy title list
 		if ((strncmp(menu_string, menu_string2, 8)) == 0) {
@@ -45,7 +45,20 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 24:     menu_vars_var1= &seq.notes1[var_index]   ; break;
 	case 25:     menu_vars_var1= &seq.notes2[var_index]   ; break;
 	case 26:     menu_vars_var1= &seq.loop [var_index]    ; break;
-	case 27:     menu_vars_var1= &LFO[var_index].target_index    ; break;
+	case 27: 	menu_vars_var1=&filter[var_index].cutoff_1 ;break;
+	case 28: 	menu_vars_var1=&filter[var_index].cutoff_2 ;break;  // fine tune
+	case 29: 	menu_vars_var1=&filter[var_index].resonance ;break;
+	case 30: 	menu_vars_var1=&filter[var_index].q_level  ;break;
+	case 31: 	menu_vars_var1=&filter[var_index].level;break;
+	case 32: 	menu_vars_var1=&filter[var_index].feedback ;break;
+	case 33: 	menu_vars_var1=&filter[var_index].out_mix ;break;
+	case 34: 	menu_vars_var1=&filter[var_index].poles ;break;
+	case 35:     menu_vars_var1= &LFO[var_index].target_index    ; break;
+
+
+
+
+
 	default :		menu_vars_var1= NULL   ; break;
 
 	}
@@ -72,7 +85,7 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 	//if (menu_counter>240)  return;
 	memcpy(menu_string,default_menu+string_search,8);    //copy 8 strings created menu array
 	////////////////////////////
-	for (string_counter=0;string_counter<28;string_counter++){    	// test a single menu entry  , for now only the first record
+	for (string_counter=0;string_counter<36;string_counter++){    	// test a single menu entry  , for now only the first record
 
 		memcpy(menu_string2,menu_titles_final[string_counter],8);
 		if  ((strncmp(menu_string,menu_string2,8))==0) 								// compare and if true pass var,seq
@@ -103,17 +116,20 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 
 }
 void lfo_target_parse(void){    // records ptr for target options , works ok
-
+uint8_t skip=0;
 		for (n=0;n<10;n++){
 
 			if (LFO[n].target) {  // test if above zero
 				uint8_t target_input=LFO[n].target; // copy to avoid messed up pointer
 
-				if (target_input>23)    target_input=23;   // test  limit and block self
-			if (target_input==5) 	target_input=6;  // skip up so it doesnt self
-			if (target_input==22) 	target_input=23;   //  maybe skip everything that has no generator ,
-			if (target_input==17) 	target_input=18;
-			if (target_input==14) 	target_input=20;
+
+				for(skip=target_input ;skip<36;skip++){
+					if (lfo_skip_list[target_input]==1)  target_input++;
+
+				}  // test against list
+
+				if (target_input!=36)  {
+
 
 			LFO[n].target=target_input; // write back corrected value
 
@@ -126,7 +142,8 @@ void lfo_target_parse(void){    // records ptr for target options , works ok
 
 			if (target_out_ptr)           LFO[n].out_ptr =target_out_ptr;     // write ptr
 
-
+				}
+				else LFO[n].target=0;  // write back 0 if failed
 
 
 
