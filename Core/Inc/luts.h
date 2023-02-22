@@ -1,6 +1,6 @@
 
 
-const char default_menu[] ={" 00SeqPos     00Tempo      02Transpos 03Transpos 05Transpos  "  // was getting corrupted then screwed everything
+const char default_menu[] ={" 00SeqPos     00Tempo    01Transpos 02Transpos 03Transpos 05Transpos  "  // was getting corrupted then screwed everything
 		"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "
 		"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
 		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes1  "
@@ -22,8 +22,8 @@ const char default_menu[] ={" 00SeqPos     00Tempo      02Transpos 03Transpos 05
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
 
 char default_menu3[1024]; // hold all string for output  128 per page , needs to resize
-const uint8_t  menu_vars_index_limit[28]= {0,9,9,9,9,9,0,5,5,5,5,0,6,6,6,6,6,6,6,6,6,0,0,0,15,15,9,9} ; // index number limiter ,fixed
-const uint8_t  menu_vars_divider[28] = {0,0,0,0,0,0,0,0,0,0,
+const uint8_t  menu_vars_index_limit[36]= {0,9,9,9,9,9,0,5,5,5,5,0,6,6,6,6,6,6,6,6,6,0,0,0,15,15,9,3,3,3,3,3,3,3,3,9} ; // index number limiter ,fixed
+const uint8_t  menu_vars_divider[36] = {0,0,0,0,0,0,0,0,0,0,
 																				0,0,0,0,5,0,4,5,5,1,
 																				0,0,0,4,4,5,5,0,0                                         };   // right shift divider mainly for LFO  , maybe for lcd too
 
@@ -36,7 +36,7 @@ const char* menu_titles_final[]= {"LFO     ", "Rate    ","Depth   " ,"Gain    ",
 };   // 36 *8
 uint8_t lfo_skip_list[36]={ 0,0,1,0,1,1,0,0,0,0,
 		1,1,1,1,0,1,1,1,0,0,
-		1,1,1,1,1,1,0,1,0,1,
+		1,1,1,1,1,1,1,0,1,1,
 		1,1,1,1,1,1
 
 };

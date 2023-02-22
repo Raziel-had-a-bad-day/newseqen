@@ -55,10 +55,6 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 34: 	menu_vars_var1=&filter[var_index].poles ;break;
 	case 35:     menu_vars_var1= &LFO[var_index].target_index    ; break;
 
-
-
-
-
 	default :		menu_vars_var1= NULL   ; break;
 
 	}
@@ -487,7 +483,7 @@ uint16_t feedback_loc=(init_b&896)+107;
 	if ((target_display) &&   (disp_stepper==11))      // write LFO.target display
 	{
 		uint8_t target_tmp1=*menu_vars_var ;
-		if (target_tmp1>26) target_tmp1=26;    // check in case
+		if (target_tmp1>35) target_tmp1=0;    // check in case
 		memcpy(default_menu3+feedback_loc+12, *(menu_titles_final+target_tmp1),7);  // copy info for LFO
 
 		 		 	}

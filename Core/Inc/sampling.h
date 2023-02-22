@@ -1,3 +1,13 @@
+float filter_pole(float input,float old_input, float freq1,float freq2) {
+
+	float output;
+
+	output=(input*freq1)+(old_input*freq2);
+
+
+return  output;
+
+}
 void sampling(void){						// 330 atm or 8.5ms
 
 //	if (time_proc>580) time_final=time_proc;
@@ -95,22 +105,25 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	{
 
 
-		note[2].timeshift=(adc_values[0]>>2)&15; //assigned pots to start of loopers 0-16,works
+		note[1].timeshift=(adc_values[0]>>2)&15; //assigned pots to start of loopers 0-16,works
+		note[2].timeshift=note[1].timeshift;
 		note[3].timeshift=(adc_values[1]>>2)&15;
+		note[4].timeshift=note[3].timeshift;
 
-
+		seq.loop[1]=((note[1].timeshift+(seq.pos&7))&15);
 		seq.loop[2]=((note[2].timeshift+(seq.pos&7))&15); // calc  8 note loop positions sets looping point in sequence
 
-		//seq.loop[3]=(note[3].timeshift+(( seq.pos&31 ) >>2)) & 15;  // quater speed
-			seq.loop[3]=((note[3].timeshift+(seq.pos&7))&15); //sets looping point in sequence this is full 16 note
+
+			seq.loop[3]=((note[1].timeshift+(seq.pos&7))&15); //sets looping point in sequence this is full 16 note
 
 			seq.loop[4]=((note[2].timeshift+(seq.pos&7))&15);
 
 		//seq.loop[4]=((note[2].timeshift+((seq.pos&15)>>1))&15); // half speed
-
+			note[1].pitch=(seq.notes2[seq.loop[1]]>>4)+(note[1].transpose>>4);
 		note[2].pitch=(seq.notes2[seq.loop[2]]>>4)+(note[2].transpose>>4);  //loop 8 notes from pos and x times
-		note[3].pitch=(seq.notes1[seq.loop[3]]>>4);  //loop 8 notes from pos and x times ,might disable normal adsr completely
-	if (note[3].pitch) 		{note[3].pitch=note[3].pitch+(note[3].transpose>>4);	adsr_retrigger[3]=1; note_toggler[i>>5]=1<<(i&31   )   ; } // stay at zero for off
+
+		note[3].pitch=(seq.notes2[seq.loop[1]]>>4)+(note[3].transpose>>4); ;  //loop 8 notes from pos and x times ,might disable normal adsr completely
+//	if (note[3].pitch) 		{note[3].pitch=note[3].pitch+(note[3].transpose>>4);	adsr_retrigger[3]=1; note_toggler[i>>5]=1<<(i&31   )   ; } // stay at zero for off
 
 	note[5].pitch=(seq.notes2[seq.loop[2]]>>4)+(note[5].transpose>>4);  //
 		lfo_target_replace();
@@ -148,8 +161,7 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
  //make sure it's finished
 
 // filter loop
-int32_t play_holder1[512];    // data banks
-int32_t play_holder2[512];
+
 uint8_t sine_zero;
 int32_t  sample_temp1;
 int32_t  sample_temp2;
@@ -157,7 +169,19 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	i_total=i+sample_pointB;
 	sampling_position=(i>>6);
 
-	if ((i&63)==0)	lfo_target_replace();    // update values , not too bad
+	if ((i&63)==0)	{  lfo_target_replace();    // update values , not too bad
+float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.01)    ;   // need this for useful filter
+freq_pointer[0] [sampling_position]=1-freq_temp; // problem was selecting accu instead of out , good now
+ freq_temp=arm_sin_f32(filter[1].cutoff_1*0.01)    ;
+freq_pointer[1] [sampling_position] =1-freq_temp ; // filter lfos
+freq_temp=arm_sin_f32(filter[2].cutoff_1*0.01)    ;
+freq_pointer[2] [sampling_position] =1-freq_temp ; // filter lfos
+ freq_temp=arm_sin_f32(filter[3].cutoff_1*0.01)    ;
+freq_pointer[3] [sampling_position] =1-freq_temp ; // filter lfos
+
+
+
+	}
 
 // every step   1,110,928   >>20  ,per note
 // New oscillators , sync, trigger input , waveshape ,zero cross
@@ -166,38 +190,38 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	if (sample_accus[0]>524287) sample_accus[0] =-sample_accus[0] ; // faster >  than &  ,strange
 
 	sample_accus[1] = sample_accus[1] + note[1].tuned;  // normal adder full volume
-		//	if (!(note[].pitch[0]))   sample_accus[1] =0;  // turn off with vel now , maybe use mask
+
 			if (sample_accus[1]>524287) sample_accus[1] =-sample_accus[1] ; // faster >  than &  ,strange
 
 			sample_accus[2] = sample_accus[2] + note[2].tuned;
-			//		if (!(note[].pitch[0]))   sample_accus[2] =0;  // turn off with vel now , maybe use mask
+
 					if (sample_accus[2]>524287) sample_accus[2] =-sample_accus[2] ; // faster >  than &  ,strange
 
 					sample_accus[3] = sample_accus[3] + note[3].tuned; // bouncing somewhere
-					//sample_accus[3] = sample_accus[3] +4000;
-					//	if (!(note[].pitch[0]))   sample_accus[3] =0;  // turn off with vel now , maybe use mask
+
 							if (sample_accus[3]>524287) sample_accus[3] =-sample_accus[3] ; // faster >  than &  ,strange
 
 							sample_accus[4] = sample_accus[4] + note[4].tuned;
-								//	if (!(note[].pitch[4]))   sample_accus[4] =0;  // turn off with vel now , maybe use mask
+
 									if (sample_accus[4]>524287) sample_accus[4] =-sample_accus[4] ; // faster >  than &  ,strange
 
-									sample_Accu[2] = 0;sample_Accu[0] =0;sample_Accu[3] =0; //all zeroed
-									//if (sample_accus[2]<0) sample_Accu[2]=+sample_accus[2]; else sample_Accu[2]=sample_accus[2]; // convert to triangle ?
-									sample_temp1=sample_accus[2]>>10; // needs cut a bit  ,default 20bit
+									sample_Accu[0] =sample_Accu[1] =sample_Accu[2]=sample_Accu[3] =0; //all zeroed
 
-									sample_temp2=sample_temp1*note[2].velocity; // 20+8
-									sample_Accu[0]=sample_temp2;
 
-									sample_temp1=sine_out*	note[5].velocity;  // sine out is 16bit, add 4 then 16+8
-									sine_out=sample_temp1>>4;
 
-									sample_Accu[0] = ((sine_out+sample_Accu[0])*cross_fade[1]);   // sine input plus other
+									sample_temp1=sample_accus[1]>>8; // needs cut a bit  ,default 20bit
+								    sample_Accu[0]=sample_temp1*note[1].velocity; // 20+8
+
+									sample_temp1=sample_accus[2]>>8; // needs cut a bit  ,default 20bit
+									sample_Accu[1]=sample_temp1*note[2].velocity; // 20+8
+
 
 									sample_temp1=sample_accus[3]>>8;
-									sample_temp2=sample_temp1*note[3].velocity;    // 64 default 20+8
-									sample_Accu[3] =sample_temp2;
+									sample_Accu[2] =sample_temp1*note[3].velocity;    // 64 default 20+8
 
+
+									sample_temp1=sine_out*	note[5].velocity;  // sine out is 16bit, add 4 then 16+8
+									sample_Accu[3] =sample_temp1>>4;
 
 
 if (sine_counterB==0) 	sine_temp2=note[5].tuned;
@@ -207,13 +231,14 @@ if (sine_counterB==0) 	sine_temp2=note[5].tuned;
 
 if (sine_counterB>(sine_length<<5)) sine_counterB=0; //fixed for now
 sine_count(); // calc sine   distortion out when hcagning note
-play_holder1[i]=sample_Accu[0];  // write to bank
-play_holder2[i]=sample_Accu[3];
-
-
+play_holder0[i]=sample_Accu[0];  // write to bank
+play_holder1[i]=sample_Accu[1];
+play_holder2[i]=sample_Accu[2];
+play_holder3[i]=sample_Accu[3];
 } // end of osc , doing some sound
 
 int32_t filter_Accu;
+
 
 //uint16_t* click=&input_holder[0];
 
@@ -259,73 +284,86 @@ if (		(note_toggler[i>>5]	)==(1<<(i&31)	)) 				{ADSR[0].attack_trigger =0;  trig
 //sample_Accu[1]=(sample_Accu[1]-2020)<<14; // shift to correct level
 
 //sample_Accu[1]=sample_Accu[1]-60000;
-sample_Accu[1]=play_holder1[i];  // sine input
-sample_Accu[3]=play_holder2[i] ; // saw
+sample_Accu[0]=play_holder0[i];  // sine input
+sample_Accu[1]=play_holder1[i] ; // saw
+sample_Accu[2]=play_holder2[i];  // sine input
+sample_Accu[3]=play_holder3[i] ;
+
+
+
+
 
 // this section is about 100 tmr cycles
-
+if ((i&63)==0){
 freq_point[0]=freq_pointer[0] [sampling_position];; // load up coeffs
-//freq_point[1]=freq_pointer[1] [sampling_position];
-freq_point[2]=freq_pointer[2] [sampling_position];  // ok , array was too short
-//freq_point[3]=freq_pointer[3] [sampling_position];
-//freq_point[0]=0.5;  //was ok with this
-	//	freq_point[2]=0.5;
 
-
-adsr_level[3] = adsr_lut	[i>>1];
+freq_point[2]=freq_pointer[1] [sampling_position];  // ok , array was too short
+freq_point[4]=freq_pointer[2] [sampling_position];  // ok , array was too short
+freq_point[6]=freq_pointer[3] [sampling_position];  // ok , array was too short
 
 
 if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;// just in case
+if (freq_point[4]>1) freq_point[4]=1; else if (freq_point[4]<0) freq_point[4]=0;// just in case
+if (freq_point[2]>1) freq_point[2]=1; else if (freq_point[2]<0) freq_point[2]=0;// just in case
+if (freq_point[6]>1) freq_point[6]=1; else if (freq_point[6]<0) freq_point[6]=0;// just in case
+
+freq_point[1]=1-freq_point[0];
+freq_point[3]=1-freq_point[2];
+freq_point[5]=1-freq_point[4];
+freq_point[7]=1-freq_point[6];
+
+
+}
+
+
+
+
+
 		//freq_point[0]=0.50;
-		freq_point[1]=1-freq_point[0];
-		//sample_Accu[1] = sample_Accu[1]>>13;
 
-		//int16_t  ADSR[0].buffer_temp2=lfo_out [1] [i>>6];
+   // vol lfo
 
-		//ADSR[0].buffer_temp2=ADSR[0].buffer_temp2-8195;
-		//sample_Accu[1] = sample_Accu[1] *lfo_out [0] [i>>6];     // vol lfo
-		sample_Accu[1] = sample_Accu[1] ;
 
-		filter_accus[1]=sample_Accu[1]; // saw
-	//	filter_accus[1]=	filter_accus[1]*adsr_level[3][sampling_position];
-		//filter_accus[1]=	filter_accus[1]*adsr_level[3];
 
-		filter_accus[2]=(filter_accus[1]*freq_point[0])+(filter_accus[2]*freq_point[1]);					// maybe allow bandpass insted of lpf
-		filter_accus[3]=(filter_accus[2]*freq_point[0])+(filter_accus[3]*freq_point[1]);
-		filter_accus[4]=(filter_accus[3]*freq_point[0])+(filter_accus[4]*freq_point[1]);
-		filter_accus[5]=(filter_accus[4]*freq_point[0])+(filter_accus[5]*freq_point[1]);
-		filter_hold[0]=(filter_accus[5]+filter_accus[11])*0.5; //half sample , nice
-		sample_Accu[0] =filter_accus[5]; // out
-		filter_accus[11]=filter_accus[5]; //write back new value
+
+
+
+		filter_accus[1]=sample_Accu[0]; // saw
+		filter_accus[2]=(filter_accus[1]*freq_point[0])+(filter_accus[2]*freq_point[1]);      //short=fast , adding makes it slower
+		filter_accus[3]=(filter_accus[2]*freq_point[0])+(filter_accus[3]*freq_point[1]);			// int32 after conversions is no quicker
+		sample_Accu[0]=filter_accus[3];
+
+	//	sample_Accu[3]=play_holder2[i] >>5;
+		filter_accus[4]=sample_Accu[1];
+
+		filter_accus[5]=(filter_accus[4]*freq_point[2])+(filter_accus[5]*freq_point[3]);   // 30 cyles for 2 poles
+		filter_accus[6]=(filter_accus[5]*freq_point[2])+(filter_accus[6]*freq_point[3]);
+		sample_Accu[1]=filter_accus[6];
+
+		filter_accus[7]=sample_Accu[2];
+
+				filter_accus[8]=(filter_accus[7]*freq_point[4])+(filter_accus[8]*freq_point[5]);   // 30 cyles for 2 poles
+				filter_accus[9]=(filter_accus[8]*freq_point[4])+(filter_accus[9]*freq_point[5]);
+				sample_Accu[2]=filter_accus[9];
+
+				filter_accus[10]=sample_Accu[3];
+
+						filter_accus[11]=(filter_accus[10]*freq_point[6])+(filter_accus[11]*freq_point[7]);   // 30 cyles for 2 poles
+						filter_accus[12]=(filter_accus[11]*freq_point[6])+(filter_accus[12]*freq_point[7]);
+						sample_Accu[3]=filter_accus[12];
+
+
+
+
+	//	filter_hold[0]=(filter_accus[5]+filter_accus[11])*0.5; //half sample , nice
+	//	sample_Accu[0] =filter_accus[5]; // out
+	//	filter_accus[11]=filter_accus[5]; //write back new value
 		//sample_Accu[0] =sample_Accu[1];
-
-		//filter 2
-		sample_Accu[3]=play_holder2[i] >>5; // sine
-
-
-				if (freq_point[2]>1) freq_point[2]=1;
-
-				freq_point[3]=1-freq_point[2];
-				filter_accus[6]=sample_Accu[3];
-			//	filter_accus[6]= filter_accus[6]*adsr_level[3]; // add adsr envelope
-
-				filter_accus[7]=(filter_accus[6]*freq_point[2])+(filter_accus[7]*freq_point[3]);
-				filter_accus[8]=(filter_accus[7]*freq_point[2])+(filter_accus[8]*freq_point[3]);
-				filter_accus[9]=(filter_accus[8]*freq_point[2])+(filter_accus[9]*freq_point[3]);
-				filter_accus[10]=(filter_accus[9]*freq_point[2])+(filter_accus[10]*freq_point[3]);
-				filter_hold[1]=(filter_accus[10]+filter_accus[12])*0.5; //half sample
-				sample_Accu[2] =filter_accus[10]; //out
-				filter_accus[12]=filter_accus[10]; //write back new value
 
 
 filter_Accu=0;
-filter_Accu=(sample_Accu[0]+sample_Accu[2])>>8; //filter + drum out
-
-//filter_Accu=(sample_Accu[1]+sample_Accu[3])>>8; //filter + drum out ,clean out
- //filter_Accu=sample_Accu[1]>>7;
-
-// filter_Accu=sample_Accu[2]>>11;
-//filter_Accu=(sample_Accu[1]>>7)+(sample_Accu[3]>>8); //filter + drum out
+filter_Accu=sample_Accu[0]+sample_Accu[1]+sample_Accu[2]+sample_Accu[3]; //filter + drum out
+filter_Accu=filter_Accu>>1;
  if (one_shot!=199)   one_shot++;  //play one attack then stop
 
  if (filter_Accu>0xFFFF) filter_Accu=0xFFFF; else if (filter_Accu<-65535) filter_Accu=-65535;  // limiter to 16 bits
@@ -447,8 +485,6 @@ for (l=0;l<10;l++){   //current lfo setup , needs sampling position 0-8  and tem
 		} // lfo gen : 0=f1 , 1=tempo,2=pitch
 
 
-			freq_pointer[0] [sampling_position]=0.99; // problem was selecting accu instead of out , good now
-	freq_pointer[2] [sampling_position] =0.99; // filter lfos
 
 	}
 

@@ -95,6 +95,7 @@ void lfo_target_modify(void);
 void gfx_clear(void);
 void lfo_target_parse(void);
 void gfx_send(void);
+float filter_pole(float input,float old_ouput,float freq1,float freq2) ;
 uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ); // string +index , returns pointer to struct
 void display_process(void);
 void displayBuffer2 (void);  // new version
@@ -223,9 +224,9 @@ uint16_t menu_page[3]; // switch between pages, keep track when flipping
 uint8_t seq_loop[7]; //loop positions
 
 //new stuff///////////////////////////////////////////////////////////////////////////////////////////////////////
-float filter_accus[15];  // hold floats for filter
+float  filter_accus[15];  // hold floats for filter
 float filter_hold[5];  //holds some feedback related stuff
-float freq_point[4]={0,0,0,0} ; // multiplier coeff holder temp
+float freq_point[8]={0,0,0,0,0,0,0,0} ; // multiplier coeff holder temp
 float freq_pointer[4] [9];  // multiplier coeff holder
 uint8_t i_frac;  // divide i/64
 uint8_t seq_store;  // just an seq_pos holder for adsr
@@ -372,6 +373,10 @@ uint8_t sampling_position=0; // tracks loop position in sampling for LFO mainly 
 uint8_t gfx_clear_flag=0;    // important for clearing screen
 uint8_t mem_errors=0;   // eeprom error count
 uint8_t mem_verify=0;
+int32_t play_holder1[512];    // data banks
+int32_t play_holder2[512];
+int32_t play_holder3[512];    // data banks
+int32_t play_holder0[512];
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 
