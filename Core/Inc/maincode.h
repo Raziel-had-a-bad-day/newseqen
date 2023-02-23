@@ -6,7 +6,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	uint8_t menu_countr=0; //  menu vars
 	uint8_t *menu_vars_var1=NULL;
 
-	for (i = 0; i < 36; i++) {      // find menu location
+	for (i = 0; i <menu_vars_count; i++) {      // find menu location
 
 		memcpy(menu_string2, menu_titles_final[i], 8);  // copy title list
 		if ((strncmp(menu_string, menu_string2, 8)) == 0) {
@@ -15,7 +15,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 		}
 	}
 
-	if (menu_vars_index_limit[menu_countr]<var_index) var_index=menu_vars_index_limit[menu_countr];   // make sure it stays right
+	if (var_index>menu_vars_index_limit[menu_countr]) var_index=menu_vars_index_limit[menu_countr];   // make sure it stays right
 
 	switch(menu_countr){
 	case 0:     menu_vars_var1= NULL; break;
@@ -23,7 +23,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 2:     menu_vars_var1= &LFO[var_index].depth    ; break;
 	case 3:     menu_vars_var1= &LFO[var_index].gain    ; break;
 	case 4:     menu_vars_var1= &LFO[var_index].offset    ; break;
-	case 5:     menu_vars_var1= &LFO[var_index].target    ; break;
+	case 5:     menu_vars_var1= &patch[var_index].target    ; break;
 	case 6:     menu_vars_var1= NULL   ; break;
 	case 7:     menu_vars_var1= &ADSR[var_index].attack    ; break;
 	case 8:     menu_vars_var1= &ADSR[var_index].decay    ; break;
@@ -53,7 +53,11 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 32: 	menu_vars_var1=&filter[var_index].feedback ;break;
 	case 33: 	menu_vars_var1=&filter[var_index].out_mix ;break;
 	case 34: 	menu_vars_var1=&filter[var_index].poles ;break;
-	case 35:     menu_vars_var1= &LFO[var_index].target_index    ; break;
+	case 35:     menu_vars_var1= &patch[var_index].target_index    ; break;
+	case 36: 	menu_vars_var1=&patch[var_index].input1 ;break;
+	case 37: 	menu_vars_var1=&patch[var_index].input2 ;break;
+	case 38: 	menu_vars_var1=&patch[var_index].in_mix ;break;
+	case 39: 	menu_vars_var1=&patch[var_index].in_offset ;break;
 
 	default :		menu_vars_var1= NULL   ; break;
 
@@ -81,7 +85,7 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 	//if (menu_counter>240)  return;
 	memcpy(menu_string,default_menu+string_search,8);    //copy 8 strings created menu array
 	////////////////////////////
-	for (string_counter=0;string_counter<36;string_counter++){    	// test a single menu entry  , for now only the first record
+	for (string_counter=0;string_counter<menu_vars_count;string_counter++){    	// test a single menu entry  , for now only the first record
 
 		memcpy(menu_string2,menu_titles_final[string_counter],8);
 		if  ((strncmp(menu_string,menu_string2,8))==0) 								// compare and if true pass var,seq
@@ -111,35 +115,51 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 
 
 }
-void lfo_target_parse(void){    // records ptr for target options , works ok
+void patch_target_parse(void){    // records ptr for target options , works ok
 uint8_t skip=0;
 		for (n=0;n<10;n++){
 
-			if (LFO[n].target) {  // test if above zero
-				uint8_t target_input=LFO[n].target; // copy to avoid messed up pointer
+			uint16_t* output_hold;
+			uint8_t input_hold=patch[n].input1;
+
+			if (patch[n].input1>39) patch[n].input1=0;    // limit
+
+			switch(input_hold&3){     // lfo now , can add adsr later
+
+						case 0:   output_hold=&LFO[input_hold>>2].out[0];break;
+						case 1:   output_hold=&LFO[input_hold>>2].out_saw[0];break;
+						case 2:   output_hold=&LFO[input_hold>>2].out_tri[0];break;
+						case 3:   output_hold=&LFO[input_hold>>2].out_tri[0];break;
+						}
+
+			patch[n].in1_ptr=output_hold;   // sets input pointer to first sample , default is lfo[0].out [0]
 
 
-				for(skip=target_input ;skip<36;skip++){
-					if (lfo_skip_list[target_input]==1)  target_input++;
+			if (patch[n].target) {  // test if above zero
+
+
+				uint8_t target_input=patch[n].target; // copy to avoid messed up pointer
+			for(skip=target_input ;skip<menu_vars_count;skip++){
+					if (patch_skip_list[target_input]==1)  target_input++;
 
 				}  // test against list
+				if (target_input>(menu_vars_count-1)) target_input=menu_vars_count-1;
+				if (target_input!=35)  {     // make target index is not selected
 
-				if (target_input!=36)  {
 
+			patch[n].target=target_input; // write back corrected value
 
-			LFO[n].target=target_input; // write back corrected value
-
-			uint8_t target_index=LFO[n].target_index;
+			uint8_t target_index=patch[n].target_index;
 
 			if (target_index>menu_vars_index_limit[target_index]  )   // test limit
 			{	target_index=menu_vars_index_limit[target_index]; }
-			LFO[n].target_index=target_index;
+			patch[n].target_index=target_index;
 			uint8_t*  target_out_ptr= menu_vars(menu_titles_final[target_input] , target_index    );
 
-			if (target_out_ptr)           LFO[n].out_ptr =target_out_ptr;     // write ptr
+			if (target_out_ptr)           patch[n].out_ptr =target_out_ptr;     // write ptr
 
 				}
-				else LFO[n].target=0;  // write back 0 if failed
+				else patch[n].target=0;  // write back 0 if failed
 
 
 
@@ -148,15 +168,21 @@ uint8_t skip=0;
 
 	}
 
-void lfo_target_modify(void){					// modify original value  careful position  ,ok
+void patch_target_modify(void){					// modify original value  careful position  ,ok
 
-
+	uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
 	for (n=0;n<10;n++){
-		if (LFO[n].target) {         // check first for enable
-			uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
-			uint8_t right_shift=menu_vars_divider[LFO[n].target]+1;   // grab divider
-			uint8_t  *ptr_to_modify =LFO[n].out_ptr;       // select address , not always 8 bit ,ok
-			uint16_t lfo_out_temp=  (LFO[n].out [loop_position])>>7;  // 0-127, 64 default
+
+
+		if (patch[n].input1>39) patch[n].input1=0;    // limit
+
+		if (patch[n].target) {         // check first for enable
+
+
+			uint8_t right_shift=menu_vars_divider[patch[n].target]+1;   // grab divider
+			uint8_t  *ptr_to_modify =patch[n].out_ptr;       // select address , not always 8 bit ,ok
+
+			uint16_t lfo_out_temp=  (patch[n].output [loop_position])>>7;  // 0-127, 64 default
 			uint8_t lfo_mod1=ptr_to_modify; //ok
 
 			uint32_t  modified_var =  lfo_out_temp*  lfo_mod1  ;   // grab lfo out *    data to be modfied
@@ -172,20 +198,25 @@ void lfo_target_modify(void){					// modify original value  careful position  ,o
 	}
 
 }
-void lfo_target_replace(void){					// sttaight value replace  ,ok
-
+void patch_target_replace(void){					// sttaight value replace  ,ok
+	uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
 
 	for (n=0;n<10;n++){
-		if (LFO[n].target) {         // check first for enable
-			uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
-			uint8_t right_shift=menu_vars_divider[LFO[n].target]+1;   // grab divider
-			uint8_t  *ptr_to_modify =LFO[n].out_ptr;       // select address , not always 8 bit ,ok
-			uint16_t lfo_out_temp=  (LFO[n].out [loop_position])>>7;  // 0-127, 64 default
+
+
+
+		if (patch[n].target) {         // check first for enable
+
+			patch[n].output[loop_position]=*(patch[n].in1_ptr+(loop_position));   //write output here
+
+			uint8_t right_shift=menu_vars_divider[patch[n].target]+1;   // grab divider
+			uint8_t  *ptr_to_modify =patch[n].out_ptr;       // select address , not always 8 bit ,ok
+			uint16_t lfo_out_temp=  (patch[n].output [loop_position])>>8;  // 0-256,
 			uint8_t lfo_mod1=ptr_to_modify; //ok
 
 			uint8_t  var_replaced =  lfo_out_temp &255 ;   // grab lfo out *    data to be modfied
 
-		if (var_replaced>159) var_replaced=159;
+	//	if (var_replaced>159) var_replaced=159;    leave this for now
 
 			*ptr_to_modify =var_replaced;   // replace original value,ok
 
@@ -248,7 +279,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)    // unreliable
 
 
 void analoginputloopb(void){  //works ,getting obsolete
-uint16_t menu_holder;
+
 
 	menuSelect = cursor_menu[2]>>4;		//x *7  main menu select
 		menuSelectX=cursor_menu[2]&15;  // Y select inside page
@@ -483,7 +514,7 @@ uint16_t feedback_loc=(init_b&896)+107;
 	if ((target_display) &&   (disp_stepper==11))      // write LFO.target display
 	{
 		uint8_t target_tmp1=*menu_vars_var ;
-		if (target_tmp1>35) target_tmp1=0;    // check in case
+		if (target_tmp1>=menu_vars_count) target_tmp1=0;    // check in case
 		memcpy(default_menu3+feedback_loc+12, *(menu_titles_final+target_tmp1),7);  // copy info for LFO
 
 		 		 	}
@@ -496,10 +527,6 @@ uint16_t feedback_loc=(init_b&896)+107;
 
 
 }   // end o void
-
-
-
-
 
 
 void displayBuffer2 (void){       // use only writing characters  ,nothing more  , init_b for selecting location

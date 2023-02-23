@@ -248,21 +248,18 @@ HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
 
 
-uint8_t potSource2[120];    // { [0 ... 112] = 64 };
+uint8_t potSource2[64]={0};    // { [0 ... 112] = 64 };
+uint16_t mem_count2=0;
 
-	for(i=0;i<6;i++){     // 256
-	HAL_I2C_Mem_Read(&hi2c2, 160, 64+(i*64), 2,&potSource2, 64,1000);		// all good readin eeprom  values
-
-	memcpy (potSource+(i*64),potSource2,sizeof(potSource2));   //this works  ok now ,leave it alone
+HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 384,1000); //ok
 
 
-	}
-	for(i=0;i<260;i++){			// write potvalues ,for display ,also filter bad data IMPORTANT !!!
+//	for(i=0;i<384;i++){			// write potvalues ,for display ,also filter bad data IMPORTANT !!!
 
-		if (potSource[i]>159) potSource[i]=159;
-		potValues[i]=potSource[i]>>4;
+	//	if (potSource[i]>159) potSource[i]=159;
+//		potValues[i]=potSource[i]>>4;
 
-	}
+//	}
 
 	uint16_t mem_counter=0;
 	memcpy(&seq,potSource,46 );  // load from potSource  ,, causes problems with memory ,NEEDS TO BE CONTINUOS OR  WILL  GET CORRUPT
@@ -273,7 +270,7 @@ uint8_t potSource2[120];    // { [0 ... 112] = 64 };
 		memcpy(&LFO[mem_counter],potSource+46+(mem_counter*6),6 );  // + 60 ,ok here
 
 		memcpy(&ADSR[mem_counter],potSource+106+(mem_counter*5),5 );  // +50  ,
-
+		memcpy(&patch[mem_counter],potSource+268+(mem_counter*6),6 );
 	}
 
 	for(i=0;i<64;i++){       //   fill with characters also add lcd command ,ok
@@ -322,8 +319,8 @@ for (pars_counter=0;pars_counter<512;pars_counter++)	{   // fill up display data
 	menu_title_count--;  //count back one
 	display_clear ();
 
-uint16_t lut_temp2=0;
-uint16_t lut_temp3=0;
+
+
 
 
 menuSelect=0;
@@ -350,8 +347,8 @@ firstbarLoop=0;
 
 
 if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
-	  if (mem_count>260) mem_count=0; else mem_count++; // write to first this was moved for no logical reason ?
-	  lfo_target_parse(); //
+	  if (mem_count>329) mem_count=0; else mem_count++; // write to first this was moved for no logical reason ?
+	  patch_target_parse(); //
 	// read values from stored
 
 	memcpy(potSource,&seq,46); // about 35
@@ -361,7 +358,7 @@ if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 
 		memcpy(potSource+46+(i*6),&LFO[i],6 );  // + 60  ,ok
 		memcpy(potSource+106+(i*5),&ADSR[i],5 );  // +50  ,
-
+		memcpy(potSource+268+(i*6),&patch[i],6 );
 	}	// copy vars into potSource
 
 
@@ -372,7 +369,7 @@ if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 
 
 				 mem_buf=potSource[mem_count];
-				 if (mem_buf>159) mem_buf=159;
+			//	 if (mem_buf>159) mem_buf=159;
 				 mem_count2=((1+(mem_count>>6))<<6)+(mem_count&63);
 				 HAL_I2C_Mem_Read(&hi2c2, 160,mem_count2, 2,&mem_verify, 1,100);
 				 if (mem_verify!=mem_buf) HAL_I2C_Mem_Write(&hi2c2, 160,mem_count2 , 2, &mem_buf, 1, 100);

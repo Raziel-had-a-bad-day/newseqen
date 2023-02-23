@@ -1,7 +1,7 @@
 
 
 // STM32F411
-
+//   user adjust 0-160    , internal 0-255 or 16bit
 // if folding problem , space after // 
 /*int _write(int file, char *ptr, int len) {   	// code sw viewer
 	 int DataIdx;
@@ -89,11 +89,11 @@ static void MX_TIM2_Init(void);
 static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 void display_init(void);
-void lfo_target_replace(void);
+void patch_target_replace(void);
 void display_clear (void);
-void lfo_target_modify(void);
+void patch_target_modify(void);
 void gfx_clear(void);
-void lfo_target_parse(void);
+void patch_target_parse(void);
 void gfx_send(void);
 float filter_pole(float input,float old_ouput,float freq1,float freq2) ;
 uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ); // string +index , returns pointer to struct
@@ -224,6 +224,7 @@ uint16_t menu_page[3]; // switch between pages, keep track when flipping
 uint8_t seq_loop[7]; //loop positions
 
 //new stuff///////////////////////////////////////////////////////////////////////////////////////////////////////
+float filter_res[5];
 float  filter_accus[15];  // hold floats for filter
 float filter_hold[5];  //holds some feedback related stuff
 float freq_point[8]={0,0,0,0,0,0,0,0} ; // multiplier coeff holder temp
@@ -273,11 +274,15 @@ struct LFO_settings{      // use first 5*10 , leave the rest  , no bueno  32 eac
 	uint8_t depth;	//(p140)
 	uint8_t gain;
 	uint8_t offset;
-	uint8_t target;      // lfo modulation target  , number for now , 0-16(index) + (0-27)<<4, variable ptr
-	uint8_t target_index;
-	uint16_t out[10];       // actual output , needs multiple for loop,,calculated
-	uint8_t* out_ptr;   // address from target (mostly 8 bit,mostly )
-	};
+	uint8_t delay;  // + lfo_accu_temp
+	uint8_t phase;  // unsure
+	//uint8_t target;      // lfo modulation target  , number for now , 0-16(index) + (0-27)<<4, variable ptr
+	//uint8_t target_index;
+	uint16_t out[10];       // sine, actual output , needs multiple for loop,,calculated
+//	uint8_t* out_ptr;   // address from target (mostly 8 bit,mostly )
+	uint16_t out_saw[10];   // saw output
+	uint16_t out_tri[10];
+};
 
 struct LFO_settings LFO[10]={0};       // create lfo settings
 
@@ -314,7 +319,7 @@ struct note_settings{								//default note/osc/patch settings  14*8 bytes (112)
 
 
 };
-struct note_settings note[7]={[0].velocity=64,[1].velocity=64,[2].velocity=64,[3].velocity=64,[4].velocity=64,[5].velocity=64,[6].velocity=64
+struct note_settings note[7]={[0].velocity=255,[1].velocity=255,[2].velocity=255,[3].velocity=255,[4].velocity=255,[5].velocity=255,[6].velocity=255
 															,[0].detune=64,[1].detune=64,[2].detune=64,[3].detune=64,[4].detune=64,[5].detune=64,[6].detune=64};
 //struct note_settings note[7];
 
@@ -343,6 +348,19 @@ struct filter_settings{
 };
 struct filter_settings filter[4]={[0].cutoff_1=159,[1].cutoff_1=159,[2].cutoff_1=159,[3].cutoff_1=159,[0].level=64,[1].level=64,[2].level=64,[3].level=64};
 
+struct patch_settings{					// use this instead of lfo  or other modulators
+	uint8_t input1;   // in1 ,default , modulation source , lfo+type and adsr for now
+	uint8_t input2;  // secondary input, optional
+	uint8_t in_mix;  // mix in1 and in2, 0 default
+	uint8_t in_offset;  // offset values
+	uint8_t target;	//target  type
+	uint8_t target_index;	//index
+	uint16_t output[10];  // actual output
+	uint8_t*  out_ptr;  // output target , might change that
+	uint16_t*   in1_ptr;     // use ptr for reading
+};
+struct patch_settings patch[10];    // patch board
+
 
 uint16_t string_search=0;   // search position on created menu
 uint16_t string_value=0;  // holds the variable result from the search result
@@ -362,7 +380,7 @@ uint8_t * menu_vars_var=0;			// return memory location to var !
 char menu_vars_in[8];  // incoming string ,ok
 uint8_t menu_index_in=0; // gets the struct index ie LFO[1].rate
 uint16_t default_menu3_size=0;    //  just set size of menu
-
+const uint8_t menu_vars_count=40;  // set counter when menu vars testing
 int8_t enc_out1=1;    // menu_title_lut   cursor position
 uint8_t  enc2_store[5];
 uint8_t enc2_store_count=0;
@@ -377,6 +395,7 @@ int32_t play_holder1[512];    // data banks
 int32_t play_holder2[512];
 int32_t play_holder3[512];    // data banks
 int32_t play_holder0[512];
+uint8_t clipping=0;
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 

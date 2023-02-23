@@ -9,37 +9,38 @@ const char default_menu[] ={" 00SeqPos     00Tempo    01Transpos 02Transpos 03Tr
 		"04Rate     04Depth    04Offset      05Rate     05Depth    05Offset    "
 		"06Rate     06Depth    06Offset      07Rate     07Depth    07Offset    "
 
-		"00Rate     00Depth    00Offset   00Target  00Targindx        "
-		"01Rate     01Depth    01Offset   01Target  01Targindx        "
-		"02Rate     02Depth    02Offset   02Target  02Targindx        "
-		"03Rate     02Depth    02Offset   03Target  03Targindx        "
-		"04Rate     04Depth    04Offset   04Target  04Targindx        "
-		"05Rate     05Depth    05Offset   05Target  05Targindx        "
-		"06Rate     06Depth    06Offset   06Target  06Targindx        "
-	//	"07Rate     07Depth    07Offset   07Target  07Targindx        "
+		" 00Input_1  00InOffset  00Target   00Targindx       "
+		" 01Input_1  01InOffset  01Target   01Targindx       "
+		" 02Input_1  02InOffset  02Target   02Targindx       "
+		" 03Input_1  03InOffset  03Target   03Targindx       "
+		" 04Input_1  04InOffset  04Target   04Targindx       "
+		" 05Input_1  05InOffset  05Target   05Targindx       "
+		" 06Input_1  06InOffset  06Target   06Targindx       "
 		"00Attack   00Decay    00Sustain  00Release          "
 		"01Attack   01Decay    01Sustain  01Release          "};   // just for testing text memory , will be modifiable ,  lut
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
 
 char default_menu3[1024]; // hold all string for output  128 per page , needs to resize
-const uint8_t  menu_vars_index_limit[36]= {0,9,9,9,9,9,0,5,5,5,5,0,6,6,6,6,6,6,6,6,6,0,0,0,15,15,9,3,3,3,3,3,3,3,3,9} ; // index number limiter ,fixed
-const uint8_t  menu_vars_divider[36] = {0,0,0,0,0,0,0,0,0,0,
+const uint8_t  menu_vars_index_limit[41]= {0,9,9,9,9,9,0,5,5,5,5,0,6,6,6,6,6,6,6,6,
+		6,0,0,0,15,15,9,3,3,3,3,3,3,3,3,9,9,9,9,9,0} ; // index number limiter ,fixed IMPORTANT!
+
+const uint8_t  menu_vars_divider[41] = {0,0,0,0,0,0,0,0,0,0,
 																				0,0,0,0,5,0,4,5,5,1,
-																				0,0,0,4,4,5,5,0,0                                         };   // right shift divider mainly for LFO  , maybe for lcd too
+																				0,0,0,4,4,5,5,0,0 ,0,
+																				0,0,0,0,0,0,0,0,0,0,0   };   // right shift divider mainly for LFO  , maybe for lcd too
 
 
-const char* menu_titles_final[]= {"LFO     ", "Rate    ","Depth   " ,"Gain    ", "Offset  ", "Target  ","ADSR    ",
-		"Attack  ", "Decay   ","Sustain ","Release ",
-		"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",
-		"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    ","Cutoff_1","Cutoff_2","Resnance","Q_level ","Level   ","Feedback","Out_mix ","Poles   ",
-		"Targindx"
-};   // 36 *8
-uint8_t lfo_skip_list[36]={ 0,0,1,0,1,1,0,0,0,0,
-		1,1,1,1,0,1,1,1,0,0,
-		1,1,1,1,1,1,1,0,1,1,
-		1,1,1,1,1,1
-
-};
+	const char* menu_titles_final[]= {"LFO     ", "Rate    ","Depth   " ,"Gain    ", "Offset  ", "Target  ","ADSR    ",
+			"Attack  ", "Decay   ","Sustain ","Release ",
+			"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",
+			"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    ","Cutoff_1","Cutoff_2","Resnance","Q_level ","Level   ","Feedback","Out_mix ","Poles   ",
+			"Targindx","Input_1 ","Input_2 ","In_mix  ","InOffset"
+	};   // 40 *8
+	const uint8_t patch_skip_list[41]={ 0,1,1,1,1,1,1,1,1,1,
+			1,1,1,1,1,1,1,1,0,0,
+			1,1,1,1,1,1,1,0,1,1,
+			1,1,1,1,1,1,1,1,1,1
+	};  // skip most of it for now
 
 
 const uint16_t sine_block2[514]={20000,20245,20491,20736,20981,21226,21471,21716,21960,22204,22448,22692,22935,23177,23419,23661,23902,24142,24382,24621,24860,25097,25334,25570,25806,26040,26274,26506,26738,26968,27198,27426,27654,27880,28105,28329,28551,28772,28992,29211,29428,29644,29858,30071,30282,30492,30700,30906,31111,31315,31516,31716,31914,32110,32305,32497,32688,32877,33063,33248,33431,33612,33791,33968,34142,34315,34485,34653,34819,34983,35144,35303,35460,35615,35767,35917,36064,36209,36352,36492,36629,36764,36897,37027,37155,37279,37402,37521,37638,37753,37864,37973,38080,38183,38284,38382,
