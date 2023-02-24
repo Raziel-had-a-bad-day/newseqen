@@ -118,6 +118,7 @@ void display_fill(void);
 void display_generate(void);
 void gfx_send_page(void);
 void LFO_source(void);
+void note_reset (void);
 uint8_t seq_pos; // sequencer position linked to isrCount for now but maybe change
 
 void  mask_calc(uint8_t mask_select,uint8_t mask_speed);
@@ -234,7 +235,9 @@ uint8_t seq_store;  // just an seq_pos holder for adsr
 uint16_t trigger_counter;
 uint32_t  lfo_accu[10]  [10]; //holds last lfo value , simple 0-255 upcount for now,will change; 10x8
 uint16_t  lfo_out[10] [10];   //8x10 values for lfo
-uint16_t tempo_lut[162]; // tempo look up 40-200bpm
+uint16_t tempo_lut[256]; // tempo look up 40-200bpm
+uint16_t lfo_tempo_lut[256];
+uint16_t tempo_mod_hold;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////GFX
 //uint8_t gfx_ram[64][18] ; //holds data for lcd 64*128bit +2 bytes ver/hor command for lcd
 uint8_t  gfx_ram[1153];
@@ -388,6 +391,7 @@ uint8_t  lcd_temp=0;   //temp hold
 uint8_t spi2_send_enable=0;
 uint8_t target_display=0;   // enabled when cursor is on LFO.target
 uint8_t sampling_position=0; // tracks loop position in sampling for LFO mainly 0-7
+uint8_t sampling_position_b=0;    //previous step
 uint8_t gfx_clear_flag=0;    // important for clearing screen
 uint8_t mem_errors=0;   // eeprom error count
 uint8_t mem_verify=0;

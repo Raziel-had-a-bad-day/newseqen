@@ -36,6 +36,21 @@ uint8_t l;			// 35.002khz(0.02857ms) sample, 1 sample is temp count (16x=0.00045
 tempo_sync=16384/((tempo_mod*16)/512) ; // 8000 at slowest 15.625 updates to lfo at 1 note 16384/15.625=1048.576+ per update  at setting 80
 tempo_sync=tempo_sync/80;  // bit weird her , this is adsr !
 
+
+uint32_t lfo_tempo_hold;
+
+if (tempo_mod_hold!=tempo_mod){					// lfo lut calculate only when changes tempo
+
+		float lfo_tempo_calc=((62831*4)/(tempo_mod)); // deafualt 1 note
+
+
+						for (i=0;i<256;i++){								// 128 is 1 note
+	lfo_tempo_hold=(((i+1)*lfo_tempo_calc))/64;
+	lfo_tempo_lut[i]= lfo_tempo_hold;
+
+}}
+tempo_mod_hold=tempo_mod;   // for lfo
+
 uint32_t  note_toggler[17]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  //records note position on 0-512   using a bit
 for (i=0;i<16;i++) {  note_toggler[i]=0; }
 	//potSource[150]=(freq_point[0])*100; //0-2
@@ -86,7 +101,7 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 
 	i_total=i+sample_pointB;
 	sampling_position=i>>6;   //   0-8 steps
-
+	sampling_position_b=(sampling_position+7)&7;
 	note_plain=seq.notes1[seq.pos & 7 ];
 potValues[i&255]=potSource[i&255]>>4; //just to update values
 	if (tempo_count>=tempo_mod) { next_isr=(next_isr+1)& 4095;tempo_count=0;  }  else {tempo_count++; }  //trigger next note , actual next step for isrCount(future)  8ms,trying to fix slow down here  8000 too  much, adsr clears note info
@@ -102,7 +117,7 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	if(tempo_start  )    // Calculates only on note change, gotta change seq.pos somehow  , only activates when change in seq pos ie once in ten bankwrites ,rare
 	{
 
-
+		note_reset();
 		note[1].timeshift=(adc_values[0]>>2)&15; //assigned pots to start of loopers 0-16,works
 		note[2].timeshift=note[1].timeshift;
 		note[3].timeshift=(adc_values[1]>>2)&15;
@@ -125,10 +140,12 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 
 	note[5].pitch=(seq.notes2[seq.loop[2]]>>4)+(note[5].transpose>>4);  //
 		patch_target_replace();
+		uint8_t detune_temp=0;
+		detune_temp=(note[5].pitch+(note[5].detune>>2))&31    ;
+		if(detune_temp>27) detune_temp=27;
+		   //this is for sine skip mask
 
-	note[5].pitch=MajorNote[note[5].pitch];    //this is for sine skip mask
-	//note[5].pitch=(note[5].pitch*(note[5].detune))>>7 ; // works ok with single note @24 but   fails on other
-	note[5].tuned=sine_lut[note[5].pitch];	//sets freq ,1.0594  * 16536 =17518  ,
+	note[5].tuned=sine_lut[MajorNote[detune_temp]];	//sets freq ,1.0594  * 16536 =17518  ,
 	note[5].tuned= (note[5].tuned*1200)>>10;  // modify different sample size , just need single cycle length and thats it
 		mask_result =0;
 
@@ -137,10 +154,13 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	if (note[mask_i].pitch) {
 
 	//	note[mask_i].pitch=(note[mask_i].pitch ;
-		tune_Accu=sample_Noteadd[MajorNote[note[mask_i].pitch&15]];
+
+		detune_temp=(note[mask_i].pitch+(note[mask_i].detune>>2))&31    ;
+		if(detune_temp>27) detune_temp=27;
+		note[mask_i].tuned=sample_Noteadd[MajorNote[detune_temp]];
 
 
-	note[mask_i].tuned=(tune_Accu);       } // relies on note channel clear , not good , clear not channel straight after
+	    } // relies on note channel clear , not good , clear not channel straight after
 
 	}
 
@@ -310,10 +330,10 @@ freq_point[3]=1-freq_point[2];
 freq_point[5]=1-freq_point[4];
 freq_point[7]=1-freq_point[6];
 
-filter_res[0]=freq_point[0]*0.1;
-filter_res[1]=freq_point[1]*0.1;
-filter_res[2]=freq_point[2]*0.1;
-filter_res[3]=freq_point[3]*0.1;
+filter_res[0]=freq_point[0]*0.5;
+filter_res[1]=freq_point[1]*0.5;
+filter_res[2]=freq_point[2]*0.5;
+filter_res[3]=freq_point[3]*0.5;
 
 
 
@@ -447,50 +467,55 @@ void LFO_source(void){     // lfo
 float	freq_temp=0;
 float 	freq2_temp=0;
 uint32_t 	freq_saw=0;
-uint8_t l ;
+uint8_t lfo_c ;
 float offset=0;
 uint32_t lfo_accu_temp;
 	uint32_t freq3_temp;
 	uint32_t freq4_temp;
 	int16_t  output_hold;
+	int32_t freq_tri;
 
-for (l=0;l<10;l++){   //current lfo setup , needs sampling position 0-8  and tempo_sync
-
-
-
-	lfo_accu_temp=	lfo_accu[l][sampling_position];  // hold
-
-	freq3_temp=LFO[l].rate +1;  // rate. this needs a little log
-		freq4_temp=freq3_temp*freq3_temp;  // multiply the rate +32 000 max
+	for (lfo_c=0;lfo_c<10;lfo_c++){   //current lfo setup , needs sampling position 0-8  and tempo_sync
 
 
-			freq3_temp=lfo_accu_temp+ freq4_temp;// get lfo value plus rate , will try to get related to tempo for easier sync , at potS 80?/8192/8notes/ 1 bar
+
+	lfo_accu_temp=	lfo_accu[lfo_c][sampling_position_b];  // hold
+
+	freq3_temp=lfo_tempo_lut[LFO[lfo_c].rate] ;  // rate. this needs a little log
+		//freq4_temp=freq3_temp*freq3_temp;  // multiply  , dont more then 8000 really
+
+
+			freq3_temp=lfo_accu_temp+ freq3_temp;// get lfo value plus rate , will try to get related to tempo for easier sync , at potS 80?/8192/8notes/ 1 bar
 
 
 ///  counts from -16k to +16 k   @ + 0.03125      to   +400    *10    or 13 ms *8 (10 hz ? fastest  )
 		if (freq3_temp>62831) lfo_accu_temp=0; else lfo_accu_temp=freq3_temp; // write back value  counts -16000 to +16000
-
-		lfo_accu[l][sampling_position]=lfo_accu_temp;
+		if(!seq.pos)  lfo_accu_temp=0;   // tempo sync
+		lfo_accu[lfo_c][sampling_position]=lfo_accu_temp;
 		freq_temp=lfo_accu_temp;
 		freq2_temp=(freq_temp*0.0001);  //0-360
-		freq_temp =arm_sin_f32(freq2_temp); // seems ok   , cmsis is ok  RADIANS !!!!!
-		freq2_temp=freq_temp*LFO[l].depth*204;
 
-		if (!LFO[l].offset)    LFO[l].offset=0;   // se
- 	//	offset=(LFO[l].offset*200)-32767; //  limit now for finetuning
+		freq_temp =arm_sin_f32(freq2_temp); // seems ok   , cmsis is ok  RADIANS !!!!!
+		freq2_temp=freq_temp*LFO[lfo_c].depth*204;
+
+		if (!LFO[lfo_c].offset)    LFO[lfo_c].offset=0;   // se
+ 		offset=(LFO[lfo_c].offset<<8); //  limit now for finetuning
 			freq2_temp=(freq2_temp+offset);
 
 		if (freq2_temp>32767)  freq2_temp=32767;
 		if (freq2_temp<-32767) {  freq2_temp=-32767; }  // clip to 13bit -/+ 8000
 
 						output_hold=freq2_temp;
+						if(lfo_accu_temp<32768)   freq_tri=lfo_accu_temp; else freq_tri=65535-lfo_accu_temp;    // 0-32767
+					freq_saw=((lfo_accu_temp*LFO[lfo_c].depth)>>8)+offset;
+					if (freq_saw>65535)  freq_saw=65535;   // clip
 
-					freq_saw=lfo_accu_temp>>(LFO[l].depth>>4);
-				   LFO[l].out[sampling_position]=output_hold+32767;
-				   LFO[l].out_saw[sampling_position]=(freq_saw+32767)&32767;
+					LFO[lfo_c].out[sampling_position]=output_hold+32767;
+				   LFO[lfo_c].out_saw[sampling_position]=freq_saw;
 
-
-				   if(lfo_accu_temp<32768)      LFO[l].out_tri[sampling_position]=freq_saw; else LFO[l].out_tri[sampling_position]=32767-(lfo_accu_temp&32767);
+				   freq_tri=((freq_tri*LFO[lfo_c].depth)>>7)+offset;
+				   if (freq_tri>65535)  freq_tri=65535;   // clip
+				  LFO[lfo_c].out_tri[sampling_position]=freq_tri;
 
 		} // lfo gen : 0=f1 , 1=tempo,2=pitch
 

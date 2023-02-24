@@ -289,13 +289,13 @@ seq.pos=0;
 float tempo_hold;  // calculate tempo look up
 
 
-	for (i=0;i<161;i++) {
+	for (i=0;i<256;i++) {
 
 	tempo_hold=(i+180)*0.0166666666;
 
 	tempo_hold=	1/tempo_hold;
-	//tempo_hold=	tempo_hold*2187.6*4;      // change for the sake of note length
-	tempo_hold=	tempo_hold*2187.6*1;      // change for the sake of note length
+	tempo_hold=	tempo_hold*2187.6*2;      // change for the sake of note length
+	//tempo_hold=	tempo_hold*2187.6*1;      // change for the sake of note length
 	tempo_lut[i]=tempo_hold;
 	}
 

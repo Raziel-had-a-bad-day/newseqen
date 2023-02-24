@@ -305,7 +305,7 @@ void analoginputloopb(void){  //works ,getting obsolete
 
 
   if (enc2_temp>383) enc2_temp=383;  //mem overflow somewhere
-	if (enc_dir>160) enc_dir=160;
+	if (enc_dir>255) enc_dir=255;
 			if (enc_dir<0) enc_dir=0;
 
 			enc_tempB=enc_temp;
@@ -561,7 +561,14 @@ if (disp_stepper==17) {disp_stepper=0;enc2_add=0;  }     else disp_stepper++;			
 }    // displayBuffer2
 
 
+void note_reset (void){          // reset deafult values before modulation , in case it gets left  with no modulator
 
+	note[0].velocity=255;note[1].velocity=255;note[2].velocity=255;note[3].velocity=255;note[4].velocity=255;note[5].velocity=255;note[6].velocity=255
+																;note[0].detune=127;note[1].detune=127;note[2].detune=127;note[3].detune=127;note[4].detune=127;
+	note[5].detune=127;note[6].detune=127;
+
+
+}
 
 
 

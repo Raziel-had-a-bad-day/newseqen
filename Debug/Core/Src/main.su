@@ -17,11 +17,12 @@
 ../Core/Inc/maincode.h:415:6:display_fill	16	static
 ../Core/Inc/maincode.h:440:6:display_process	24	static
 ../Core/Inc/maincode.h:532:6:displayBuffer2	16	static
+../Core/Inc/maincode.h:564:6:note_reset	4	static
 ../Core/Inc/sampling.h:1:7:filter_pole	32	static
-../Core/Inc/sampling.h:11:6:sampling	144	static
-../Core/Inc/sampling.h:391:6:mask_calc	24	static
-../Core/Inc/sampling.h:405:6:sine_count	24	static
-../Core/Inc/sampling.h:444:6:LFO_source	56	static
+../Core/Inc/sampling.h:11:6:sampling	152	static
+../Core/Inc/sampling.h:411:6:mask_calc	24	static
+../Core/Inc/sampling.h:425:6:sine_count	24	static
+../Core/Inc/sampling.h:464:6:LFO_source	56	static
 ../Core/Src/main.c:101:5:main	160	static
 ../Core/Src/main.c:511:6:SystemClock_Config	88	static
 ../Core/Src/main.c:558:13:MX_ADC1_Init	56	static

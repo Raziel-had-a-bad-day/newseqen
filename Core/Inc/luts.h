@@ -9,13 +9,18 @@ const char default_menu[] ={" 00SeqPos     00Tempo    01Transpos 02Transpos 03Tr
 		"04Rate     04Depth    04Offset      05Rate     05Depth    05Offset    "
 		"06Rate     06Depth    06Offset      07Rate     07Depth    07Offset    "
 
-		" 00Input_1  00InOffset  00Target   00Targindx       "
-		" 01Input_1  01InOffset  01Target   01Targindx       "
-		" 02Input_1  02InOffset  02Target   02Targindx       "
-		" 03Input_1  03InOffset  03Target   03Targindx       "
-		" 04Input_1  04InOffset  04Target   04Targindx       "
-		" 05Input_1  05InOffset  05Target   05Targindx       "
-		" 06Input_1  06InOffset  06Target   06Targindx       "
+		" 00Input_1    00Target   00Targindx        "
+		" 01Input_1    01Target   01Targindx        "
+		" 02Input_1    02Target   02Targindx        "
+		" 03Input_1    03Target   03Targindx        "
+		" 04Input_1    04Target   04Targindx        "
+		" 05Input_1    05Target   05Targindx        "
+		" 06Input_1    06Target   06Targindx        "
+		" 07Input_1    07Target   07Targindx        "
+		" 08Input_1    08Target   08Targindx        "
+		" 09Input_1    09Target   09Targindx        "
+
+
 		"00Attack   00Decay    00Sustain  00Release          "
 		"01Attack   01Decay    01Sustain  01Release          "};   // just for testing text memory , will be modifiable ,  lut
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
@@ -37,8 +42,8 @@ const uint8_t  menu_vars_divider[41] = {0,0,0,0,0,0,0,0,0,0,
 			"Targindx","Input_1 ","Input_2 ","In_mix  ","InOffset"
 	};   // 40 *8
 	const uint8_t patch_skip_list[41]={ 0,1,1,1,1,1,1,1,1,1,
-			1,1,1,1,1,1,1,1,0,0,
-			1,1,1,1,1,1,1,0,1,1,
+			1,1,1,1,1,1,1,1,1,0,
+			0,1,1,1,1,1,1,0,1,1,
 			1,1,1,1,1,1,1,1,1,1
 	};  // skip most of it for now
 
