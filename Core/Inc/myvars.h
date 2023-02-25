@@ -285,6 +285,7 @@ struct LFO_settings{      // use first 5*10 , leave the rest  , no bueno  32 eac
 //	uint8_t* out_ptr;   // address from target (mostly 8 bit,mostly )
 	uint16_t out_saw[10];   // saw output
 	uint16_t out_tri[10];
+	uint8_t out_8b;  // 8bit output from sine
 };
 
 struct LFO_settings LFO[10]={0};       // create lfo settings
@@ -383,7 +384,7 @@ uint8_t * menu_vars_var=0;			// return memory location to var !
 char menu_vars_in[8];  // incoming string ,ok
 uint8_t menu_index_in=0; // gets the struct index ie LFO[1].rate
 uint16_t default_menu3_size=0;    //  just set size of menu
-const uint8_t menu_vars_count=40;  // set counter when menu vars testing
+
 int8_t enc_out1=1;    // menu_title_lut   cursor position
 uint8_t  enc2_store[5];
 uint8_t enc2_store_count=0;
@@ -400,6 +401,7 @@ int32_t play_holder2[512];
 int32_t play_holder3[512];    // data banks
 int32_t play_holder0[512];
 uint8_t clipping=0;
+uint8_t notes_joined[33];
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 

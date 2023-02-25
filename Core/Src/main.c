@@ -72,6 +72,9 @@ TIM_HandleTypeDef htim4;
 /* USER CODE BEGIN PV */
 #include "maincode.h"			// void
 #include "sampling.h"     // audio process
+
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -166,11 +169,6 @@ HAL_SPI_Receive(&hspi1, return_spi1, 2, 1000);   // manuf return sif correct , 0
 */
 
 
-
-
-
-
-
 HAL_Delay(5);
 
 
@@ -254,13 +252,6 @@ uint16_t mem_count2=0;
 HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 384,1000); //ok
 
 
-//	for(i=0;i<384;i++){			// write potvalues ,for display ,also filter bad data IMPORTANT !!!
-
-	//	if (potSource[i]>159) potSource[i]=159;
-//		potValues[i]=potSource[i]>>4;
-
-//	}
-
 	uint16_t mem_counter=0;
 	memcpy(&seq,potSource,46 );  // load from potSource  ,, causes problems with memory ,NEEDS TO BE CONTINUOS OR  WILL  GET CORRUPT
     memcpy(&note,potSource+156,112 );   // this works but keep checking for fragmentation
@@ -272,6 +263,7 @@ HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 384,1000); //ok
 		memcpy(&ADSR[mem_counter],potSource+106+(mem_counter*5),5 );  // +50  ,
 		memcpy(&patch[mem_counter],potSource+268+(mem_counter*6),6 );
 	}
+
 
 	for(i=0;i<64;i++){       //   fill with characters also add lcd command ,ok
 
@@ -318,9 +310,6 @@ for (pars_counter=0;pars_counter<512;pars_counter++)	{   // fill up display data
 	default_menu3_size = strlen(default_menu3);  // grab menu size , this is needed
 	menu_title_count--;  //count back one
 	display_clear ();
-
-
-
 
 
 menuSelect=0;

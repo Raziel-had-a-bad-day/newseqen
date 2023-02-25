@@ -1,6 +1,8 @@
 
 
-const char default_menu[] ={" 00SeqPos     00Tempo    01Transpos 02Transpos 03Transpos 05Transpos  "  // was getting corrupted then screwed everything
+#define menu_lookup_count    40     // size of the look up variables processor
+
+const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Transpos 03Transpos 05Transpos "  // was getting corrupted then screwed everything
 		"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "
 		"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
 		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes1  "
@@ -9,44 +11,52 @@ const char default_menu[] ={" 00SeqPos     00Tempo    01Transpos 02Transpos 03Tr
 		"04Rate     04Depth    04Offset      05Rate     05Depth    05Offset    "
 		"06Rate     06Depth    06Offset      07Rate     07Depth    07Offset    "
 
-		" 00Input_1    00Target   00Targindx        "
-		" 01Input_1    01Target   01Targindx        "
-		" 02Input_1    02Target   02Targindx        "
-		" 03Input_1    03Target   03Targindx        "
-		" 04Input_1    04Target   04Targindx        "
-		" 05Input_1    05Target   05Targindx        "
-		" 06Input_1    06Target   06Targindx        "
-		" 07Input_1    07Target   07Targindx        "
-		" 08Input_1    08Target   08Targindx        "
-		" 09Input_1    09Target   09Targindx        "
-
+		" 00Input_1  00Target   00Tg_ndx    07Input_1  07Target   07Tg_ndx     "
+		" 01Input_1  01Target   01Tg_ndx    08Input_1  08Target   08Tg_ndx     "
+		" 02Input_1  02Target   02Tg_ndx    09Input_1  09Target   09Tg_ndx     "
+		" 03Input_1  03Target   03Tg_ndx            "
+		" 04Input_1  04Target   04Tg_ndx            "
+		" 05Input_1  05Target   05Tg_ndx            "
+		" 06Input_1  06Target   06Tg_ndx            "
 
 		"00Attack   00Decay    00Sustain  00Release          "
 		"01Attack   01Decay    01Sustain  01Release          "};   // just for testing text memory , will be modifiable ,  lut
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
 
 char default_menu3[1024]; // hold all string for output  128 per page , needs to resize
-const uint8_t  menu_vars_index_limit[41]= {0,9,9,9,9,9,0,5,5,5,5,0,6,6,6,6,6,6,6,6,
+const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,9,0,5,5,5,5,0,6,6,6,6,6,6,6,6,
 		6,0,0,0,15,15,9,3,3,3,3,3,3,3,3,9,9,9,9,9,0} ; // index number limiter ,fixed IMPORTANT!
 
-const uint8_t  menu_vars_divider[41] = {0,0,0,0,0,0,0,0,0,0,
+const uint8_t  menu_vars_divider[menu_lookup_count] = {0,0,0,0,0,0,0,0,0,0,
 																				0,0,0,0,5,0,4,5,5,1,
 																				0,0,0,4,4,5,5,0,0 ,0,
 																				0,0,0,0,0,0,0,0,0,0,0   };   // right shift divider mainly for LFO  , maybe for lcd too
 
 
-	const char* menu_titles_final[]= {"LFO     ", "Rate    ","Depth   " ,"Gain    ", "Offset  ", "Target  ","ADSR    ",
+	const char* menu_titles_final[menu_lookup_count]= {"LFO     ", "Rate    ","Depth   " ,"Gain    ", "Offset  ", "Target  ","ADSR    ",
 			"Attack  ", "Decay   ","Sustain ","Release ",
 			"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",
 			"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    ","Cutoff_1","Cutoff_2","Resnance","Q_level ","Level   ","Feedback","Out_mix ","Poles   ",
-			"Targindx","Input_1 ","Input_2 ","In_mix  ","InOffset"
+			"Tg_ndx  ","Input_1 ","Input_2 ","In_mix  ","InOffset"
 	};   // 40 *8
-	const uint8_t patch_skip_list[41]={ 0,1,1,1,1,1,1,1,1,1,
+
+
+
+
+	const uint8_t patch_skip_list[menu_lookup_count]={ 0,1,1,1,1,1,1,1,1,1,
 			1,1,1,1,1,1,1,1,1,0,
 			0,1,1,1,1,1,1,0,1,1,
 			1,1,1,1,1,1,1,1,1,1
 	};  // skip most of it for now
+ const char* patch_inputs[]={
+		"LFO0 sin","LFO0 saw","LFO0 tri","LFO0 tri" ,"LFO1 sin","LFO1 saw","LFO1 tri","LFO1 tri" ,"LFO2 sin","LFO2 saw","LFO2 tri","LFO2 tri" ,
+		"LFO3 sin","LFO3 saw","LFO3 tri","LFO3 tri" ,"LFO4 sin","LFO4 saw","LFO4 tri","LFO4 tri" ,"LFO5 sin","LFO5 saw","LFO5 tri","LFO5 tri" ,
+		"LFO6 sin","LFO6 saw","LFO6 tri","LFO6 tri" ,"LFO7 sin","LFO7 saw","LFO7 tri","LFO7 tri" ,"LFO8 sin","LFO8 saw","LFO8 tri","LFO8 tri" ,
+		"LFO9 sin","LFO9 saw","LFO9 tri","LFO9 tri","LFO9 tri"
 
+
+
+ };
 
 const uint16_t sine_block2[514]={20000,20245,20491,20736,20981,21226,21471,21716,21960,22204,22448,22692,22935,23177,23419,23661,23902,24142,24382,24621,24860,25097,25334,25570,25806,26040,26274,26506,26738,26968,27198,27426,27654,27880,28105,28329,28551,28772,28992,29211,29428,29644,29858,30071,30282,30492,30700,30906,31111,31315,31516,31716,31914,32110,32305,32497,32688,32877,33063,33248,33431,33612,33791,33968,34142,34315,34485,34653,34819,34983,35144,35303,35460,35615,35767,35917,36064,36209,36352,36492,36629,36764,36897,37027,37155,37279,37402,37521,37638,37753,37864,37973,38080,38183,38284,38382,
 		38478,38570,38660,38747,38831,38912,38991,39066,39139,39209,39276,39340,39401,39459,39514,39566,39616,39662,39706,39746,39784,39818,39850,39878,39904,39926,39946,39962,39976,39986,39994,39998,40000,39998,39994,39986,39976,39962,39946,39926,39904,39878,39850,39818,39784,39746,39706,39662,39616,39566,39514,39459,39401,39340,39276,39209,39139,39066,38991,38912,38831,38747,38660,38570,38478,38382,38284,38183,38080,37973,37864,37753,37638,37521,37402,37279,37155,37027,36897,36764,36629,36492,36352,36209,36064,35917,35767,35615,35460,35303,35144,34983,34819,34653,34485,34315,
@@ -84,7 +94,7 @@ const uint16_t sine_block5[601]={ 20037, 20533, 20996, 21339, 21610, 21874, 2216
 
 }; // more organ
 
-uint8_t gfx_char[1024]={   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  0x00,     // 8*5 fonts vert aligned  , maybe play with other fonts too
+const uint8_t gfx_char[1024]={   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  0x00,     // 8*5 fonts vert aligned  , maybe play with other fonts too
 	     0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E,  0x00,
 	     0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E,  0x00,
 	     0x0E, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1F,  0x00,

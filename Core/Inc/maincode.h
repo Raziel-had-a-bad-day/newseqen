@@ -6,7 +6,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	uint8_t menu_countr=0; //  menu vars
 	uint8_t *menu_vars_var1=NULL;
 
-	for (i = 0; i <menu_vars_count; i++) {      // find menu location
+	for (i = 0; i <menu_lookup_count; i++) {      // find menu location
 
 		memcpy(menu_string2, menu_titles_final[i], 8);  // copy title list
 		if ((strncmp(menu_string, menu_string2, 8)) == 0) {
@@ -85,7 +85,7 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 	//if (menu_counter>240)  return;
 	memcpy(menu_string,default_menu+string_search,8);    //copy 8 strings created menu array
 	////////////////////////////
-	for (string_counter=0;string_counter<menu_vars_count;string_counter++){    	// test a single menu entry  , for now only the first record
+	for (string_counter=0;string_counter<menu_lookup_count;string_counter++){    	// test a single menu entry  , for now only the first record
 
 		memcpy(menu_string2,menu_titles_final[string_counter],8);
 		if  ((strncmp(menu_string,menu_string2,8))==0) 								// compare and if true pass var,seq
@@ -139,11 +139,11 @@ uint8_t skip=0;
 
 
 				uint8_t target_input=patch[n].target; // copy to avoid messed up pointer
-			for(skip=target_input ;skip<menu_vars_count;skip++){
+			for(skip=target_input ;skip<menu_lookup_count;skip++){
 					if (patch_skip_list[target_input]==1)  target_input++;
 
 				}  // test against list
-				if (target_input>(menu_vars_count-1)) target_input=menu_vars_count-1;
+				if (target_input>(menu_lookup_count-1)) target_input=menu_lookup_count-1;
 				if (target_input!=35)  {     // make target index is not selected
 
 
@@ -168,7 +168,7 @@ uint8_t skip=0;
 
 	}
 
-void patch_target_modify(void){					// modify original value  careful position  ,ok
+void patch_target_modify(void){					// modify original value  careful position ,not using it now  ,ok
 
 	uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
 	for (n=0;n<10;n++){
@@ -476,12 +476,12 @@ uint16_t feedback_loc=(init_b&896)+107;
 
 
 	uint8_t crap_hold9=(menu_title_lut[enc_out1]>>16)&255;   // look up up menu_titles_final
-	if (crap_hold9==5) target_display=1;   // check if LFO.target is on cursor
-	else target_display=0;
+	if (crap_hold9==5) target_display=1;   // check if LFO.target is on cursor , may use for other things
+	else if (crap_hold9==36) target_display=2;   else target_display=0;
 
 	// fetch values for last line or cursor
 
-	 memcpy(default_menu3+feedback_loc+5, *(menu_titles_final+crap_hold9),8);   // copy feedback data for reading,ok
+	 memcpy(default_menu3+feedback_loc+8, *(menu_titles_final+crap_hold9),8);   // copy feedback data for reading,ok
 	 memcpy(menu_vars_in,*(menu_titles_final+crap_hold9),8);	// send back for menu vars ok
 
 	 char temp_char[]="  ";
@@ -509,14 +509,14 @@ uint16_t feedback_loc=(init_b&896)+107;
 	lcd_out3=*menu_vars_var;
 	default_menu3[init_b]=((lcd_out3&255)>>4)+48; lcd_temp=lcd_out3; enc_dir=lcd_temp;       } // force enc_dir
 
-	if (disp_stepper==11) {default_menu3[feedback_loc+13]=menu_index_list[enc_out1<<1];   	default_menu3[feedback_loc+14]=menu_index_list[(enc_out1<<1)+1];}   // index display
+	if (disp_stepper==11) {default_menu3[feedback_loc+5]=menu_index_list[enc_out1<<1];   	default_menu3[feedback_loc+6]=menu_index_list[(enc_out1<<1)+1];}   // index display
 
-	if ((target_display) &&   (disp_stepper==11))      // write LFO.target display
+	if ((target_display) &&   (disp_stepper==11))      // write LFO.target display , might use it for other things too
 	{
 		uint8_t target_tmp1=*menu_vars_var ;
-		if (target_tmp1>=menu_vars_count) target_tmp1=0;    // check in case
-		memcpy(default_menu3+feedback_loc+12, *(menu_titles_final+target_tmp1),7);  // copy info for LFO
-
+		if (target_tmp1>=menu_lookup_count) target_tmp1=0;    // check in case
+		if (target_display==1) memcpy(default_menu3+feedback_loc+8, *(menu_titles_final+target_tmp1),8);  // copy info for LFO
+		if (target_display==2) memcpy(default_menu3+feedback_loc+8, *(patch_inputs+target_tmp1),8);  // Limited atm
 		 		 	}
 
 	if (disp_stepper==1)  gfx_send_cursor=(init_b>>4)&7 ;   //send cursor line
