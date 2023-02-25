@@ -33,7 +33,7 @@ uint8_t l;			// 35.002khz(0.02857ms) sample, 1 sample is temp count (16x=0.00045
 tempo_sync=16384/((tempo_mod*16)/512) ; // 8000 at slowest 15.625 updates to lfo at 1 note 16384/15.625=1048.576+ per update  at setting 80
 tempo_sync=tempo_sync/80;  // bit weird her , this is adsr !
 
-
+uint8_t looper_dat[8]={1,3,7,15};
 uint32_t lfo_tempo_hold;
 
 if (tempo_mod_hold!=tempo_mod){					// lfo lut calculate only when changes tempo
@@ -90,7 +90,7 @@ for (i=0;i<256;i++) {
 adsr_lut[i]= ADSR[0].buffer_temp*0.001;
 }
 
-
+uint8_t seq_dat=(1<<(((adc_values[0]>>3))+1))-1;
 ///////////////////////////////////////////////////////////////
 uint8_t note_plain;
 
@@ -115,29 +115,26 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 	{
 
 		note_reset();
-		note[1].timeshift=(adc_values[0])&31; //assigned pots to start of loopers 0-16,works
-		note[2].timeshift=note[1].timeshift;
-		note[3].timeshift=(adc_values[1])&31;
-		note[4].timeshift=note[3].timeshift;
+		//note[1].timeshift=(adc_values[1])&31; //assigned pots to start of loopers 0-16,works
 
-		seq.loop[1]=((note[1].timeshift+(seq.pos&7))&31);
-		seq.loop[2]=((note[2].timeshift+(seq.pos&7))&31); // calc  8 note loop positions sets looping point in sequence
+	//	note[2].timeshift=note[1].timeshift=note[3].timeshift=note[4].timeshift;
+		uint8_t   loop_temp1;
+		loop_temp1=((seq.pos&seq_dat)+adc_values[1])&31; // loop position and length
+		seq.loop[1]=(note[1].timeshift+loop_temp1)&31;
+		seq.loop[2]=(note[2].timeshift+loop_temp1)&31; // this is really handy with sync to notes
+		seq.loop[3]=(note[3].timeshift+loop_temp1)&31;
+		seq.loop[5]=(note[5].timeshift+loop_temp1)&31;
 
 
-			seq.loop[3]=((note[1].timeshift+(seq.pos&7))&15); //sets looping point in sequence this is full 16 note
-
-			seq.loop[4]=((note[2].timeshift+(seq.pos&7))&15);
-
-		//seq.loop[4]=((note[2].timeshift+((seq.pos&15)>>1))&15); // half speed
 			note[1].pitch=(notes_joined[seq.loop[1]]>>4)+(note[1].transpose>>4);    // maybe join 1 and 2
 			note[0].pitch=note[1].pitch+(note[0].transpose>>4); // just double
 
-			note[2].pitch=(notes_joined[seq.loop[1]]>>4)+(note[2].transpose>>4);  //loop 8 notes from pos and x times
+			note[2].pitch=(notes_joined[seq.loop[2]]>>4)+(note[2].transpose>>4);  //loop 8 notes from pos and x times
 
-		note[3].pitch=(notes_joined[seq.loop[1]]>>4)+(note[3].transpose>>4); ;  //loop 8 notes from pos and x times ,might disable normal adsr completely
+		note[3].pitch=(notes_joined[seq.loop[3]]>>4)+(note[3].transpose>>4); ;  //loop 8 notes from pos and x times ,might disable normal adsr completely
 //	if (note[3].pitch) 		{note[3].pitch=note[3].pitch+(note[3].transpose>>4);	adsr_retrigger[3]=1; note_toggler[i>>5]=1<<(i&31   )   ; } // stay at zero for off
 
-	note[5].pitch=(notes_joined[seq.loop[1]]>>4)+(note[5].transpose>>4);  //
+	note[5].pitch=(notes_joined[seq.loop[5]]>>4)+(note[5].transpose>>4);  //
 		patch_target_replace();
 		uint8_t detune_temp=0;
 		detune_temp=(note[5].pitch+(note[5].detune>>2))&31    ;
@@ -178,7 +175,7 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
  //make sure it's finished
 
 // filter loop
-
+int32_t  sample_temp2;
 uint8_t sine_zero;
 int32_t  sample_temp1;
 
@@ -222,37 +219,37 @@ freq_pointer[3] [sampling_position] =1-freq_temp ; // filter lfos
 
 									if (sample_accus[4]>524287) sample_accus[4] =-sample_accus[4] ; // faster >  than &  ,strange
 
-									sample_Accu[0] =sample_Accu[1] =sample_Accu[2]=sample_Accu[3] =0; //all zeroed 20 bits
+									sample_Accu[5] =sample_Accu[0] =sample_Accu[1] =sample_Accu[2]=sample_Accu[3] =0; //all zeroed 20 bits
 
 
+									sample_temp1=(sample_accus[0]*note[0].velocity);   // multiply then shift is a little faster
+									sample_temp2=(sample_accus[1]*note[1].velocity);// needs cut a bit  ,default 20bit
+								    sample_Accu[0]=(sample_temp1+sample_temp1)>>9;
 
-									sample_temp1=(sample_accus[1]+sample_accus[0])>>9; // needs cut a bit  ,default 20bit
-								    sample_Accu[0]=sample_temp1*note[1].velocity; // 20+8
-
-									sample_temp1=sample_accus[2]>>8; // needs cut a bit  ,default 20bit
-									sample_Accu[1]=sample_temp1*note[2].velocity; // 20+8
+									sample_temp1=sample_accus[2]*note[2].velocity; // needs cut a bit  ,default 20bit
+									sample_Accu[1]=sample_temp1>>8; // 20+8
 
 
-									sample_temp1=sample_accus[3]>>8;
-									sample_Accu[2] =sample_temp1*note[3].velocity;    // 64 default 20+8
+									sample_temp1=sample_accus[3]*note[3].velocity;      // needs some gain fine tune !
+									sample_Accu[2] =sample_temp1>>8;    // 64 default 20+8
 
 
 									sample_temp1=sine_out*	note[5].velocity;  // sine out is 16bit, add 4 then 16+8
 									sample_Accu[3] =sample_temp1>>4;
 
 
-if (sine_counterB==0) 	sine_temp2=note[5].tuned;
+	if (sine_counterB==0) 	sine_temp2=note[5].tuned;
 
-	sine_counterB=sine_counterB+sine_temp2 ;  // sine up counter per cycle , however sine adder needs to wait
-	if (sine_counterB>>7) sine_zero=0; else sine_zero=1;
+		sine_counterB=sine_counterB+sine_temp2 ;  // sine up counter per cycle , however sine adder needs to wait
+		if (sine_counterB>>7) sine_zero=0; else sine_zero=1;
 
-if (sine_counterB>(sine_length<<5)) sine_counterB=0; //fixed for now
-sine_count(); // calc sine   distortion out when hcagning note
-play_holder0[i]=sample_Accu[0];  // write to bank
-play_holder1[i]=sample_Accu[1];
-play_holder2[i]=sample_Accu[2];
-play_holder3[i]=sample_Accu[3];
-} // end of osc , doing some sound
+	if (sine_counterB>(sine_length<<5)) sine_counterB=0; //fixed for now
+	sine_count(); // calc sine   distortion out when hcagning note
+	play_holder0[i]=sample_Accu[0];  // write to bank
+	play_holder1[i]=sample_Accu[1];
+	play_holder2[i]=sample_Accu[2];
+	play_holder3[i]=sample_Accu[3];
+	} // end of osc , doing some sound
 
 int32_t filter_Accu;
 

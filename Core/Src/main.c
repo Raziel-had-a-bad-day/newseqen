@@ -307,10 +307,13 @@ for (pars_counter=0;pars_counter<512;pars_counter++)	{   // fill up display data
 		menu_parser();  // run it closer to default_menu size ,times, if default_menu is corrupt gfx breaks pretty bad
 		default_menu3[pars_counter>>1]=64;
 	}
-	default_menu3_size = strlen(default_menu3);  // grab menu size , this is needed
+
+
+
+default_menu3_size = strlen(default_menu3);  // grab menu size , this is needed
 	menu_title_count--;  //count back one
 	display_clear ();
-
+	for (pars_counter=0;pars_counter<menu_title_count;pars_counter++)	default_menu3 [menu_title_lut[pars_counter]&1023]=48;
 
 menuSelect=0;
 // fill up sample
@@ -356,10 +359,15 @@ if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 	//	mem_buf=0;
 			// mem_verify=0;
 
+			// for patch write start at 2048 for now
+
+
 
 				 mem_buf=potSource[mem_count];
 			//	 if (mem_buf>159) mem_buf=159;
 				 mem_count2=((1+(mem_count>>6))<<6)+(mem_count&63);
+				 //mem_count2=mem_count2+2048;   // Relocate mem for patch
+
 				 HAL_I2C_Mem_Read(&hi2c2, 160,mem_count2, 2,&mem_verify, 1,100);
 				 if (mem_verify!=mem_buf) HAL_I2C_Mem_Write(&hi2c2, 160,mem_count2 , 2, &mem_buf, 1, 100);
 
@@ -415,8 +423,8 @@ loop_counter2=0; //reset
 		  adc_temp1[0]=HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
 		  adc_temp1[1] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
 		//  adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
-		  adc_values[0]=	  adc_temp1[0]>>7;
-		  adc_values[1]=	  adc_temp1[1]>>7;
+		  adc_values[0]=	31- ( adc_temp1[0]>>7);
+		  adc_values[1]=	 31-( adc_temp1[1]>>7);
 		//  adc_values[2]=	  adc_temp1[2]>>7;
 		  HAL_ADCEx_InjectedStop(&hadc1) ;
 

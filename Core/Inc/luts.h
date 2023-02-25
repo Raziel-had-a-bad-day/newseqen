@@ -3,6 +3,7 @@
 #define menu_lookup_count    40     // size of the look up variables processor
 
 const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Transpos 03Transpos 05Transpos "  // was getting corrupted then screwed everything
+		"      00Slide    01Slide    02Slide    03Slide    05Slide    "
 		"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "
 		"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
 		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes1  "
@@ -10,14 +11,15 @@ const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Tra
 		"02Rate     02Depth    02Offset      03Rate     03Depth    03Offset    "
 		"04Rate     04Depth    04Offset      05Rate     05Depth    05Offset    "
 		"06Rate     06Depth    06Offset      07Rate     07Depth    07Offset    "
+		"08Rate     08Depth    08Offset      09Rate     09Depth    09Offset    "
 
-		" 00Input_1  00Target   00Tg_ndx    07Input_1  07Target   07Tg_ndx     "
-		" 01Input_1  01Target   01Tg_ndx    08Input_1  08Target   08Tg_ndx     "
-		" 02Input_1  02Target   02Tg_ndx    09Input_1  09Target   09Tg_ndx     "
-		" 03Input_1  03Target   03Tg_ndx            "
+		" 00Input_1  00Target   00Tg_ndx    06Input_1  06Target   06Tg_ndx     "
+		" 01Input_1  01Target   01Tg_ndx    07Input_1  07Target   07Tg_ndx     "
+		" 02Input_1  02Target   02Tg_ndx    08Input_1  08Target   08Tg_ndx     "
+		" 03Input_1  03Target   03Tg_ndx    09Input_1  09Target   09Tg_ndx     "
 		" 04Input_1  04Target   04Tg_ndx            "
 		" 05Input_1  05Target   05Tg_ndx            "
-		" 06Input_1  06Target   06Tg_ndx            "
+
 
 		"00Attack   00Decay    00Sustain  00Release          "
 		"01Attack   01Decay    01Sustain  01Release          "};   // just for testing text memory , will be modifiable ,  lut
