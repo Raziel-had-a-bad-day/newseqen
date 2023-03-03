@@ -14,7 +14,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 
 		}
 	}
-
+	menu_vars_ref=menu_countr ;
 	if (var_index>menu_vars_index_limit[menu_countr]) var_index=menu_vars_index_limit[menu_countr];   // make sure it stays right
 
 	switch(menu_countr){
@@ -63,7 +63,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 
 	}
     // copy back address  ,ok
-
+	// return the result number for later reference
 	//menu_vars_var= menu_vars_var1;
 	return menu_vars_var1;
 }
@@ -156,8 +156,8 @@ uint8_t skip=0;
 			patch[n].target_index=target_index;
 			uint8_t*  target_out_ptr= menu_vars(menu_titles_final[target_input] , target_index    );
 
-			if (target_out_ptr)           patch[n].out_ptr =target_out_ptr;     // write ptr
-
+			if (target_out_ptr)           {patch[n].out_ptr =target_out_ptr;     // write ptr
+			patch[n].limiter=menu_vars_limiter[menu_vars_ref]; }
 				}
 				else patch[n].target=0;  // write back 0 if failed
 
@@ -179,7 +179,7 @@ void patch_target_modify(void){					// modify original value  careful position ,
 		if (patch[n].target) {         // check first for enable
 
 
-			uint8_t right_shift=menu_vars_divider[patch[n].target]+1;   // grab divider
+
 			uint8_t  *ptr_to_modify =patch[n].out_ptr;       // select address , not always 8 bit ,ok
 
 			uint16_t lfo_out_temp=  (patch[n].output [loop_position])>>7;  // 0-127, 64 default
@@ -188,7 +188,7 @@ void patch_target_modify(void){					// modify original value  careful position ,
 			uint32_t  modified_var =  lfo_out_temp*  lfo_mod1  ;   // grab lfo out *    data to be modfied
 			//uint8_t  var_replaced= (modified_var>>right_shift)&127;   // scale to 8 bit for now
 			uint8_t  var_replaced= (modified_var>>7);   // scale to 8 bit for now
-		if (var_replaced>159) var_replaced=159;
+		if (var_replaced>patch[n].limiter) var_replaced=patch[n].limiter;
 
 			*ptr_to_modify =var_replaced;   // replace original value,ok
 
@@ -209,14 +209,14 @@ void patch_target_replace(void){					// sttaight value replace  ,ok
 
 			patch[n].output[loop_position]=*(patch[n].in1_ptr+(loop_position));   //write output here
 
-			uint8_t right_shift=menu_vars_divider[patch[n].target]+1;   // grab divider
+
 			uint8_t  *ptr_to_modify =patch[n].out_ptr;       // select address , not always 8 bit ,ok
 			uint16_t lfo_out_temp=  (patch[n].output [loop_position])>>8;  // 0-256,
 			uint8_t lfo_mod1=ptr_to_modify; //ok
 
 			uint8_t  var_replaced =  lfo_out_temp &255 ;   // grab lfo out *    data to be modfied
 
-	//	if (var_replaced>159) var_replaced=159;    leave this for now
+			if (var_replaced>patch[n].limiter) var_replaced=patch[n].limiter;  // limit lfo output
 
 			*ptr_to_modify =var_replaced;   // replace original value,ok
 
@@ -261,14 +261,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)    // unreliable
 		if (sample_point==511) {bank_write=1; sample_pointD=0;  }
 		if (sample_point==1022) {bank_write=1; sample_pointD=512; }
 		sample_point=sample_point & 1023;// this is 1
-		play_hold=play_sample[sample_point]; // this is 2
-
-		if(TIM3==htim->Instance)			// nothing here is consistent
+		play_hold=play_sample[sample_point<<1]; // this is 2
+		play_hold2=play_sample[(sample_point<<1)+1];
+		if(TIM3==htim->Instance)			// nothing here is consistent ?
 	{
 
 
-	TIM3->CCR3=play_hold ;  // keep readin sample storage
-
+	TIM3->CCR1=play_hold ;  // keep readin sample storage
+	TIM3->CCR2=play_hold2 ;   // load up counter on ch2
 
 	sample_point++; //this needs to be here or too fast and wrong sample rate
 
@@ -503,15 +503,19 @@ uint16_t feedback_loc=(init_b&896)+107;
 		uint16_t init_holder=init_b;
 
 		init_b= menu_title_lut[enc_out1];    // this only grabs menu_title_count (&255)      , problem maybe here
-	//	if (init_b>(feedback_loc+3) ) init_b=init_b+16;// skip feedback line
+		//	if (init_b>(feedback_loc+3) ) init_b=init_b+16;// skip feedback line
 		if ((init_b&896)!=(init_holder&896)) {display_fill(); gfx_clear_flag=1; } // detect x over , not perfect
 
-	lcd_out3=*menu_vars_var;
-	default_menu3[init_b]=((lcd_out3&255)>>4)+48; lcd_temp=lcd_out3; enc_dir=lcd_temp;       } // force enc_dir
+		lcd_out3=*menu_vars_var;
+		div_limit=lcd_out3;
+		if (lcd_out3>10)							div_limit= lcd_out3>>2;
+		if (lcd_out3>40)							div_limit= lcd_out3>>5;
 
-	if (disp_stepper==11) {default_menu3[feedback_loc+5]=menu_index_list[enc_out1<<1];   	default_menu3[feedback_loc+6]=menu_index_list[(enc_out1<<1)+1];}   // index display
+		default_menu3[init_b]=div_limit+48; lcd_temp=lcd_out3; enc_dir=lcd_temp;       } // force enc_dir
 
-	if ((target_display) &&   (disp_stepper==11))      // write LFO.target display , might use it for other things too
+	if (disp_stepper>4) {default_menu3[feedback_loc+5]=menu_index_list[enc_out1<<1];   	default_menu3[feedback_loc+6]=menu_index_list[(enc_out1<<1)+1];}   // index display
+
+	if ((target_display) &&   (disp_stepper>4))      // write LFO.target display , might use it for other things too
 	{
 		uint8_t target_tmp1=*menu_vars_var ;
 		if (target_tmp1>=menu_lookup_count) target_tmp1=0;    // check in case

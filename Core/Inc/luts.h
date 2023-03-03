@@ -6,7 +6,7 @@ const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Tra
 		"      00Slide    01Slide    02Slide    03Slide    05Slide    "
 		"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "
 		"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
-		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes1  "
+		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes2  "
 		"00Rate     00Depth    00Offset      01Rate     01Depth    01Offset    "
 		"02Rate     02Depth    02Offset      03Rate     03Depth    03Offset    "
 		"04Rate     04Depth    04Offset      05Rate     05Depth    05Offset    "
@@ -29,10 +29,10 @@ char default_menu3[1024]; // hold all string for output  128 per page , needs to
 const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,9,0,5,5,5,5,0,6,6,6,6,6,6,6,6,
 		6,0,0,0,15,15,9,3,3,3,3,3,3,3,3,9,9,9,9,9,0} ; // index number limiter ,fixed IMPORTANT!
 
-const uint8_t  menu_vars_divider[menu_lookup_count] = {0,0,0,0,0,0,0,0,0,0,
-																				0,0,0,0,5,0,4,5,5,1,
-																				0,0,0,4,4,5,5,0,0 ,0,
-																				0,0,0,0,0,0,0,0,0,0,0   };   // right shift divider mainly for LFO  , maybe for lcd too
+const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,255,255,255,255,40,0,255,255,255,
+																				255,0,3,3,27,16,31,27,31,255,
+																				27,0,255,255,31,31,27,255,255 ,255,
+																				10,255,255,255,31,40,40,255,255,0   };   // right shift divider mainly for LFO  , maybe for lcd too
 
 
 	const char* menu_titles_final[menu_lookup_count]= {"LFO     ", "Rate    ","Depth   " ,"Gain    ", "Offset  ", "Target  ","ADSR    ",
@@ -41,9 +41,6 @@ const uint8_t  menu_vars_divider[menu_lookup_count] = {0,0,0,0,0,0,0,0,0,0,
 			"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    ","Cutoff_1","Cutoff_2","Resnance","Q_level ","Level   ","Feedback","Out_mix ","Poles   ",
 			"Tg_ndx  ","Input_1 ","Input_2 ","In_mix  ","InOffset"
 	};   // 40 *8
-
-
-
 
 	const uint8_t patch_skip_list[menu_lookup_count]={ 0,1,1,1,1,1,1,1,1,1,
 			1,1,1,1,1,1,1,1,1,0,
@@ -59,6 +56,19 @@ const uint8_t  menu_vars_divider[menu_lookup_count] = {0,0,0,0,0,0,0,0,0,0,
 
 
  };
+const uint8_t  display_vars_divider[menu_lookup_count] =						// lcd display values
+		{0,5,5,5,5,0,0,5,5,5,
+				5,0,0,0,0,0,0,0,0,5,
+				0,0,5,5,0,0,5,5,5 ,5,
+				5,5,5,5,0,2,0,0,5,5   };
+
+
+
+
+
+
+
+
 
 const uint16_t sine_block2[514]={20000,20245,20491,20736,20981,21226,21471,21716,21960,22204,22448,22692,22935,23177,23419,23661,23902,24142,24382,24621,24860,25097,25334,25570,25806,26040,26274,26506,26738,26968,27198,27426,27654,27880,28105,28329,28551,28772,28992,29211,29428,29644,29858,30071,30282,30492,30700,30906,31111,31315,31516,31716,31914,32110,32305,32497,32688,32877,33063,33248,33431,33612,33791,33968,34142,34315,34485,34653,34819,34983,35144,35303,35460,35615,35767,35917,36064,36209,36352,36492,36629,36764,36897,37027,37155,37279,37402,37521,37638,37753,37864,37973,38080,38183,38284,38382,
 		38478,38570,38660,38747,38831,38912,38991,39066,39139,39209,39276,39340,39401,39459,39514,39566,39616,39662,39706,39746,39784,39818,39850,39878,39904,39926,39946,39962,39976,39986,39994,39998,40000,39998,39994,39986,39976,39962,39946,39926,39904,39878,39850,39818,39784,39746,39706,39662,39616,39566,39514,39459,39401,39340,39276,39209,39139,39066,38991,38912,38831,38747,38660,38570,38478,38382,38284,38183,38080,37973,37864,37753,37638,37521,37402,37279,37155,37027,36897,36764,36629,36492,36352,36209,36064,35917,35767,35615,35460,35303,35144,34983,34819,34653,34485,34315,

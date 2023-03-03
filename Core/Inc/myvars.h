@@ -151,10 +151,11 @@ uint16_t sample_pointB; //circular pointer
  uint16_t i;
 uint16_t adc_values[5]={20,20,20,20,20} ;  // adc values storage
 
-  uint16_t play_sample[1025]={} ;  //sample storage  , big better
+  uint16_t play_sample[2050]={} ;  //sample storage  , big better
 volatile uint16_t sample_point; // pointer for sample array
-
+volatile uint16_t sample_point2;
  volatile  uint16_t play_hold;
+ volatile  uint16_t play_hold2;
  uint16_t sample_pointD;  // global store buffer start
 
  unsigned short bank_write=1;
@@ -362,6 +363,7 @@ struct patch_settings{					// use this instead of lfo  or other modulators
 	uint16_t output[10];  // actual output
 	uint8_t*  out_ptr;  // output target , might change that
 	uint16_t*   in1_ptr;     // use ptr for reading
+    uint8_t limiter;   // output limiter for target  8 bit
 };
 struct patch_settings patch[10];    // patch board
 
@@ -402,6 +404,9 @@ int32_t play_holder3[512];    // data banks
 int32_t play_holder0[512];
 uint8_t clipping=0;
 uint8_t notes_joined[33];
+uint8_t menu_vars_ref=0;  // menu vars search reference , used for divider
+uint8_t div_limit=0;
+uint8_t serial_send[5]={254,210,0,0,0};
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 

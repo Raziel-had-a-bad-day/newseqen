@@ -32,35 +32,38 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Inc/myvars.h ../Core/Inc/luts.h \
- ../Drivers/CMSIS/Include/arm_math.h \
- ../Drivers/CMSIS/Include/arm_math_types.h \
- ../Drivers/CMSIS/Include/arm_math_memory.h \
- ../Drivers/CMSIS/Include/dsp/none.h \
- ../Drivers/CMSIS/Include/arm_math_types.h \
- ../Drivers/CMSIS/Include/dsp/utils.h \
- ../Drivers/CMSIS/Include/dsp/basic_math_functions.h \
- ../Drivers/CMSIS/Include/arm_math_memory.h \
- ../Drivers/CMSIS/Include/dsp/none.h ../Drivers/CMSIS/Include/dsp/utils.h \
- ../Drivers/CMSIS/Include/dsp/interpolation_functions.h \
- ../Drivers/CMSIS/Include/dsp/bayes_functions.h \
- ../Drivers/CMSIS/Include/dsp/statistics_functions.h \
- ../Drivers/CMSIS/Include/dsp/basic_math_functions.h \
- ../Drivers/CMSIS/Include/dsp/fast_math_functions.h \
- ../Drivers/CMSIS/Include/dsp/matrix_functions.h \
- ../Drivers/CMSIS/Include/dsp/complex_math_functions.h \
- ../Drivers/CMSIS/Include/dsp/statistics_functions.h \
- ../Drivers/CMSIS/Include/dsp/controller_functions.h \
- ../Drivers/CMSIS/Include/dsp/support_functions.h \
- ../Drivers/CMSIS/Include/dsp/distance_functions.h \
- ../Drivers/CMSIS/Include/dsp/svm_functions.h \
- ../Drivers/CMSIS/Include/dsp/svm_defines.h \
- ../Drivers/CMSIS/Include/dsp/fast_math_functions.h \
- ../Drivers/CMSIS/Include/dsp/transform_functions.h \
- ../Drivers/CMSIS/Include/dsp/complex_math_functions.h \
- ../Drivers/CMSIS/Include/dsp/filtering_functions.h \
- ../Drivers/CMSIS/Include/dsp/support_functions.h \
- ../Drivers/CMSIS/Include/dsp/quaternion_math_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math_types.h \
+ ../Drivers/CMSIS/Include/cmsis_compiler.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math_memory.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/none.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math_types.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/utils.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/basic_math_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math_memory.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/none.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/utils.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/interpolation_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/bayes_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/statistics_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/basic_math_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/fast_math_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/matrix_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/complex_math_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/statistics_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/controller_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/support_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/distance_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/svm_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/svm_defines.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/fast_math_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/transform_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/complex_math_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/filtering_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/support_functions.h \
+ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/quaternion_math_functions.h \
  ../Core/Inc/maincode.h ../Core/Inc/sampling.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -96,36 +99,38 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 ../Core/Inc/myvars.h:
 ../Core/Inc/luts.h:
-../Drivers/CMSIS/Include/arm_math.h:
-../Drivers/CMSIS/Include/arm_math_types.h:
-../Drivers/CMSIS/Include/arm_math_memory.h:
-../Drivers/CMSIS/Include/dsp/none.h:
-../Drivers/CMSIS/Include/arm_math_types.h:
-../Drivers/CMSIS/Include/dsp/utils.h:
-../Drivers/CMSIS/Include/dsp/basic_math_functions.h:
-../Drivers/CMSIS/Include/arm_math_memory.h:
-../Drivers/CMSIS/Include/dsp/none.h:
-../Drivers/CMSIS/Include/dsp/utils.h:
-../Drivers/CMSIS/Include/dsp/interpolation_functions.h:
-../Drivers/CMSIS/Include/dsp/bayes_functions.h:
-../Drivers/CMSIS/Include/dsp/statistics_functions.h:
-../Drivers/CMSIS/Include/dsp/basic_math_functions.h:
-../Drivers/CMSIS/Include/dsp/fast_math_functions.h:
-../Drivers/CMSIS/Include/dsp/matrix_functions.h:
-../Drivers/CMSIS/Include/dsp/complex_math_functions.h:
-../Drivers/CMSIS/Include/dsp/statistics_functions.h:
-../Drivers/CMSIS/Include/dsp/controller_functions.h:
-../Drivers/CMSIS/Include/dsp/support_functions.h:
-../Drivers/CMSIS/Include/dsp/distance_functions.h:
-../Drivers/CMSIS/Include/dsp/svm_functions.h:
-../Drivers/CMSIS/Include/dsp/svm_defines.h:
-../Drivers/CMSIS/Include/dsp/fast_math_functions.h:
-../Drivers/CMSIS/Include/dsp/transform_functions.h:
-../Drivers/CMSIS/Include/dsp/complex_math_functions.h:
-../Drivers/CMSIS/Include/dsp/filtering_functions.h:
-../Drivers/CMSIS/Include/dsp/support_functions.h:
-../Drivers/CMSIS/Include/dsp/quaternion_math_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math_types.h:
+../Drivers/CMSIS/Include/cmsis_compiler.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math_memory.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/none.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math_types.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/utils.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/basic_math_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math_memory.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/none.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/utils.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/interpolation_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/bayes_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/statistics_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/basic_math_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/fast_math_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/matrix_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/complex_math_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/statistics_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/controller_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/support_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/distance_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/svm_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/svm_defines.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/fast_math_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/transform_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/complex_math_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/filtering_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/support_functions.h:
+C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/quaternion_math_functions.h:
 ../Core/Inc/maincode.h:
 ../Core/Inc/sampling.h:

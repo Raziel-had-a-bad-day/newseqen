@@ -69,6 +69,9 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 
+UART_HandleTypeDef huart1;
+UART_HandleTypeDef huart6;
+
 /* USER CODE BEGIN PV */
 #include "maincode.h"			// void
 #include "sampling.h"     // audio process
@@ -88,6 +91,8 @@ static void MX_TIM4_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_USART1_UART_Init(void);
+static void MX_USART6_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -133,6 +138,8 @@ int main(void)
   MX_I2C2_Init();
   MX_TIM2_Init();
   MX_SPI1_Init();
+  MX_USART1_UART_Init();
+  MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 
   const volatile uint8_t *userConfig=(const volatile uint8_t *)0x0800D2F0;
@@ -153,7 +160,8 @@ TIM3->CCER=0;
 HAL_TIM_Base_Start(&htim2);
 HAL_TIM_Base_Start(&htim4);
 //HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);  // they both work fine together
-HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
+HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
+HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
 //HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_4,pData, 63);
 TIM2->CNT=32000;
 HAL_ADC_Start(&hadc1);
@@ -252,6 +260,9 @@ uint16_t mem_count2=0;
 HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 384,1000); //ok
 
 
+
+
+
 	uint16_t mem_counter=0;
 	memcpy(&seq,potSource,46 );  // load from potSource  ,, causes problems with memory ,NEEDS TO BE CONTINUOS OR  WILL  GET CORRUPT
     memcpy(&note,potSource+156,112 );   // this works but keep checking for fragmentation
@@ -343,6 +354,12 @@ if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 	  patch_target_parse(); //
 	// read values from stored
 
+	 // serial_send[2]=mem_count>>8;
+	  serial_send[2]=0;
+	  serial_send[3]=mem_count&63;
+	  serial_send[4]=potSource[mem_count&63];
+	  HAL_UART_Transmit(&huart1,serial_send,5, 100);  //send serial
+
 	memcpy(potSource,&seq,46); // about 35
 
 	for(i=0;i<10;i++){
@@ -353,7 +370,7 @@ if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 		memcpy(potSource+268+(i*6),&patch[i],6 );
 	}	// copy vars into potSource
 
-
+	HAL_UART_Transmit(&huart1,serial_send,5, 100);  //send serial again
 
 		uint16_t mem_count2=0;
 	//	mem_buf=0;
@@ -422,10 +439,13 @@ loop_counter2=0; //reset
 
 		  adc_temp1[0]=HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
 		  adc_temp1[1] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
-		//  adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
+		  adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
+
+		  //  adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
 		  adc_values[0]=	31- ( adc_temp1[0]>>7);
 		  adc_values[1]=	 31-( adc_temp1[1]>>7);
-		//  adc_values[2]=	  adc_temp1[2]>>7;
+		  adc_values[2]=	 31-( adc_temp1[2]>>7);
+		  //  adc_values[2]=	  adc_temp1[2]>>7;
 		  HAL_ADCEx_InjectedStop(&hadc1) ;
 
 
@@ -599,7 +619,7 @@ static void MX_ADC1_Init(void)
   */
   sConfigInjected.InjectedChannel = ADC_CHANNEL_0;
   sConfigInjected.InjectedRank = 1;
-  sConfigInjected.InjectedNbrOfConversion = 2;
+  sConfigInjected.InjectedNbrOfConversion = 3;
   sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_56CYCLES;
   sConfigInjected.ExternalTrigInjecConvEdge = ADC_EXTERNALTRIGINJECCONVEDGE_NONE;
   sConfigInjected.ExternalTrigInjecConv = ADC_INJECTED_SOFTWARE_START;
@@ -615,6 +635,16 @@ static void MX_ADC1_Init(void)
   */
   sConfigInjected.InjectedChannel = ADC_CHANNEL_2;
   sConfigInjected.InjectedRank = 2;
+  if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
+  */
+  sConfigInjected.InjectedChannel = ADC_CHANNEL_8;
+  sConfigInjected.InjectedRank = 3;
+  sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_3CYCLES;
   if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK)
   {
     Error_Handler();
@@ -641,7 +671,7 @@ static void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.ClockSpeed = 400000;
+  hi2c2.Init.ClockSpeed = 100000;
   hi2c2.Init.DutyCycle = I2C_DUTYCYCLE_2;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -828,11 +858,15 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_PWM2;
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
   sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -889,6 +923,72 @@ static void MX_TIM4_Init(void)
   /* USER CODE BEGIN TIM4_Init 2 */
 
   /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_HalfDuplex_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
+  * @brief USART6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART6_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART6_Init 0 */
+
+  /* USER CODE END USART6_Init 0 */
+
+  /* USER CODE BEGIN USART6_Init 1 */
+
+  /* USER CODE END USART6_Init 1 */
+  huart6.Instance = USART6;
+  huart6.Init.BaudRate = 115200;
+  huart6.Init.WordLength = UART_WORDLENGTH_8B;
+  huart6.Init.StopBits = UART_STOPBITS_1;
+  huart6.Init.Parity = UART_PARITY_NONE;
+  huart6.Init.Mode = UART_MODE_TX_RX;
+  huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart6.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_HalfDuplex_Init(&huart6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART6_Init 2 */
+
+  /* USER CODE END USART6_Init 2 */
 
 }
 

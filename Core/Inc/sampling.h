@@ -63,8 +63,8 @@ note_holdA=0;
 // some good phasin and delays here
 uint8_t cross_fade[2]={0,0};
 uint8_t fader[17]={0,1,5,11,19,28,39,51,64,76,88,99,108,116,122,126,127}; // sine curve for cross fade
-adc_values[2]= 15; //force for now
-if(adc_values[2]&16)     	{cross_fade[1]=127-fader[adc_values[2]&15]; cross_fade[2]=127;}  else {cross_fade[2]=fader[adc_values[2]&15]; cross_fade[1]=127;} //calculate crossfader
+//adc_values[2]= 15; //force for now
+//if(adc_values[2]&16)     	{cross_fade[1]=127-fader[adc_values[2]&15]; cross_fade[2]=127;}  else {cross_fade[2]=fader[adc_values[2]&15]; cross_fade[1]=127;} //calculate crossfader
 
 // doing lfo calc here as it is slow only for now
 ////////////////////adsr/////////////////////////////////////////
@@ -118,26 +118,34 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 		//note[1].timeshift=(adc_values[1])&31; //assigned pots to start of loopers 0-16,works
 
 	//	note[2].timeshift=note[1].timeshift=note[3].timeshift=note[4].timeshift;
-		uint8_t   loop_temp1;
-		loop_temp1=((seq.pos&seq_dat)+adc_values[1])&31; // loop position and length
-		seq.loop[1]=(note[1].timeshift+loop_temp1)&31;
-		seq.loop[2]=(note[2].timeshift+loop_temp1)&31; // this is really handy with sync to notes
-		seq.loop[3]=(note[3].timeshift+loop_temp1)&31;
-		seq.loop[5]=(note[5].timeshift+loop_temp1)&31;
+		uint8_t   loop_temp1[4];
+		loop_temp1[0]=seq.pos&7;
+		loop_temp1[1]=adc_values[1]>>2;
+		loop_temp1[2]=adc_values[2]>>2;
+		loop_temp1[3]=adc_values[0]>>2;
+
+		//loop_temp1=(seq.pos&seq_dat); // loop position and length
 
 
-			note[1].pitch=(notes_joined[seq.loop[1]]>>4)+(note[1].transpose>>4);    // maybe join 1 and 2
-			note[0].pitch=note[1].pitch+(note[0].transpose>>4); // just double
 
-			note[2].pitch=(notes_joined[seq.loop[2]]>>4)+(note[2].transpose>>4);  //loop 8 notes from pos and x times
+		seq.loop[1]=(note[1].timeshift+loop_temp1[0]+loop_temp1[1])&31;
+		seq.loop[2]=(note[2].timeshift+loop_temp1[0]+loop_temp1[2])&31; // this is really handy with sync to notes
+		seq.loop[3]=(note[3].timeshift+loop_temp1[0]+loop_temp1[3])&31;
+		seq.loop[5]=(note[5].timeshift+loop_temp1[0])&31;
 
-		note[3].pitch=(notes_joined[seq.loop[3]]>>4)+(note[3].transpose>>4); ;  //loop 8 notes from pos and x times ,might disable normal adsr completely
+
+			note[1].pitch=(notes_joined[seq.loop[1]])+(note[1].transpose);    // maybe join 1 and 2
+			note[0].pitch=note[1].pitch+(note[0].transpose); // just double
+
+			note[2].pitch=(notes_joined[seq.loop[2]])+(note[2].transpose);  //loop 8 notes from pos and x times
+
+		note[3].pitch=(notes_joined[seq.loop[3]])+(note[3].transpose); ;  //loop 8 notes from pos and x times ,might disable normal adsr completely
 //	if (note[3].pitch) 		{note[3].pitch=note[3].pitch+(note[3].transpose>>4);	adsr_retrigger[3]=1; note_toggler[i>>5]=1<<(i&31   )   ; } // stay at zero for off
 
-	note[5].pitch=(notes_joined[seq.loop[5]]>>4)+(note[5].transpose>>4);  //
+	note[5].pitch=(notes_joined[seq.loop[5]])+(note[5].transpose);  //
 		patch_target_replace();
 		uint8_t detune_temp=0;
-		detune_temp=(note[5].pitch+(note[5].detune>>2))&31    ;
+		detune_temp=(note[5].pitch+(note[5].detune))&31    ;
 		if(detune_temp>27) detune_temp=27;
 		   //this is for sine skip mask
 
@@ -151,7 +159,7 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 
 	//	note[mask_i].pitch=(note[mask_i].pitch ;
 
-		detune_temp=(note[mask_i].pitch+(note[mask_i].detune>>2))&31    ;
+		detune_temp=(note[mask_i].pitch+(note[mask_i].detune))&31    ;
 		if(detune_temp>27) detune_temp=27;
 		note[mask_i].tuned=sample_Noteadd[MajorNote[detune_temp]];
 
@@ -252,7 +260,7 @@ freq_pointer[3] [sampling_position] =1-freq_temp ; // filter lfos
 	} // end of osc , doing some sound
 
 int32_t filter_Accu;
-
+int32_t filter_Accu2;
 
 //uint16_t* click=&input_holder[0];
 
@@ -366,17 +374,20 @@ filter_res[3]=freq_point[3]*0.2;
 		//sample_Accu[0] =sample_Accu[1];
 
 
-filter_Accu=0;
-filter_Accu=sample_Accu[0]+sample_Accu[1]+sample_Accu[2]+sample_Accu[3]; //filter + drum out
-filter_Accu=filter_Accu>>5;
+filter_Accu=filter_Accu2=0;
+filter_Accu=(sample_Accu[0]+sample_Accu[1])>>11;
+filter_Accu2=(sample_Accu[2]+sample_Accu[3])>>11; //filter + drum out
 
  if (one_shot!=199)   one_shot++;  //play one attack then stop
 
- if (filter_Accu>0xFFFF) {filter_Accu=0xFFFF;clipping++;} else if (filter_Accu<-65535) filter_Accu=-65535;  // limiter to 16 bits
+ //if (filter_Accu>0xFFFF) {filter_Accu=0xFFFF;clipping++;} else if (filter_Accu<-65535) filter_Accu=-65535;  // limiter to 16 bits
+ if (filter_Accu>0x3FF) {filter_Accu=0x3FF;clipping++;} else if (filter_Accu<-1023) filter_Accu=-1023;  // limiter to 11 bits
+ if (filter_Accu2>0x3FF) {filter_Accu2=0x3FF;clipping++;} else if (filter_Accu2<-1023) filter_Accu2=-1023;  // limiter to 11 bits
 
 
- play_sample[i_total]=(filter_Accu>>6)+1024;   // final output disable for now 2544
 
+ play_sample[(i_total<<1)]=(filter_Accu)+1023;   // final output disable for now 2544
+ play_sample[(i_total<<1)+1]=(filter_Accu2)+1023;
  //play_sample[i_total]=(input_holder[i]);  // works good
 
 } // end of filer
