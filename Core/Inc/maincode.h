@@ -21,7 +21,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 0:     menu_vars_var1= NULL; break;
 	case 1:     menu_vars_var1= &LFO[var_index].rate   ; break;
 	case 2:     menu_vars_var1= &LFO[var_index].depth    ; break;
-	case 3:     menu_vars_var1= &LFO[var_index].gain    ; break;
+	case 3:     menu_vars_var1= &LFO[var_index].delay    ; break;
 	case 4:     menu_vars_var1= &LFO[var_index].offset    ; break;
 	case 5:     menu_vars_var1= &patch[var_index].target    ; break;
 	case 6:     menu_vars_var1= NULL   ; break;
@@ -58,7 +58,10 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 37: 	menu_vars_var1=&patch[var_index].input2 ;break;
 	case 38: 	menu_vars_var1=&patch[var_index].in_mix ;break;
 	case 39: 	menu_vars_var1=&patch[var_index].in_offset ;break;
-
+	case 40:     menu_vars_var1= &LFO_slave1[var_index].rate   ; break;
+	case 41:     menu_vars_var1= &LFO_slave1[var_index].depth    ; break;
+	case 42:     menu_vars_var1= &LFO_slave1[var_index].delay    ; break;
+	case 43:     menu_vars_var1= &LFO_slave1[var_index].offset    ; break;
 	default :		menu_vars_var1= NULL   ; break;
 
 	}
@@ -94,6 +97,8 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 			if ((menu_counter>110 )&&(menu_counter<128 )) menu_counter=menu_counter+16;   // skip to second page
 			if((menu_counter>237)&&(menu_counter<256 )) menu_counter=menu_counter+16; // skip
 			if((menu_counter>365)&&(menu_counter<384 )) menu_counter=menu_counter+16; // skip
+			if((menu_counter>493)&&(menu_counter<512 )) menu_counter=menu_counter+16; // skip
+			if((menu_counter>621)&&(menu_counter<640 )) menu_counter=menu_counter+16; // skip
 			menu_title_lut[menu_title_count]=  (string_counter <<16)+(menu_counter&1023);   // search result  and disp lcd position counter
 
 			memcpy(menu_index_list+(menu_title_count*2),default_menu+string_search-2,2); // get array  index under ,LFO[1]  etc ,ok
@@ -122,7 +127,7 @@ uint8_t skip=0;
 			uint16_t* output_hold;
 			uint8_t input_hold=patch[n].input1;
 
-			if (patch[n].input1>39) patch[n].input1=0;    // limit
+			if (patch[n].input1>=menu_lookup_count) patch[n].input1=0;    // limit
 
 			switch(input_hold&3){     // lfo now , can add adsr later
 
@@ -174,7 +179,7 @@ void patch_target_modify(void){					// modify original value  careful position ,
 	for (n=0;n<10;n++){
 
 
-		if (patch[n].input1>39) patch[n].input1=0;    // limit
+		if (patch[n].input1>=menu_lookup_count) patch[n].input1=0;    // limit
 
 		if (patch[n].target) {         // check first for enable
 
@@ -304,7 +309,7 @@ void analoginputloopb(void){  //works ,getting obsolete
 	if  (enc_temp<enc_tempB)	 enc_dir=enc_dir+1;
 
 
-  if (enc2_temp>383) enc2_temp=383;  //mem overflow somewhere
+  if (enc2_temp>511) enc2_temp=511;  //mem overflow somewhere
 	if (enc_dir>255) enc_dir=255;
 			if (enc_dir<0) enc_dir=0;
 

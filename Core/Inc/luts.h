@@ -1,9 +1,11 @@
 
 
-#define menu_lookup_count    40     // size of the look up variables processor
+#define menu_lookup_count    44     // size of the look up variables processor
 
 const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Transpos 03Transpos 05Transpos "  // was getting corrupted then screwed everything
-		"      00Slide    01Slide    02Slide    03Slide    05Slide    "
+
+  // was getting corrupted then screwed everything
+				"06Transpos 07Transpos 08Transpos 09Transpos 06Slide    07Slide    08Slide    09Slide    "
 		"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "
 		"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
 		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes2  "
@@ -21,31 +23,40 @@ const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Tra
 		" 05Input_1  05Target   05Tg_ndx            "
 
 
-		"00Attack   00Decay    00Sustain  00Release          "
-		"01Attack   01Decay    01Sustain  01Release          "};   // just for testing text memory , will be modifiable ,  lut
+
+				"00S_Rate   00S_Depth  00S_Offset  01S_Rate   01S_Depth  01S_Offset    "
+				"02S_Rate   02S_Depth  02S_Offset  03S_Rate   03S_Depth  03S_Offset    "
+				"04S_Rate   04S_Depth  04S_Offset  05S_Rate   05S_Depth  05S_Offset    "
+			//	"06S_Rate   06S_Depth  06S_Offset  07S_Rate   07S_Depth  07S_Offset    "
+		//		"08S_Rate   08S_Depth  08S_Offset  09S_Rate   09S_Depth  09S_Offset    "
+	//	"00Attack   00Decay    00Sustain  00Release          "
+		//	"01Attack   01Decay    01Sustain  01Release          "
+		"06OSC1     07OSC1     08OSC1     09OSC1     "
+};   // just for testing text memory , will be modifiable ,  lut
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
 
 char default_menu3[1024]; // hold all string for output  128 per page , needs to resize
-const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,9,0,5,5,5,5,0,6,6,6,6,6,6,6,6,
-		6,0,0,0,15,15,9,3,3,3,3,3,3,3,3,9,9,9,9,9,0} ; // index number limiter ,fixed IMPORTANT!
+const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,9,0,5,5,5,5,0,9,9,9,9,9,9,9,9,
+		9,0,0,0,15,15,9,3,3,3,3,3,3,3,3,9,9,9,9,9,9,9,9,9} ; // index number limiter ,fixed IMPORTANT!
 
 const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,255,255,255,255,40,0,255,255,255,
-																				255,0,3,3,27,16,31,27,31,255,
+																				255,0,1,1,27,16,31,27,31,255,
 																				27,0,255,255,31,31,27,255,255 ,255,
 																				10,255,255,255,31,40,40,255,255,0   };   // right shift divider mainly for LFO  , maybe for lcd too
 
 
-	const char* menu_titles_final[menu_lookup_count]= {"LFO     ", "Rate    ","Depth   " ,"Gain    ", "Offset  ", "Target  ","ADSR    ",
+	const char* menu_titles_final[menu_lookup_count]= {"LFO     ", "Rate    ","Depth   " ,"Delay   ", "Offset  ", "Target  ","ADSR    ",
 			"Attack  ", "Decay   ","Sustain ","Release ",
 			"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",
 			"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    ","Cutoff_1","Cutoff_2","Resnance","Q_level ","Level   ","Feedback","Out_mix ","Poles   ",
-			"Tg_ndx  ","Input_1 ","Input_2 ","In_mix  ","InOffset"
+			"Tg_ndx  ","Input_1 ","Input_2 ","In_mix  ","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset"
 	};   // 40 *8
 
 	const uint8_t patch_skip_list[menu_lookup_count]={ 0,1,1,1,1,1,1,1,1,1,
 			1,1,1,1,1,1,1,1,1,0,
 			0,1,1,1,1,1,1,0,1,1,
-			1,1,1,1,1,1,1,1,1,1
+			1,1,1,1,1,1,1,1,1,1,
+			1,1,1,1
 	};  // skip most of it for now
  const char* patch_inputs[]={
 		"LFO0 sin","LFO0 saw","LFO0 tri","LFO0 tri" ,"LFO1 sin","LFO1 saw","LFO1 tri","LFO1 tri" ,"LFO2 sin","LFO2 saw","LFO2 tri","LFO2 tri" ,
@@ -60,7 +71,8 @@ const uint8_t  display_vars_divider[menu_lookup_count] =						// lcd display val
 		{0,5,5,5,5,0,0,5,5,5,
 				5,0,0,0,0,0,0,0,0,5,
 				0,0,5,5,0,0,5,5,5 ,5,
-				5,5,5,5,0,2,0,0,5,5   };
+				5,5,5,5,0,2,0,0,5,5,
+				5,5,5,5 };
 
 
 

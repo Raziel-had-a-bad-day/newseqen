@@ -17,6 +17,8 @@
 
 // flash start 0x08000000    , prog size  59B0  22,960 bytes  end   0x080059B0 , 64k ends at 0x08010000 , maybe after or D2F0 which is 54k so 0x0800D2F0
 // source , select mask type , speed of playback
+#define seq_sample_rate 39308
+// clock/period
 
 const uint32_t flash_start=0x0800D2F0; // flash start address , 2048 page saize or 0x800
 const uint32_t flash_page=0x800;
@@ -32,9 +34,8 @@ const uint8_t ChromNote[]={0,2,3,5,6,8,9,11,12,14,15,17,18,20,21}; //chromatic, 
 //const uint8_t noteReference[] = {10,10,10,10,0,10,0,8,1,10,1,8,2,10,3,10,3,8,4,10,4,8,5,10,5,8,6,10,0,11,0,8,1,11,1,8,2,11,3,11,3,8,4,11,4,8,5,9,5,8,6,9,10,11,10,20,10,11,10,12,10,13,10,14,10,15,10,16,10,17,10,18,10,19,11,20,11,11 };// cant read last
 const uint16_t timerValues[]= {34400,32469,30647,28927,27303,25771,24324,22959,21670,20454,19306,18222,17200,16234,15323,14463,13651,12885,12162,11479,10835,10227,9653,9111,8600,8117,7661
 ,7231,6825,6442,6081,5739,5417,5113,4826,4555,4300,4058,3830,3615,3412,3221,3040,2869,2708,2556,2413,2277} ;   // timer values C2-C6
-const uint16_t sample_Noteadd[50]= { 2059, 2181, 2311, 2448, 2594, 2748, 2912, 3085, 3268, 3462, 3668, 3886, 4117, 4362, 4622, 4896, 5188, 5496, 5823, 6169, 6536, 6925, 7336, 7773, 8235, 8725, 9243, 9793,
-		10375, 10992, 11646, 12338, 13072, 13850,
-		14673, 15546, 16470, 17449, 18487, 19586, 20751, 21985, 23292, 24677, 26145, 27699, 29346};  // 35khz add c2-c6  >>12 for correct value , 0-255 samples sawtooth , /2 for extra notes ,prefer circular , replaced first 2059 with 0
+const uint16_t sample_Noteadd[50]= { 1738,1841,1951,2067,2190,2320,2458,2604,2759,2923,3097,3281,3476,3683,3902,4133,4379,4640,4916,5208,5518,5846,6193,6562,6952,7365,7803,8267,8759,9279,9831,10416,11035,
+		11692,12387,13123,13904,14730,15606,16534,17518,18559,19663,20832,22071,23383,24773,26247};  // 35khz add c2-c6  >>12 for correct value , 0-255 samples sawtooth , /2 for extra notes ,prefer circular , replaced first 2059 with 0
 
 //static unsigned short playWave;
 const uint16_t freq_lut[]={4186,4434,4698,4978,5274,5587,5919,6271,6644,7039,7458,7902,8371,8869,9397,9955,10547,11175,11839,12543,13289,14079,14916,15803,16743,17739,
@@ -57,9 +58,9 @@ int _write(int file, char *ptr, int len)
 uint16_t menu_locA=0;
 
 uint8_t noteTiming;  // set timing shift
-uint8_t potValues [383];  //low res values mostly for display
+uint8_t potValues [512];  //low res values mostly for display
 
-uint8_t potSource[383]; // high res version of potValues used when needed 40-0, gonna change to 160 just o break things, need more res for lfo
+uint8_t potSource[512]; // high res version of potValues used when needed 40-0, gonna change to 160 just o break things, need more res for lfo
 
 uint16_t sine_counter;  // up counter for sine reading
 uint16_t sine_counterB;  // up counter for sine reading ,fractional * 8
@@ -289,7 +290,26 @@ struct LFO_settings{      // use first 5*10 , leave the rest  , no bueno  32 eac
 	uint8_t out_8b;  // 8bit output from sine
 };
 
-struct LFO_settings LFO[10]={0};       // create lfo settings
+struct LFO_settings LFO[10]={0};       // create lfo settings for slave1
+
+
+struct LFO_settings_slave{      // use first 5*10 , leave the rest  , no bueno  32 each
+
+	uint8_t rate; // (p130)
+	uint8_t depth;	//(p140)
+	uint8_t gain;
+	uint8_t offset;
+	uint8_t delay;  // + lfo_accu_temp
+	uint8_t phase;  // unsure
+
+
+};
+
+struct LFO_settings_slave LFO_slave1[10]={0};       // create lfo settings for slave1
+
+
+
+
 
 struct ADSR_settings{   // use initial 5*10  , leave rest
 	uint8_t attack;   // presets
@@ -324,7 +344,7 @@ struct note_settings{								//default note/osc/patch settings  14*8 bytes (112)
 
 
 };
-struct note_settings note[7]={[0].velocity=255,[1].velocity=255,[2].velocity=255,[3].velocity=255,[4].velocity=255,[5].velocity=255,[6].velocity=255
+struct note_settings note[10]={[0].velocity=255,[1].velocity=255,[2].velocity=255,[3].velocity=255,[4].velocity=255,[5].velocity=255,[6].velocity=255
 															,[0].detune=64,[1].detune=64,[2].detune=64,[3].detune=64,[4].detune=64,[5].detune=64,[6].detune=64};
 //struct note_settings note[7];
 
@@ -376,18 +396,18 @@ uint8_t space_check=0;   // look for gaps
 
 uint8_t menu_title_count=0;   // holds the counter for menu_title_lut
 
-uint32_t  menu_var_lut[128];    // hold pointers for variables , for now its enougg
+uint32_t  menu_var_lut[256];    // hold pointers for variables , for now its enougg
 
-uint32_t menu_title_lut[128];  // hold pointer for feedback line , points to default_menu first character(1<<8)   as well the current display loc(0)  , skip empty areas for now
+uint32_t menu_title_lut[256];  // hold pointer for feedback line , points to default_menu first character(1<<8)   as well the current display loc(0)  , skip empty areas for now
 
-char menu_index_list[256];   //  use along the menu_var_lut uses double the records !! gets weird when using 256
+char menu_index_list[512];   //  use along the menu_var_lut uses double the records !! gets weird when using 256
 char* menu_vars_menu=0;    // return pointer to menu_titles final
 uint8_t * menu_vars_var=0;			// return memory location to var !
 char menu_vars_in[8];  // incoming string ,ok
 uint8_t menu_index_in=0; // gets the struct index ie LFO[1].rate
 uint16_t default_menu3_size=0;    //  just set size of menu
 
-int8_t enc_out1=1;    // menu_title_lut   cursor position
+int16_t enc_out1=1;    // menu_title_lut   cursor position
 uint8_t  enc2_store[5];
 uint8_t enc2_store_count=0;
 uint8_t  lcd_temp=0;   //temp hold
@@ -406,7 +426,10 @@ uint8_t clipping=0;
 uint8_t notes_joined[33];
 uint8_t menu_vars_ref=0;  // menu vars search reference , used for divider
 uint8_t div_limit=0;
-uint8_t serial_send[5]={254,210,0,0,0};
+uint8_t serial_send[8]={254,210,0,0,254,210,0,0};
+uint8_t serial_source[256]={0};
+uint8_t serial_source_temp[256]={0};
+uint8_t serial_up=0;  //counter for serial send
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 

@@ -257,7 +257,7 @@ HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
 uint8_t potSource2[64]={0};    // { [0 ... 112] = 64 };
 uint16_t mem_count2=0;
 
-HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 384,1000); //ok
+HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 512,1000); //ok
 
 
 
@@ -265,15 +265,17 @@ HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 384,1000); //ok
 
 	uint16_t mem_counter=0;
 	memcpy(&seq,potSource,46 );  // load from potSource  ,, causes problems with memory ,NEEDS TO BE CONTINUOS OR  WILL  GET CORRUPT
-    memcpy(&note,potSource+156,112 );   // this works but keep checking for fragmentation
+    memcpy(&note,potSource+156,160 );   // this works but keep checking for fragmentation
 
     for(mem_counter=0;mem_counter<10;mem_counter++){
 
 		memcpy(&LFO[mem_counter],potSource+46+(mem_counter*6),6 );  // + 60 ,ok here
 
 		memcpy(&ADSR[mem_counter],potSource+106+(mem_counter*5),5 );  // +50  ,
-		memcpy(&patch[mem_counter],potSource+268+(mem_counter*6),6 );
-	}
+		memcpy(&patch[mem_counter],potSource+316+(mem_counter*6),6 );
+		memcpy(&LFO_slave1[mem_counter],potSource+376+(mem_counter*6),6 );  // + 60 ,ok here
+
+    }
 
 
 	for(i=0;i<64;i++){       //   fill with characters also add lcd command ,ok
@@ -289,20 +291,17 @@ HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 384,1000); //ok
 seq.pos=0;
 
 
-float tempo_hold;  // calculate tempo look up
+uint32_t  tempo_hold=1;  // calculate tempo look up
 
 
-	for (i=0;i<256;i++) {
+  	for (i=1;i<256;i++) {     // change for 32khz   1-256 bpm
+  		tempo_hold=i;
+  		tempo_hold=(60*seq_sample_rate)/(tempo_hold*16); //
 
-	tempo_hold=(i+180)*0.0166666666;
+  	tempo_lut[i]=tempo_hold;
+  	}
 
-	tempo_hold=	1/tempo_hold;
-	tempo_hold=	tempo_hold*2187.6*2;      // change for the sake of note length
-	//tempo_hold=	tempo_hold*2187.6*1;      // change for the sake of note length
-	tempo_lut[i]=tempo_hold;
-	}
-
-isrMask=571; // def tempo 571=180bpm , 20 ms /isrcount
+//isrMask=571; // def tempo 571=180bpm , 20 ms /isrcount
 
 	noteTiming=24;
 	for (i=0;i<320;i++)	{	// write C into whole section,useful ornot
@@ -313,11 +312,15 @@ isrMask=571; // def tempo 571=180bpm , 20 ms /isrcount
 	gfx_clear();
 uint16_t pars_counter;
 
-for (pars_counter=0;pars_counter<512;pars_counter++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
+for (pars_counter=0;pars_counter<600;pars_counter++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
 
 		menu_parser();  // run it closer to default_menu size ,times, if default_menu is corrupt gfx breaks pretty bad
-		default_menu3[pars_counter>>1]=64;
+
 	}
+
+for (pars_counter=0;pars_counter<512;pars_counter++)	  default_menu3[pars_counter>>1]=64;
+
+
 
 
 
@@ -350,29 +353,49 @@ firstbarLoop=0;
 
 
 if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
-	  if (mem_count>329) mem_count=0; else mem_count++; // write to first this was moved for no logical reason ?
+	  if (mem_count>512) mem_count=0; else mem_count++; // write to first this was moved for no logical reason ?
 	  patch_target_parse(); //
 	// read values from stored
+	  memcpy(serial_source,&seq,36); // copy bits
+	  uint16_t mem_count2=0;
+	  memcpy(serial_source+96,potSource+252,64 );  // 4 * 16
+	  for(mem_counter=0;mem_counter<10;mem_counter++){
+		  if (mem_counter<4)memcpy(serial_source+96+(mem_counter*7),&note[mem_counter+6],7 );
+					memcpy(serial_source+36+(mem_counter*6),&LFO_slave1[mem_counter],6 );  // insert lfo settings
+			  }
 
-	 // serial_send[2]=mem_count>>8;
-	  serial_send[2]=0;
-	  serial_send[3]=mem_count&63;
-	  serial_send[4]=potSource[mem_count&63];
-	  HAL_UART_Transmit(&huart1,serial_send,5, 100);  //send serial
+while ((serial_source_temp[serial_up]==serial_source[serial_up]) &&(serial_up<161) )   {
+	serial_up++;
+}
+
+
+
+	  serial_send[6]=0;
+	  serial_send[7]=seq.pos;  // chase
+	  serial_send[2]=serial_up;
+	 	  serial_send[3]=serial_source[serial_up];
+	 	 serial_source_temp[serial_up]=serial_source[serial_up];
+	 	if (serial_up>161) serial_up=0; else serial_up++;
+
+	 	HAL_UART_Transmit(&huart1,serial_send,8, 100);  //send serial
 
 	memcpy(potSource,&seq,46); // about 35
 
 	for(i=0;i<10;i++){
-		if (i<8){    memcpy(potSource+156+(i*14),&note[i],14 );}  //grab note settings ,112 total , works
+		    memcpy(potSource+156+(i*14),&note[i],14 );  //grab note settings ,112 total , works
 
 		memcpy(potSource+46+(i*6),&LFO[i],6 );  // + 60  ,ok
 		memcpy(potSource+106+(i*5),&ADSR[i],5 );  // +50  ,
-		memcpy(potSource+268+(i*6),&patch[i],6 );
+		memcpy(potSource+316+(i*6),&patch[i],6 );
+		memcpy(potSource+376+(i*6),&LFO_slave1[i],6 ); // ext llof settings
+
+
+
 	}	// copy vars into potSource
 
-	HAL_UART_Transmit(&huart1,serial_send,5, 100);  //send serial again
+	//HAL_UART_Transmit(&huart1,serial_send,4, 100);  //send serial again
 
-		uint16_t mem_count2=0;
+	mem_count2=0;
 	//	mem_buf=0;
 			// mem_verify=0;
 
@@ -456,11 +479,7 @@ loop_counter2=0; //reset
 	  }
 
 	  if ((seq.pos==7) && (lcd_send==0)) {lcd_send=1;} // runs just once
-	  /*
-	   if (promValue<64) promValue=promValue+1 ; else promValue=0;  // fetch eeprom   nogo
-	  	  if ((promValues[promValue] ) !=(potValues[promValue]))  EEPROM.write(promValue,(potValues[promValue]));   //  not too happy can totally kill speed  will have to put elsewhere
-	  	  promValues[promValue] =potValues[promValue];
-	  	   */
+
 
 	  	     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin,(seq.pos & 1)); // easy skip ?
 	  	    // very inconsistent

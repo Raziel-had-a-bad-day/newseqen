@@ -20,8 +20,8 @@ uint8_t mask_i;
 
 
 bank_write=0;
-memcpy(notes_joined,seq.notes2,16);
-memcpy(notes_joined+16,seq.notes1,16);
+memcpy(notes_joined,seq.notes1,16);
+memcpy(notes_joined+16,seq.notes2,16);
 sample_pointB=sample_pointD;
 unsigned short tempo_start=0;  // enabled when i=isrMask;
 
@@ -209,23 +209,23 @@ freq_pointer[3] [sampling_position] =1-freq_temp ; // filter lfos
 // New oscillators , sync, trigger input , waveshape ,zero cross
 	sample_accus[0] = sample_accus[0] + note[0].tuned; //careful with signed bit shift,better compare
 
-	if (sample_accus[0]>524287) sample_accus[0] =-sample_accus[0] ; // faster >  than &  ,strange
+	if (sample_accus[0]>524287) sample_accus[0] =-1048576+sample_accus[0] ; // faster >  than &  ,strange
 
 	sample_accus[1] = sample_accus[1] + note[1].tuned;  // normal adder full volume
 
-			if (sample_accus[1]>524287) sample_accus[1] =-sample_accus[1] ; // faster >  than &  ,strange
+			if (sample_accus[1]>524287) sample_accus[1] =-1048576+sample_accus[1] ; // faster >  than &  ,strange
 
 			sample_accus[2] = sample_accus[2] + note[2].tuned;
 
-					if (sample_accus[2]>524287) sample_accus[2] =-sample_accus[2] ; // faster >  than &  ,strange
+					if (sample_accus[2]>524287) sample_accus[2] =-1048576+sample_accus[2] ; // faster >  than &  ,strange
 
 					sample_accus[3] = sample_accus[3] + note[3].tuned; // bouncing somewhere
 
-							if (sample_accus[3]>524287) sample_accus[3] =-sample_accus[3] ; // faster >  than &  ,strange
+							if (sample_accus[3]>524287) sample_accus[3] =-1048576+sample_accus[3] ; // faster >  than &  ,strange
 
 							sample_accus[4] = sample_accus[4] + note[4].tuned;
 
-									if (sample_accus[4]>524287) sample_accus[4] =-sample_accus[4] ; // faster >  than &  ,strange
+									if (sample_accus[4]>524287) sample_accus[4] =-1048576+sample_accus[4] ; // faster >  than &  ,strange
 
 									sample_Accu[5] =sample_Accu[0] =sample_Accu[1] =sample_Accu[2]=sample_Accu[3] =0; //all zeroed 20 bits
 
