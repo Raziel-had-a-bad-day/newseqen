@@ -1,7 +1,7 @@
 
 
 #define menu_lookup_count    44     // size of the look up variables processor
-
+#define seq_sample_rate 32000   // use it for period and tempo calcualtions
 const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Transpos 03Transpos 05Transpos "  // was getting corrupted then screwed everything
 
   // was getting corrupted then screwed everything
@@ -31,7 +31,7 @@ const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Tra
 		//		"08S_Rate   08S_Depth  08S_Offset  09S_Rate   09S_Depth  09S_Offset    "
 	//	"00Attack   00Decay    00Sustain  00Release          "
 		//	"01Attack   01Decay    01Sustain  01Release          "
-		"06OSC1     07OSC1     08OSC1     09OSC1     "
+		"00OSC1     01OSC1     02OSC1     03OSC1     06OSC1     07OSC1     08OSC1     09OSC1     "
 };   // just for testing text memory , will be modifiable ,  lut
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
 
@@ -40,7 +40,7 @@ const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,9,0,5,5,5,5,
 		9,0,0,0,15,15,9,3,3,3,3,3,3,3,3,9,9,9,9,9,9,9,9,9} ; // index number limiter ,fixed IMPORTANT!
 
 const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,255,255,255,255,40,0,255,255,255,
-																				255,0,1,1,27,16,31,27,31,255,
+																				255,0,3,3,27,16,31,27,31,255,
 																				27,0,255,255,31,31,27,255,255 ,255,
 																				10,255,255,255,31,40,40,255,255,0   };   // right shift divider mainly for LFO  , maybe for lcd too
 

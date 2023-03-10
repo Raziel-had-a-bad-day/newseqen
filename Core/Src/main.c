@@ -76,6 +76,7 @@ UART_HandleTypeDef huart6;
 #include "maincode.h"			// void
 #include "sampling.h"     // audio process
 
+// 32khz froom now on
 
 
 /* USER CODE END PV */
@@ -355,29 +356,8 @@ firstbarLoop=0;
 if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
 	  if (mem_count>512) mem_count=0; else mem_count++; // write to first this was moved for no logical reason ?
 	  patch_target_parse(); //
-	// read values from stored
-	  memcpy(serial_source,&seq,36); // copy bits
-	  uint16_t mem_count2=0;
-	  memcpy(serial_source+96,potSource+252,64 );  // 4 * 16
-	  for(mem_counter=0;mem_counter<10;mem_counter++){
-		  if (mem_counter<4)memcpy(serial_source+96+(mem_counter*7),&note[mem_counter+6],7 );
-					memcpy(serial_source+36+(mem_counter*6),&LFO_slave1[mem_counter],6 );  // insert lfo settings
-			  }
+	  uint16_t mem_count2=0;	// read values from stored
 
-while ((serial_source_temp[serial_up]==serial_source[serial_up]) &&(serial_up<161) )   {
-	serial_up++;
-}
-
-
-
-	  serial_send[6]=0;
-	  serial_send[7]=seq.pos;  // chase
-	  serial_send[2]=serial_up;
-	 	  serial_send[3]=serial_source[serial_up];
-	 	 serial_source_temp[serial_up]=serial_source[serial_up];
-	 	if (serial_up>161) serial_up=0; else serial_up++;
-
-	 	HAL_UART_Transmit(&huart1,serial_send,8, 100);  //send serial
 
 	memcpy(potSource,&seq,46); // about 35
 
@@ -428,7 +408,36 @@ loop_counter2=0; //reset
 }
 
 
-	  if (disp_end==1)	  display_generate();      // run this after gfx draw page finish
+	if (serial_tosend){    // send on seq change
+
+		  memcpy(serial_source,&seq,36); // copy bits
+
+		  memcpy(serial_source+96,potSource+252,64 );  // 4 * 16
+		  for(mem_counter=0;mem_counter<10;mem_counter++){
+			  if (mem_counter<4)memcpy(serial_source+96+(mem_counter*7),&note[mem_counter+6],7 );
+						memcpy(serial_source+36+(mem_counter*6),&LFO_slave1[mem_counter],6 );  // insert lfo settings
+				  }
+
+	while ((serial_source_temp[serial_up]==serial_source[serial_up]) &&(serial_up<161) )   {
+		serial_up++;
+	}
+
+		  serial_send[6]=0;
+		  serial_send[7]=seq.pos;  // chase
+		  serial_send[2]=serial_up;
+			  serial_send[3]=serial_source[serial_up];
+			 serial_source_temp[serial_up]=serial_source[serial_up];
+			if (serial_up>161) serial_up=0; else serial_up++;
+
+			HAL_UART_Transmit(&huart1,serial_send,8, 100);  //send serial
+		serial_tosend=0;
+	}
+
+
+
+
+
+if (disp_end==1)	  display_generate();      // run this after gfx draw page finish
 
 
 
@@ -513,7 +522,7 @@ loop_counter2=0; //reset
 	  				adc_flag=0;
 	  			}
 	  		}
-
+	  		if ((sample_point>512)&&( sample_pointD==512)) bank_write=1;
 	while  (bank_write)                         {							// wait for adc , priority
 
 
@@ -855,7 +864,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 2544;
+  htim3.Init.Period = 3124;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)

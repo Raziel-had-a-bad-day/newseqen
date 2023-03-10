@@ -262,20 +262,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)    // unreliable
 	{
 		time_proc++;
 		//if (((sample_point==511) || (sample_point==1022)) && (bank_write)  ) error_count++;
+//
+//		if (sample_point==511) {bank_write=1; sample_pointD=0;  }
+//		if (sample_point==1022) {bank_write=1; sample_pointD=512; }
+//		sample_point=sample_point & 1023;// this is 1
 
-		if (sample_point==511) {bank_write=1; sample_pointD=0;  }
-		if (sample_point==1022) {bank_write=1; sample_pointD=512; }
-		sample_point=sample_point & 1023;// this is 1
-		play_hold=play_sample[sample_point<<1]; // this is 2
-		play_hold2=play_sample[(sample_point<<1)+1];
+
 		if(TIM3==htim->Instance)			// nothing here is consistent ?
 	{
 
+			play_hold=play_sample[sample_point<<1]; // this is 2
+			play_hold2=play_sample[(sample_point<<1)+1];
+			if (sample_point>1022)    {bank_write=2;sample_point=0;} else sample_point++;
 
 	TIM3->CCR1=play_hold ;  // keep readin sample storage
 	TIM3->CCR2=play_hold2 ;   // load up counter on ch2
 
-	sample_point++; //this needs to be here or too fast and wrong sample rate
+
 
 	}
 

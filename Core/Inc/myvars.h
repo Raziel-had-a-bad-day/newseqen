@@ -34,8 +34,8 @@ const uint8_t ChromNote[]={0,2,3,5,6,8,9,11,12,14,15,17,18,20,21}; //chromatic, 
 //const uint8_t noteReference[] = {10,10,10,10,0,10,0,8,1,10,1,8,2,10,3,10,3,8,4,10,4,8,5,10,5,8,6,10,0,11,0,8,1,11,1,8,2,11,3,11,3,8,4,11,4,8,5,9,5,8,6,9,10,11,10,20,10,11,10,12,10,13,10,14,10,15,10,16,10,17,10,18,10,19,11,20,11,11 };// cant read last
 const uint16_t timerValues[]= {34400,32469,30647,28927,27303,25771,24324,22959,21670,20454,19306,18222,17200,16234,15323,14463,13651,12885,12162,11479,10835,10227,9653,9111,8600,8117,7661
 ,7231,6825,6442,6081,5739,5417,5113,4826,4555,4300,4058,3830,3615,3412,3221,3040,2869,2708,2556,2413,2277} ;   // timer values C2-C6
-const uint16_t sample_Noteadd[50]= { 1738,1841,1951,2067,2190,2320,2458,2604,2759,2923,3097,3281,3476,3683,3902,4133,4379,4640,4916,5208,5518,5846,6193,6562,6952,7365,7803,8267,8759,9279,9831,10416,11035,
-		11692,12387,13123,13904,14730,15606,16534,17518,18559,19663,20832,22071,23383,24773,26247};  // 35khz add c2-c6  >>12 for correct value , 0-255 samples sawtooth , /2 for extra notes ,prefer circular , replaced first 2059 with 0
+const uint16_t sample_Noteadd[50]= { 2135,2262,2396,2539,2690,2850,3019,3199,3389,3590,3804,4030,4270,4524,4793,5077,5379,5699,6038,6397,6778,7181,7608,8060,8539,9047,9585,10155,10759,11399,12076,12794,13555,14362,15216,
+		16120,17079,18094,19170,20310,21518,22798,24153,25589,27111,28723,30431,32241};  // 35khz add c2-c6  >>12 for correct value , 0-255 samples sawtooth , /2 for extra notes ,prefer circular , replaced first 2059 with 0
 
 //static unsigned short playWave;
 const uint16_t freq_lut[]={4186,4434,4698,4978,5274,5587,5919,6271,6644,7039,7458,7902,8371,8869,9397,9955,10547,11175,11839,12543,13289,14079,14916,15803,16743,17739,
@@ -62,7 +62,7 @@ uint8_t potValues [512];  //low res values mostly for display
 
 uint8_t potSource[512]; // high res version of potValues used when needed 40-0, gonna change to 160 just o break things, need more res for lfo
 
-uint16_t sine_counter;  // up counter for sine reading
+uint16_t sine_counter[10];  // up counter for sine reading
 uint16_t sine_counterB;  // up counter for sine reading ,fractional * 8
 int32_t sine_out;     // generated sine output 9 bit
 uint16_t sine_temp2;
@@ -104,7 +104,7 @@ void analogInputloop(void);
 void displayLoop(void);
 ;void timerNote(void);
 void timerNote2(void);
-void sine_count(void);
+
 void sampling(void);
 void noteCalc(void);
 void menu_parser(void);
@@ -121,7 +121,7 @@ void gfx_send_page(void);
 void LFO_source(void);
 void note_reset (void);
 uint8_t seq_pos; // sequencer position linked to isrCount for now but maybe change
-
+int32_t sine_count(void);
 void  mask_calc(uint8_t mask_select,uint8_t mask_speed);
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
@@ -134,8 +134,8 @@ uint8_t spellB[42]; // temp store
 
 uint16_t sine_length=600; //holds sample size
 
-uint16_t	sine_lut[]= { 33,33, 36, 38, 41, 43, 46, 48, 51, 54, 57, 61, 65, 68, 72, 77, 81, 86, 91, 97, 102, 108, 115, 122, 129, 137, 145, 153, 163, 172, 182, 193, 205, 217, 230, 244,
-		258, 273, 290, 307, 325, 344, 365, 387, 410, 434, 460, 487, 516};  // sine + step *32   ,current
+uint16_t	sine_lut[]= { 33,35,37,39,42,44,47,50,53,56,59,63,66,70,75,79,84,89,94,100,106,112,119,126,133,141,150,159,168,178,189,
+		200,212,225,238,252,267,283,300,318,337,357,378,401,425,450,477,505};  // (48 steps) sine + step *32   ,current
 uint16_t sine_adder; // sine_lut return
   // sine lookup  ,  multiplier for midi >>14
 
@@ -181,7 +181,7 @@ int32_t sample_accub;
 int32_t filter_out[7]={0,0,0,0,0,0,0};	// big out
 int32_t filter_in[5]={0,0,0,0,0};  // small values come in
 
-int32_t sample_accus[6]={0,0,0,0,0,0};  // sample array
+static int32_t sample_accus_hold [6]={0,0,0,0,0,0};  // sample array
 uint8_t filter_counter=0;
 uint8_t flip_list=0;  // line flipping for display
 							// 5,6 volume
@@ -345,7 +345,7 @@ struct note_settings{								//default note/osc/patch settings  14*8 bytes (112)
 
 };
 struct note_settings note[10]={[0].velocity=255,[1].velocity=255,[2].velocity=255,[3].velocity=255,[4].velocity=255,[5].velocity=255,[6].velocity=255
-															,[0].detune=64,[1].detune=64,[2].detune=64,[3].detune=64,[4].detune=64,[5].detune=64,[6].detune=64};
+															,[0].detune=127,[1].detune=127,[2].detune=127,[3].detune=127,[4].detune=127,[5].detune=127,[6].detune=127};
 //struct note_settings note[7];
 
 
@@ -430,6 +430,8 @@ uint8_t serial_send[8]={254,210,0,0,254,210,0,0};
 uint8_t serial_source[256]={0};
 uint8_t serial_source_temp[256]={0};
 uint8_t serial_up=0;  //counter for serial send
+uint8_t serial_tosend=0;
+
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 
