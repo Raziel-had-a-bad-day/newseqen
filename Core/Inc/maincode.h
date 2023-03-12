@@ -62,6 +62,12 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 41:     menu_vars_var1= &LFO_slave1[var_index].depth    ; break;
 	case 42:     menu_vars_var1= &LFO_slave1[var_index].delay    ; break;
 	case 43:     menu_vars_var1= &LFO_slave1[var_index].offset    ; break;
+	case 44: 	menu_vars_var1=&sampler.start_MSB ;break;
+	case 45: 	menu_vars_var1=&sampler.start_LSB ;break;
+	case 46: 	menu_vars_var1=&sampler.end_MSB ;break;
+	case 47: 	menu_vars_var1=&sampler.end_LSB ;break;
+
+
 	default :		menu_vars_var1= NULL   ; break;
 
 	}
@@ -583,5 +589,102 @@ void note_reset (void){          // reset deafult values before modulation , in 
 }
 
 
+void sampler_ram_record(void) {
+
+memcpy(	&RAM[sampler.ram_pos], input_holder,sizeof(input_holder));
+	sampler.ram_pos =sampler.ram_pos+512;
+if (sampler.ram_pos>16383) { sampler.ram_pos=0; sampler.record_enable=0; } // reset and stop record
+}
+
+
+void sampler_save(void){
+
+	//  ----------- w25q128   -----   page program, = 1ms          32kbyte block erase = 120ms  byte program = 30uS then 2.5uS after that  ,total 4 minutes of sampling time
+	HAL_TIM_PWM_Stop(&htim3,TIM_CHANNEL_1);   // disable pwm to stop irq trigger
+	HAL_TIM_PWM_Stop(&htim3,TIM_CHANNEL_2);
+
+
+
+	uint8_t send_spi1[5]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
+
+	//HAL_Delay(5);
+
+	//               ----                  16Mbyte   flash   , w25q128   -----  16M (24bit) * 8bits   ( 1 page 256 bytes)
+		send_spi1[0]=0x06; //enable write  , only lasts for single operation
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+		HAL_Delay(5);
+		send_spi1[0]=0x20; //sector erase
+		send_spi1[1]=0; //24bit address msb
+		send_spi1[2]=0; //24bit address
+		send_spi1[3]=1; //24bit address lsb
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
+		HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+
+		send_spi1[0]=0x05; //read status register  if writing
+		send_spi1[1]=0; //24bit address msb
+		status_reg[1]=1; // set busy on
+
+		while (status_reg[1]&1){								// check if write busy
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+			HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+		}
+
+		send_spi1[0]=0x06; //enable write again
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+		HAL_Delay(5);
+
+
+
+
+		//uint8_t temp_spi1[]={0x02,0,0,1,"H","E","L","L","O"," ","W","O","R","L","D",250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
+		uint8_t temp_spi1[]={0x02,0,0,1,128,129,130,131,132,133,134,135,136,137,138,250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
+		memcpy  (send_spi1,temp_spi1, 14);   // copy new array over old
+
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+		HAL_SPI_Transmit(&hspi1, send_spi1, 14, 1000);  //address,page program
+
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+
+
+
+		HAL_Delay(25);
+		send_spi1[0]=0x04; //disable write
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+		HAL_Delay(5);
+		memcpy  (send_spi1,return_spi1, 14);   // clear out
+		send_spi1[0]=0x03; //read page 1
+		send_spi1[1]=0; //24bit address msb
+		send_spi1[2]=0; //24bit address
+		send_spi1[3]=1; //24bit address lsb
+
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
+
+		HAL_SPI_Transmit (&hspi1, send_spi1, 4, 100);
+		HAL_SPI_Receive (&hspi1, return_spi1, 10, 100);   // works fine
+
+		//HAL_SPI_TransmitReceive(&hspi1, send_spi1, return_spi1,14, 100);  // better in case skip , 4 bytes is null then data , slow
+		//HAL_Delay(5);
+
+		//HAL_SPI_Receive(&hspi1, return_spi1, 12, 1000);  // reverse msb ?
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+
+
+		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+
+
+
+}
 
 

@@ -166,7 +166,7 @@ HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_2);
 //HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_4,pData, 63);
 TIM2->CNT=32000;
 HAL_ADC_Start(&hadc1);
-HAL_ADC_Start_DMA(&hadc1, adc_source, 1024); //dma start ,needs this and adc start ,set sampling time to very long or it will fail
+HAL_ADC_Start_DMA(&hadc1, adc_source, 3072); //dma start ,needs this and adc start ,set sampling time to very long or it will fail
 //HAL_DMA_Init(&hdma_spi2_tx);
 
 HAL_I2C_MspInit(&hi2c2);
@@ -180,79 +180,79 @@ HAL_SPI_Receive(&hspi1, return_spi1, 2, 1000);   // manuf return sif correct , 0
 
 HAL_Delay(5);
 
-
-send_spi1[0]=0x06; //enable write  , only lasts for single operation
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-HAL_Delay(5);
-send_spi1[0]=0x20; //sector erase
-send_spi1[1]=0; //24bit address msb
-send_spi1[2]=0; //24bit address
-send_spi1[3]=1; //24bit address lsb
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
-HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-
-
-send_spi1[0]=0x05; //read status register  if writing
-send_spi1[1]=0; //24bit address msb
-status_reg[1]=1; // set busy on
-
-while (status_reg[1]&1){								// check if write busy
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-	HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
+//               ----                  16Mbyte   flash   , w25q128   -----  16M (24bit) * 8bits   ( 1 page 256 bytes)
+	send_spi1[0]=0x06; //enable write  , only lasts for single operation
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+	HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
 	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-}
-
-send_spi1[0]=0x06; //enable write again
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-HAL_Delay(5);
-
-
-
-
-//uint8_t temp_spi1[]={0x02,0,0,1,"H","E","L","L","O"," ","W","O","R","L","D",250,0,0} ; //page progrram ,24bit(address)  +1-255 byte data  (page)
-uint8_t temp_spi1[]={0x02,0,0,1,128,129,130,131,132,133,134,135,136,137,138,250,0,0} ; //page progrram ,24bit(address)  +1-255 byte data  (page)
-memcpy  (send_spi1,temp_spi1, 14);   // copy new array over old
-
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-HAL_SPI_Transmit(&hspi1, send_spi1, 14, 1000);  //address,page program
-
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+	HAL_Delay(5);
+	send_spi1[0]=0x20; //sector erase
+	send_spi1[1]=0; //24bit address msb
+	send_spi1[2]=0; //24bit address
+	send_spi1[3]=1; //24bit address lsb
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
+	HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 
 
+	send_spi1[0]=0x05; //read status register  if writing
+	send_spi1[1]=0; //24bit address msb
+	status_reg[1]=1; // set busy on
 
+	while (status_reg[1]&1){								// check if write busy
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+		HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+	}
 
-HAL_Delay(25);
-send_spi1[0]=0x04; //disable write
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-
-HAL_Delay(5);
-memcpy  (send_spi1,return_spi1, 14);   // clear out
-send_spi1[0]=0x03; //read page 1
-send_spi1[1]=0; //24bit address msb
-send_spi1[2]=0; //24bit address
-send_spi1[3]=1; //24bit address lsb
-
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
-
-HAL_SPI_Transmit (&hspi1, send_spi1, 4, 100);
-HAL_SPI_Receive (&hspi1, return_spi1, 10, 100);   // works fine
-
-//HAL_SPI_TransmitReceive(&hspi1, send_spi1, return_spi1,14, 100);  // better in case skip , 4 bytes is null then data , slow
-//HAL_Delay(5);
-
-//HAL_SPI_Receive(&hspi1, return_spi1, 12, 1000);  // reverse msb ?
-HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+	send_spi1[0]=0x06; //enable write again
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+	HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+	HAL_Delay(5);
 
 
 
-HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+
+	//uint8_t temp_spi1[]={0x02,0,0,1,"H","E","L","L","O"," ","W","O","R","L","D",250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
+	uint8_t temp_spi1[]={0x02,0,0,1,128,129,130,131,132,133,134,135,136,137,138,250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
+	memcpy  (send_spi1,temp_spi1, 14);   // copy new array over old
+
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+	HAL_SPI_Transmit(&hspi1, send_spi1, 14, 1000);  //address,page program
+
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+
+
+
+	HAL_Delay(25);
+	send_spi1[0]=0x04; //disable write
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+	HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+	HAL_Delay(5);
+	memcpy  (send_spi1,return_spi1, 14);   // clear out
+	send_spi1[0]=0x03; //read page 1
+	send_spi1[1]=0; //24bit address msb
+	send_spi1[2]=0; //24bit address
+	send_spi1[3]=1; //24bit address lsb
+
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
+
+	HAL_SPI_Transmit (&hspi1, send_spi1, 4, 100);
+	HAL_SPI_Receive (&hspi1, return_spi1, 10, 100);   // works fine
+
+	//HAL_SPI_TransmitReceive(&hspi1, send_spi1, return_spi1,14, 100);  // better in case skip , 4 bytes is null then data , slow
+	//HAL_Delay(5);
+
+	//HAL_SPI_Receive(&hspi1, return_spi1, 12, 1000);  // reverse msb ?
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+
+
+	HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
 
 
 uint8_t potSource2[64]={0};    // { [0 ... 112] = 64 };
@@ -318,22 +318,33 @@ for (pars_counter=0;pars_counter<600;pars_counter++)	{   // fill up display data
 		menu_parser();  // run it closer to default_menu size ,times, if default_menu is corrupt gfx breaks pretty bad
 
 	}
+for (i=0;i<16384;i++) {     // change for 32khz   1-256 bpm
+RAM[i]=0;
+}
+for (i=0;i<1024;i++) {     // change for 32khz   1-256 bpm
+	//default_menu3[i]=64; not it
 
-for (pars_counter=0;pars_counter<512;pars_counter++)	  default_menu3[pars_counter>>1]=64;
+}
+
+
+
+	for (pars_counter=0;pars_counter<512;pars_counter++)	  default_menu3[pars_counter>>1]=64;
+
+	default_menu3_size = strlen(default_menu3);  // grab menu size , this is needed
+		menu_title_count--;  //count back one
+		display_clear ();
+		for (pars_counter=0;pars_counter<menu_title_count;pars_counter++)	default_menu3 [menu_title_lut[pars_counter]&1023]=48;
 
 
 
 
 
-default_menu3_size = strlen(default_menu3);  // grab menu size , this is needed
-	menu_title_count--;  //count back one
-	display_clear ();
-	for (pars_counter=0;pars_counter<menu_title_count;pars_counter++)	default_menu3 [menu_title_lut[pars_counter]&1023]=48;
 
-menuSelect=0;
+
+	menuSelect=0;
 // fill up sample
 firstbarLoop=0;
-
+//sample_ram =  &RAM[0];    //  allocate half a second
 
 
   /* USER CODE END 2 */
@@ -390,12 +401,6 @@ if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15
 
 				 HAL_I2C_Mem_Read(&hi2c2, 160,mem_count2, 2,&mem_verify, 1,100);
 				 if (mem_verify!=mem_buf) HAL_I2C_Mem_Write(&hi2c2, 160,mem_count2 , 2, &mem_buf, 1, 100);
-
-
-
-
-
-
 
 	 // "&hi2c2"  actual register address  , write only when needed
 
@@ -458,7 +463,7 @@ if (disp_end==1)	  display_generate();      // run this after gfx draw page fini
 	}
 
 
-	  if (loop_counter == 255)	{ // grab adc readings + 3ms , 32 step  // no freeze
+	  if (loop_counter2==2024){ // grab adc readings + 3ms , 32 step  // no freeze
 
 
 
@@ -472,13 +477,13 @@ if (disp_end==1)	  display_generate();      // run this after gfx draw page fini
 		  adc_temp1[0]=HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
 		  adc_temp1[1] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
 		  adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
-
+		  HAL_ADCEx_InjectedStop(&hadc1) ;
 		  //  adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
 		  adc_values[0]=	31- ( adc_temp1[0]>>7);
 		  adc_values[1]=	 31-( adc_temp1[1]>>7);
 		  adc_values[2]=	 31-( adc_temp1[2]>>7);
 		  //  adc_values[2]=	  adc_temp1[2]>>7;
-		  HAL_ADCEx_InjectedStop(&hadc1) ;
+
 
 
 		  //HAL_ADC_Start_DMA(&hadc1, adc_source, 512);
@@ -491,45 +496,40 @@ if (disp_end==1)	  display_generate();      // run this after gfx draw page fini
 
 
 	  	     HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin,(seq.pos & 1)); // easy skip ?
-	  	    // very inconsistent
 
-	 // if (sample_point>511) sample_pointD=0; // loop when zero cross , good but limited, works ok
-	//  if (sample_point<511)  sample_pointD=512;
-
-
-	//  if (sample_pointB!=sample_pointD) bank_write=1; // set start of buffer ,grab , works ok
 
 	  	//	adc_flag=0;
-	  		if (adc_flag) {
-	  		HAL_ADC_Stop_DMA(&hadc1); // a lot more stable this way , also sampling time no more than /8 +  144 or no go
-	  		HAL_ADC_Start_DMA(&hadc1, adc_source, 1024); //dma start ,needs this and adc start ,set sampling time
+	  		if (adc_flag) {     //  only for sending out  , poor quality
 
-	  			uint16_t* click=&adc_source[0];
 
-	  			for (i=0;i<512;i++)
-	  			{
+	  		uint16_t    adc_page=0; ;
+	  		if		(adc_flag==1)	  	{	adc_page=0;			}	//dma start ,needs this and adc start ,set sampling time
+	  		if		(adc_flag==2)	  	{	adc_page=1536;  }
 
-	  				uint16_t crap_hold=*click;
 
-	  			uint16_t crap_hold1=*(++click);
-	  		click++;
+	  		uint16_t    adc_convert_count;
+	  		uint16_t    adc_convert_temp;
+	  		for (i=0;i<512;i++){
+	  			adc_convert_count=(i*3)+adc_page;
 
-	  	//			uint16_t crap_hold=adc_source[i*2];
+	  			adc_convert_temp=adc_source[adc_convert_count]+adc_source[adc_convert_count+1]+adc_source[adc_convert_count+2];
+	  			input_holder[i]=adc_convert_temp/3;
+	  		//	input_holder[i]=adc_source[(i*3)+adc_page];
 
-	  				 // 				uint16_t crap_hold1=adc_source[(i*2)+1];
-
-	  				input_holder[i] = (crap_hold+crap_hold1 )>>1;
-	  				adc_flag=0;
-	  			}
 	  		}
+	  		if (sampler.record_enable)  {sampler_ram_record(); sampler.start_MSB=0; sampler.start_LSB=0;sampler.end_MSB=63;}
+
+	  			adc_flag=0;
+	  		}
+
+
 	  		if ((sample_point>512)&&( sample_pointD==512)) bank_write=1;
 	while  (bank_write)                         {							// wait for adc , priority
 
 
 
-		  //HAL_Delay(4);
-	  		//sample_point=sample_point&768 ;
-	  		sampling();
+
+		sampling();
 
 	  	}   // should trigger this after adc reads also reset sample_point here
 
@@ -637,7 +637,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_9;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -1063,6 +1063,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : record_pin_Pin */
+  GPIO_InitStruct.Pin = record_pin_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(record_pin_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pin : CS1_Pin */
   GPIO_InitStruct.Pin = CS1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -1070,21 +1076,39 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(CS1_GPIO_Port, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 }
 
 /* USER CODE BEGIN 4 */
 /* USER CODE BEGIN 4 */
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)   // get data after conversion
-{
-adc_flag=1;
 
 
-}
+	void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc){
+		adc_flag=1;
+
+	}
+	void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)   // get data after conversion
+	{
+	adc_flag=2;
+
+	HAL_ADC_Stop_DMA(&hadc1); HAL_ADC_Start_DMA(&hadc1,& adc_source, 3072);
+
+	}
+
+
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)   // when finished sending
 	{
 	    spi2_send_enable=1;
 	}
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if(GPIO_Pin == record_pin_Pin) {
+   sampler.record_enable=1;
+  }
+}
 
 
 

@@ -19,6 +19,8 @@ void sampling(void){						// 330 atm or 8.5ms
 uint8_t mask_i;
 int32_t sample_Accu[10] ={0,0,0,0,0,0,0,0,0,0};   // accu for sample output or lookup
 uint16_t tuned_list[10];
+int32_t sample_adc;
+int32_t ram_temp;
 if (bank_write==2)  {sample_pointD=512;}  else sample_pointD=0;
 
 bank_write=0;
@@ -59,7 +61,9 @@ potSource[381]=((lcd_out3 %100)/10);		 // 0-160 to 0-10
 potSource[382]=(lcd_out3%10);
 int32_t* osc_pointers[10];   // sample outs
 uint8_t pars_counter;
-  //setup pointers for osc options
+
+if (sampler.ram_seq>15871)  sampler.ram_seq=0;  //else sampler.ram_seq=sampler.ram_seq+1024;
+//setup pointers for osc options
  for (pars_counter=0;pars_counter<4;pars_counter++)	{   // fill up pointers and reload vars
 
 
@@ -67,13 +71,14 @@ uint8_t pars_counter;
 	 if (note[pars_counter].osc==0) osc_pointers[pars_counter]=&sample_Accu[5];  // zero
 	 	 	 	 if (note[pars_counter].osc==1) osc_pointers[pars_counter]=&sample_accus[pars_counter];   // saw
 	 			if (note[pars_counter].osc==2) osc_pointers[pars_counter]=&sample_Accu[pars_counter];		// tri
-	 			if (note[pars_counter].osc==3) osc_pointers[pars_counter]=&sample_Accu[pars_counter];   // sine
-	 			if (note[pars_counter].osc>3) osc_pointers[pars_counter]=&sample_Accu[5];   // sine
+	 			if (note[pars_counter].osc==3) { osc_pointers[pars_counter]=&sample_Accu[pars_counter+6];sampler.one_shot=sampler.one_shot | (1<<pars_counter);}   // sine
+	 			if (note[pars_counter].osc==4) { osc_pointers[pars_counter]=&sample_Accu[pars_counter+6];sampler.one_shot=sampler.one_shot &  ~(1<<pars_counter);}  // looping sample
+	 			if (note[pars_counter].osc==5) osc_pointers[pars_counter]=&sample_adc;   // sine
+	 			if (note[pars_counter].osc==6) osc_pointers[pars_counter]=&ram_temp ;   // sine
+	 			if (note[pars_counter].osc>6) osc_pointers[pars_counter]=&sample_Accu[5];  // zero
 	 			tuned_list[pars_counter]=note[pars_counter].tuned;   // this needs to run here as well
 
  }
-
-
 
 note_holdA=0;
 
@@ -146,8 +151,8 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 
 		seq.loop[0]=(note[0].timeshift+loop_temp1[0]+loop_temp1[1])&31;
 		seq.loop[1]=(note[1].timeshift+loop_temp1[0]+loop_temp1[2])&31;
-		seq.loop[2]=(note[2].timeshift+loop_temp1[0]+loop_temp1[3])&31; // this is really handy with sync to notes
-		seq.loop[3]=(note[3].timeshift+loop_temp1[0])&31;
+		seq.loop[2]=(note[2].timeshift+loop_temp1[0])&31; // this is really handy with sync to notes
+		seq.loop[3]=(note[3].timeshift+loop_temp1[0]+loop_temp1[3])&31;
 		//seq.loop[5]=(note[5].timeshift+loop_temp1[0])&31;
 
 
@@ -159,32 +164,40 @@ potValues[i&255]=potSource[i&255]>>4; //just to update values
 		note[3].pitch=(notes_joined[seq.loop[3]])+(note[3].transpose); ;  //loop 8 notes from pos and x times ,might disable normal adsr completely
 //	if (note[3].pitch) 		{note[3].pitch=note[3].pitch+(note[3].transpose>>4);	adsr_retrigger[3]=1; note_toggler[i>>5]=1<<(i&31   )   ; } // stay at zero for off
 
-	note[3].pitch=(notes_joined[seq.loop[3]])+(note[3].transpose);  //
+//	note[3].pitch=(notes_joined[seq.loop[3]])+(note[3].transpose);  //
 		patch_target_replace();
 		uint8_t detune_temp=0;
-		detune_temp=(note[3].pitch+(note[3].detune))&31    ;
-		if(detune_temp>27) detune_temp=27;
+	//	detune_temp=(note[3].pitch+(note[3].detune))&31    ;
+//		if(detune_temp>27) detune_temp=27;
 		   //this is for sine skip mask
 
-	note[3].tuned=sine_lut[MajorNote[detune_temp]];	//sets freq ,1.0594  * 16536 =17518  ,
-	note[3].tuned= (note[3].tuned*1200)>>10;  // modify different sample size , just need single cycle length and thats it
+//	note[3].tuned=sine_lut[MajorNote[detune_temp]];	//sets freq ,1.0594  * 16536 =17518  ,
+//	note[3].tuned= (note[3].tuned*1200)>>10;  // modify different sample size , just need single cycle length and thats it
 		mask_result =0;
 
 		for (mask_i=0;mask_i<5;mask_i++)	{							// calc detune , slow ,also creates notes
 
-	if (note[mask_i].pitch) {
+if (note[mask_i].pitch) {
 
 	//	note[mask_i].pitch=(note[mask_i].pitch ;
 
-		detune_temp=(note[mask_i].pitch+(note[mask_i].detune))&31    ;
-		if(detune_temp>27) detune_temp=27;
-		note[mask_i].tuned=sample_Noteadd[MajorNote[detune_temp]];
-		tuned_list[mask_i]=note[mask_i].tuned;
+		//detune_temp=(note[mask_i].pitch+(note[mask_i].detune))&31    ;
+		//if(detune_temp>27) detune_temp=27;
 
-	    } // relies on note channel clear , not good , clear not channel straight after
+
+		note[mask_i].tuned=sample_Noteadd[MajorNote[note[mask_i].pitch]];
+		//tuned_list[mask_i]=note[mask_i].tuned;
+		if (note[mask_i].osc>=3)  note[mask_i].tuned=note[mask_i].tuned>>1;
+		if (sampler.one_shot &(1<<mask_i))  sine_counter[4+(mask_i*3)]=0;  // clear if one shto enabled
+		//if (note[mask_i].osc==3)	{	note[mask_i].tuned=sine_lut[MajorNote[detune_temp]];	//sets freq ,1.0594  * 16536 =17518  ,
+	//		note[mask_i].tuned= (note[mask_i].tuned*1200)>>10; } //calc sampler
+
+
+
+	} // relies on note channel clear , not good , clear not channel straight after
 
 	}
-
+//sine_counter[4]=0;    // one shot
 		//note_tuned[3]=2751;
 	} // end of note calcualte
 
@@ -208,21 +221,49 @@ int32_t  sample_temp4;
 int32_t  sample_temp5;
 
 
+uint32_t*  sine_ptr_temp[5];
+	sampler.start=(sampler.start_MSB<<8)+sampler.start_LSB;
+	sampler.end=(sampler.end_MSB<<8)+sampler.end_LSB;
+
+	if ((sampler.one_shot&1) && (sine_counter[4]>(sampler.end-1000)) && (note[0].osc==3))   note[0].tuned=0;   //stop at the end
+	if ((sampler.one_shot&2) && (sine_counter[7]>(sampler.end-1000))&& (note[1].osc==3))    note[1].tuned=0;
+	if ((sampler.one_shot&4) && (sine_counter[11]>(sampler.end-1000))&& (note[2].osc==3))    note[2].tuned=0;
+	if ((sampler.one_shot&8) && (sine_counter[14]>(sampler.end-1000))&& (note[3].osc==3))   note[3].tuned=0;
+
+	sine_ptr_temp[0]=&sine_counter[3];
+	sine_ptr_temp[1]=&sine_counter[6];
+	sine_ptr_temp[2]=&sine_counter[9];
+	sine_ptr_temp[3]=&sine_counter[12];
+
+
+	if(sampler.start>sampler.end) sampler.start=0; //flip to 0  for now
+	if (sampler.ram_seq<sampler.start)      sampler.ram_seq=sampler.start;
+	if ((sampler.ram_seq+512)>sampler.end) sampler.ram_seq=sampler.start;
+
+	sampler.length=sampler.end-sampler.start;
+	sampler.start_ptr=&RAM[sampler.start];
+
+
+
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators
 	i_total=i+sample_pointB;
 	sampling_position=(i>>6);
+	sample_adc=input_holder[i];
+	sample_adc=(sample_adc-2040)<<12;
+	ram_temp=((RAM[sampler.ram_seq])); // grab data
+	ram_temp=(ram_temp-2040)<<12;
+	sampler.ram_seq++;
+
 
 	if ((i&63)==0)	{  patch_target_replace();    // update values , not too bad
-float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.01)    ;   // need this for useful filter
-freq_pointer[0] [sampling_position]=1-freq_temp; // problem was selecting accu instead of out , good now
- freq_temp=arm_sin_f32(filter[1].cutoff_1*0.006)    ;
-freq_pointer[1] [sampling_position] =1-freq_temp ; // filter lfos
-freq_temp=arm_sin_f32(filter[2].cutoff_1*0.006)    ;
-freq_pointer[2] [sampling_position] =1-freq_temp ; // filter lfos
- freq_temp=arm_sin_f32(filter[3].cutoff_1*0.006)    ;
-freq_pointer[3] [sampling_position] =1-freq_temp ; // filter lfos
-
-
+float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for useful filter
+	freq_pointer[0] [sampling_position]=1-freq_temp; // problem was selecting accu instead of out , good now
+	 freq_temp=arm_sin_f32(filter[1].cutoff_1*0.006)    ;
+	freq_pointer[1] [sampling_position] =1-freq_temp ; // filter lfos
+	freq_temp=arm_sin_f32(filter[2].cutoff_1*0.006)    ;
+	freq_pointer[2] [sampling_position] =1-freq_temp ; // filter lfos
+	 freq_temp=arm_sin_f32(filter[3].cutoff_1*0.006)    ;
+	freq_pointer[3] [sampling_position] =1-freq_temp ; // filter lfos
 
 	}
 
@@ -243,25 +284,21 @@ freq_pointer[3] [sampling_position] =1-freq_temp ; // filter lfos
 	sample_Accu[3]=(abs(sample_accus[3])-262144)<<1;
 
 
-
+					sample_Accu[6]=sine_count2(0,sine_ptr_temp[0],sine_ptr_temp[0]);  // might unroll later
 	 	 	 	 	 sample_temp1=(*osc_pointers[0])*note[0].velocity;// needs cut a bit  maybe some diff vol settings
-
 					sample_temp2=(sample_temp1)>>2;
 				    //sample_Accu[0] =(sample_accus[0]+sample_accus[1])>>8;
-
+					sample_Accu[7]=sine_count2(1,sine_ptr_temp[1],sine_ptr_temp[1]);  // might unroll later // might unroll later
 					sample_temp1=(*osc_pointers[1])*note[1].velocity; // needs cut a bit  ,default 20bit
 					sample_temp3=sample_temp1>>2; // 20+8
 					//sample_Accu[1] =sample_accus[2]>>8;
 
-
+					sample_Accu[8]=sine_count2(2,sine_ptr_temp[2],sine_ptr_temp[2]);  // might unroll later // might unroll later
 					sample_temp1=(*osc_pointers[2])*note[2].velocity;      // needs some gain fine tune !
 					sample_temp4 =sample_temp1>>2;    // 64 default 20+8
 
 
-					sample_Accu[3]=sine_count();
-					//sample_Accu[2] =sample_accus[3]>>8;
-					//sine_calc_select=0;
-					 // calc sine   distortion out when hcagning note  ,, down to 36 cycles atm
+					sample_Accu[9]=sine_count2(3,sine_ptr_temp[3],sine_ptr_temp[3]);  // might unroll later // might unroll later
 					sample_temp1=(*osc_pointers[3])*	note[3].velocity;  // sine out is 16bit, add 4 then 16+8
 					sample_temp5 =sample_temp1>>2;
 					//sample_Accu[3] =sine_out>>4;
@@ -283,34 +320,6 @@ int32_t filter_Accu2;
 
 //uint16_t* click=&input_holder[0];
 
-uint16_t crap_hold=2000;
-
-				uint16_t crap_hold1=2000;
-				uint16_t crap_hold2=2000;
-
-for (i=0;i<512;i++) // 15-20 tmr cycles (174)
-			{
-				crap_hold=((input_holder[i]*7)+crap_hold2)>>3;
-					crap_hold1=((crap_hold*7)+crap_hold1)>>3;
-					input_holder[i] =((crap_hold1*7)+crap_hold2)>>3;
-
-			}
-
-/*
-for (i=0;i<510;i++){
-	temp3_hold[0]=((temp3_hold[2]*7)+input_holder[i])>>3;
-	temp3_hold[1]=((temp3_hold[0]*7)+input_holder[i+1])>>3;
-	temp3_hold[2]=((temp3_hold[1]*7)+input_holder[i+2])>>3;
-
-	input_holder[i]=temp3_hold[0];
-	input_holder[i+1]=temp3_hold[1];
-	input_holder[i+2]=temp3_hold[2];
-
-
-}
-*/
-
-
 
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators , filters and final out ,slow 133
 	i_total=i+sample_pointB;
@@ -320,7 +329,7 @@ sampling_position=(i>>6);
 if (		(note_toggler[i>>5]	)==(1<<(i&31)	)) 				{ADSR[0].attack_trigger =0;  trigger_counter++; trigger_counter=trigger_counter&1023  ;}
 
 
-sample_Accu[0]=play_holder0[i];  // sine input
+sample_Accu[0]=play_holder0[i];
 sample_Accu[1]=play_holder1[i] ; // saw
 sample_Accu[2]=play_holder2[i];  // sine input
 sample_Accu[3]=play_holder3[i] ;
@@ -443,7 +452,7 @@ int32_t sine_count(void) {      // sine_out is the output 9  bit  , works
 	uint16_t sine_counter_temp=sine_counter[ 0 ];
 	uint16_t sine_counterB_temp=sine_counter[ 1];
 
-	if (sine_counterB_temp==0) 	sine_tuned=note[9].tuned;
+	if (sine_counterB_temp==0) 	sine_tuned=note[3].tuned;
 
 			sine_counterB_temp=sine_counterB_temp+sine_tuned ;  // sine up counter per cycle , however sine adder needs to wait
 			if (sine_counterB_temp>>7) sine_zero=0; else sine_zero=1;
@@ -460,11 +469,46 @@ int32_t sine_count(void) {      // sine_out is the output 9  bit  , works
 		if (sine_counter_temp>=sine_length)  sine_counter_temp=0; // limit sin_counter to sample size  set to sample length
 				sine_tempB=sine_block[sine_counter_temp]-20000;  // convert to signed and +256 to -256
 				sine_tempB=	((sine_tempB-sine_tempA)>>5)*(sine_counterB_temp & 31);   // calculate fraction then add
-				return  (sine_tempA+sine_tempB)<<4;   // add back to start value -20k-20k  or about 16bit
+
 				 sine_counter[0]=sine_counter_temp;
 				 sine_counter[1]=sine_counterB_temp;
 				 sine_counter[2]=sine_tuned;
+				 return  (sine_tempA+sine_tempB)<<4;   // add back to start value -20k-20k  or about 16bit
 	}
+
+
+int32_t sine_count2(uint8_t note_selected,  uint32_t* input_array, uint32_t* return_array ) {      // sine_out is the output 9  bit  , works
+
+
+	//note_selected=(note_selected*3)+3;
+	//uint8_t sine_zero;
+	int32_t sine_tempA;
+	int32_t sine_tempB;
+	uint16_t RAM_size_temp=sampler.length-2;
+
+	uint32_t sine_counter_temp=*input_array;
+	uint32_t sine_counterB_temp=*(input_array+1);
+	uint32_t sine_tuned=*(input_array+2);
+
+	if (sine_counterB_temp==0) 	sine_tuned=note[note_selected].tuned;  // this needs to be fractional 20-30
+	sine_counterB_temp=sine_counterB_temp+sine_tuned ;  // sine up counter per cycle , however sine adder needs to wait
+	if (sine_counterB_temp>((RAM_size_temp)<<13)) sine_counterB_temp=0; //fixed for now, last is 19200 then
+////////////////////////////////////////////
+	sine_counter_temp=(sine_counterB_temp>>13);  // up countr controlled by counter
+		sine_tempA=((*(sampler.start_ptr+sine_counter_temp))-2040)<<10;
+		sine_counter_temp++;
+	//	if (sine_counter_temp>=RAM_size)  sine_counter_temp=0; // limit sin_counter to sample size  set to sample length
+				sine_tempB=((*(sampler.start_ptr+sine_counter_temp))-2040)<<10;  // convert to signed and +256 to -256
+
+				sine_tempB=	((sine_tempB-sine_tempA)>>5)*(sine_counterB_temp & 31);   // calculate fraction then add (x/32 )  * (0-31)
+				//note_selected=(note_selected*3)+3;
+				*return_array=sine_counter_temp;  // this needs fixing
+				*(return_array+1)=sine_counterB_temp;
+				*(return_array+2)=sine_tuned;
+				 return  (sine_tempA+sine_tempB)<<1;   // add back to start value -20k-20k  or about 16bit
+
+}
+
 
 
 void LFO_source(void){     // lfo
@@ -482,8 +526,6 @@ uint32_t lfo_accu_temp;
 	int32_t freq_tri;
 
 	for (lfo_c=0;lfo_c<10;lfo_c++){   //current lfo setup , needs sampling position 0-8  and tempo_sync
-
-
 
 	lfo_accu_temp=	lfo_accu[lfo_c][sampling_position_b];  // hold
 

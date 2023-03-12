@@ -58,11 +58,13 @@ int _write(int file, char *ptr, int len)
 uint16_t menu_locA=0;
 
 uint8_t noteTiming;  // set timing shift
-uint8_t potValues [512];  //low res values mostly for display
+uint8_t potValues [512]={0};   //low res values mostly for display
 
-uint8_t potSource[512]; // high res version of potValues used when needed 40-0, gonna change to 160 just o break things, need more res for lfo
+uint8_t potSource[512]={0}; // high res version of potValues used when needed 40-0, gonna change to 160 just o break things, need more res for lfo
 
-uint16_t sine_counter[10];  // up counter for sine reading
+uint32_t sine_counter[24];  // up counter for sine reading
+float sine_counter_float[5];
+
 uint16_t sine_counterB;  // up counter for sine reading ,fractional * 8
 int32_t sine_out;     // generated sine output 9 bit
 uint16_t sine_temp2;
@@ -122,7 +124,10 @@ void LFO_source(void);
 void note_reset (void);
 uint8_t seq_pos; // sequencer position linked to isrCount for now but maybe change
 int32_t sine_count(void);
+int32_t sine_count2(uint8_t note_selected,  uint32_t* input_array, uint32_t* return_array );
 void  mask_calc(uint8_t mask_select,uint8_t mask_speed);
+void sampler_save(void);
+void sampler_ram_record(void);
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
 uint8_t NoteC; // second channel note
@@ -164,7 +169,7 @@ volatile uint16_t sample_point2;
 uint16_t note_channel[31]={ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  // 10 notes , 10 velocity 20->16bit , 10 mask toggle
  unsigned short mask_result;
 
-static uint16_t adc_source[1025] ;  // for soem reason static maybe important , also 16 bit most def
+static uint16_t adc_source[3072] ;  // for soem reason static maybe important , also 16 bit most def
 const uint8_t lfo_mask[20]={255,170,85,252,240,192,128,136,238,15,0,0,0,0,0,0,0}; // lfo dif masks
 //const uint16_t adsr_lut[41]= {0,1,2,3,4,5,6,8,9,10,12,14,17,20,24,28,32,37,42,47,53,59,65,72,79,86,96,104,114,128,144,178,228,342,409,455,512,585,682,819,1024}; //count up 1=10 , /9 for output
 float adsr_lut[256];   // hold an envelope
@@ -242,7 +247,7 @@ uint16_t lfo_tempo_lut[256];
 uint16_t tempo_mod_hold;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////GFX
 //uint8_t gfx_ram[64][18] ; //holds data for lcd 64*128bit +2 bytes ver/hor command for lcd
-uint8_t  gfx_ram[1153];
+uint8_t  gfx_ram[1153]={0}; ;
 
 uint16_t  gfx_send_counter=0;   //counts up to 31x18x2
 uint8_t gfx_send_counter2=0;			// horizontal pos 0-17
@@ -387,6 +392,28 @@ struct patch_settings{					// use this instead of lfo  or other modulators
 };
 struct patch_settings patch[10];    // patch board
 
+struct sampler_settings{
+uint8_t record_enable;   //record to ram max 1-2 sec for now
+uint8_t sample_location;   // save location on flash ,preset for now
+uint8_t sample_save_enable ;   // save flag to flash
+uint8_t one_shot; // one shot bit flag , 0-7 notes
+uint8_t offset;  // offset to seq.pos or to start of sample ?
+uint16_t  start;    // for trimming  start ,calucalted
+ uint16_t end;	// for trimming end ,calculated
+uint16_t length;  // length for looping  ,calucalted
+uint16_t ram_pos;  //record pos
+uint8_t start_MSB;
+uint8_t start_LSB;
+uint8_t end_MSB;
+uint8_t end_LSB;
+uint16_t* start_ptr;
+uint16_t ram_seq;   // seq current position
+};
+static struct sampler_settings sampler={.record_enable=0, .sample_location=0,.sample_save_enable=0,.ram_pos=0
+		,.end_MSB=63, .end_LSB=255,.start_MSB=0,.start_LSB=0,.length=1024,.one_shot=255  };                                     // needs to be protected
+
+
+
 
 uint16_t string_search=0;   // search position on created menu
 uint16_t string_value=0;  // holds the variable result from the search result
@@ -396,11 +423,11 @@ uint8_t space_check=0;   // look for gaps
 
 uint8_t menu_title_count=0;   // holds the counter for menu_title_lut
 
-uint32_t  menu_var_lut[256];    // hold pointers for variables , for now its enougg
+uint32_t  menu_var_lut[256]={0};   // hold pointers for variables , for now its enougg
 
-uint32_t menu_title_lut[256];  // hold pointer for feedback line , points to default_menu first character(1<<8)   as well the current display loc(0)  , skip empty areas for now
+uint32_t menu_title_lut[256]={0};  // hold pointer for feedback line , points to default_menu first character(1<<8)   as well the current display loc(0)  , skip empty areas for now
 
-char menu_index_list[512];   //  use along the menu_var_lut uses double the records !! gets weird when using 256
+char menu_index_list[512]={0};   //  use along the menu_var_lut uses double the records !! gets weird when using 256
 char* menu_vars_menu=0;    // return pointer to menu_titles final
 uint8_t * menu_vars_var=0;			// return memory location to var !
 char menu_vars_in[8];  // incoming string ,ok
@@ -431,7 +458,9 @@ uint8_t serial_source[256]={0};
 uint8_t serial_source_temp[256]={0};
 uint8_t serial_up=0;  //counter for serial send
 uint8_t serial_tosend=0;
-
+uint16_t RAM[16384]={0};
+uint16_t* sample_ram=NULL;   // pointer to ram
+ // ram current position for playback/record  0-16384
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 
 

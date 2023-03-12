@@ -1,6 +1,6 @@
 
-
-#define menu_lookup_count    44     // size of the look up variables processor
+#define RAM_size 16384
+#define menu_lookup_count    49     // size of the look up variables processor
 #define seq_sample_rate 32000   // use it for period and tempo calcualtions
 const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Transpos 03Transpos 05Transpos "  // was getting corrupted then screwed everything
 
@@ -32,31 +32,36 @@ const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Tra
 	//	"00Attack   00Decay    00Sustain  00Release          "
 		//	"01Attack   01Decay    01Sustain  01Release          "
 		"00OSC1     01OSC1     02OSC1     03OSC1     06OSC1     07OSC1     08OSC1     09OSC1     "
+		" 00StartMSB 00StartLSB  00EndMSB   00EndLSB       "
+
 };   // just for testing text memory , will be modifiable ,  lut
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
 
-char default_menu3[1024]; // hold all string for output  128 per page , needs to resize
-const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,9,0,5,5,5,5,0,9,9,9,9,9,9,9,9,
-		9,0,0,0,15,15,9,3,3,3,3,3,3,3,3,9,9,9,9,9,9,9,9,9} ; // index number limiter ,fixed IMPORTANT!
+char default_menu3[1024]={0}; // hold all string for output  128 per page , needs to resize
+const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,9,0,5,5,5,
+		5,0,9,9,9,9,9,9,9,9,
+		9,0,0,0,15,15,9,3,3
+		,3,3,3,3,3,3,9,9,9,9
+		,9,9,9,9,0,0,0,0,0,0} ; // index number limiter ,fixed IMPORTANT!
 
 const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,255,255,255,255,40,0,255,255,255,
-																				255,0,3,3,27,16,31,27,31,255,
+																				255,0,5,5,27,16,31,27,31,255,
 																				27,0,255,255,31,31,27,255,255 ,255,
-																				10,255,255,255,31,40,40,255,255,0   };   // right shift divider mainly for LFO  , maybe for lcd too
-
+																				10,255,255,255,31,40,40,255,255,0 ,
+																				255,255,255,63,255,63,255,0		  };   // right shift divider mainly for LFO  , maybe for lcd too
 
 	const char* menu_titles_final[menu_lookup_count]= {"LFO     ", "Rate    ","Depth   " ,"Delay   ", "Offset  ", "Target  ","ADSR    ",
 			"Attack  ", "Decay   ","Sustain ","Release ",
 			"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",
 			"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    ","Cutoff_1","Cutoff_2","Resnance","Q_level ","Level   ","Feedback","Out_mix ","Poles   ",
-			"Tg_ndx  ","Input_1 ","Input_2 ","In_mix  ","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset"
+			"Tg_ndx  ","Input_1 ","Input_2 ","In_mix  ","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset","StartMSB","StartLSB","EndMSB  ","EndLSB  ",
 	};   // 40 *8
 
 	const uint8_t patch_skip_list[menu_lookup_count]={ 0,1,1,1,1,1,1,1,1,1,
 			1,1,1,1,1,1,1,1,1,0,
 			0,1,1,1,1,1,1,0,1,1,
 			1,1,1,1,1,1,1,1,1,1,
-			1,1,1,1
+			1,1,1,1,1,1,1,1,1,1
 	};  // skip most of it for now
  const char* patch_inputs[]={
 		"LFO0 sin","LFO0 saw","LFO0 tri","LFO0 tri" ,"LFO1 sin","LFO1 saw","LFO1 tri","LFO1 tri" ,"LFO2 sin","LFO2 saw","LFO2 tri","LFO2 tri" ,
@@ -72,7 +77,7 @@ const uint8_t  display_vars_divider[menu_lookup_count] =						// lcd display val
 				5,0,0,0,0,0,0,0,0,5,
 				0,0,5,5,0,0,5,5,5 ,5,
 				5,5,5,5,0,2,0,0,5,5,
-				5,5,5,5 };
+				5,5,5,5,5,5,5,5,5};
 
 
 
