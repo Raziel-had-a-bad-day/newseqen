@@ -42,7 +42,7 @@ uint32_t lfo_tempo_hold;
 
 if (tempo_mod_hold!=tempo_mod){					// lfo lut calculate only when changes tempo
 
-		float lfo_tempo_calc=((62831*4)/(tempo_mod)); // deafualt 1 note
+		float lfo_tempo_calc=((1647099*4)/(tempo_mod)); // deafualt 1 note
 
 
 						for (i=0;i<256;i++){								// 128 is 1 note
@@ -56,9 +56,9 @@ uint32_t  note_toggler[17]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  //records not
 for (i=0;i<16;i++) {  note_toggler[i]=0; }
 	//potSource[150]=(freq_point[0])*100; //0-2
 
-potSource[380]=(lcd_out3/100);  // still works   , potsource ref is located in feedback line var  ,was sendin x16 values
-potSource[381]=((lcd_out3 %100)/10);		 // 0-160 to 0-10
-potSource[382]=(lcd_out3%10);
+potSource[380]=(lcd_temp/100) +48;  // still works   , potsource ref is located in feedback line var  ,was sendin x16 values
+potSource[381]=((lcd_temp %100)/10)+48;		 // 0-160 to 0-10
+potSource[382]=(lcd_temp%10)+48;
 int32_t* osc_pointers[10];   // sample outs
 uint8_t pars_counter;
 
@@ -181,11 +181,11 @@ if (note[mask_i].pitch) {
 
 	//	note[mask_i].pitch=(note[mask_i].pitch ;
 
-		//detune_temp=(note[mask_i].pitch+(note[mask_i].detune))&31    ;
-		//if(detune_temp>27) detune_temp=27;
+		detune_temp=(note[mask_i].pitch+(note[mask_i].detune))&31    ;
+		if(detune_temp>27) detune_temp=27;
 
 
-		note[mask_i].tuned=sample_Noteadd[MajorNote[note[mask_i].pitch]];
+		note[mask_i].tuned=(sample_Noteadd[MajorNote[detune_temp]]*126)>>7;   // put unit tune here
 		//tuned_list[mask_i]=note[mask_i].tuned;
 		if (note[mask_i].osc>=3)  note[mask_i].tuned=note[mask_i].tuned>>1;
 		if (sampler.one_shot &(1<<mask_i))  sine_counter[4+(mask_i*3)]=0;  // clear if one shto enabled
@@ -225,7 +225,7 @@ uint32_t*  sine_ptr_temp[5];
 	sampler.start=(sampler.start_MSB<<8)+sampler.start_LSB;
 	sampler.end=(sampler.end_MSB<<8)+sampler.end_LSB;
 
-	if ((sampler.one_shot&1) && (sine_counter[4]>(sampler.end-1000)) && (note[0].osc==3))   note[0].tuned=0;   //stop at the end
+	if ((sampler.one_shot&1) && (sine_counter[4]>(sampler.end-1000)) && (note[0].osc==3))   {note[0].tuned=0; sine_counter[4] =0;} //stop at the end
 	if ((sampler.one_shot&2) && (sine_counter[7]>(sampler.end-1000))&& (note[1].osc==3))    note[1].tuned=0;
 	if ((sampler.one_shot&4) && (sine_counter[11]>(sampler.end-1000))&& (note[2].osc==3))    note[2].tuned=0;
 	if ((sampler.one_shot&8) && (sine_counter[14]>(sampler.end-1000))&& (note[3].osc==3))   note[3].tuned=0;
@@ -236,13 +236,20 @@ uint32_t*  sine_ptr_temp[5];
 	sine_ptr_temp[3]=&sine_counter[12];
 
 
-	if(sampler.start>sampler.end) sampler.start=0; //flip to 0  for now
+	if(sampler.start_MSB>sampler.end_MSB) sampler.start_MSB=0; //flip to 0  for now
 	if (sampler.ram_seq<sampler.start)      sampler.ram_seq=sampler.start;
 	if ((sampler.ram_seq+512)>sampler.end) sampler.ram_seq=sampler.start;
 
 	sampler.length=sampler.end-sampler.start;
-	sampler.start_ptr=&RAM[sampler.start];
+	 if(!note[2].tuned)	sampler_offset=(sampler.offset&15)*1024;
 
+	if(sine_counter[9]<=sampler.start) sine_counter[9]=sampler.start;
+	 if(note[2].tuned)		sine_counter[9]=sine_counter[9]+512;
+
+	if (sine_counter[9]>((sampler.length+sampler.start+sampler_offset)-512))   {sine_counter[9]=sampler.start+sampler_offset; note[2].tuned=0;}
+
+	sampler.start_ptr=&RAM[sine_counter[9]-sampler_offset];
+//	sampler_offset=(sampler.offset&15)*(sampler.length>>4);
 
 
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators
@@ -284,21 +291,27 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 	sample_Accu[3]=(abs(sample_accus[3])-262144)<<1;
 
 
-					sample_Accu[6]=sine_count2(0,sine_ptr_temp[0],sine_ptr_temp[0]);  // might unroll later
-	 	 	 	 	 sample_temp1=(*osc_pointers[0])*note[0].velocity;// needs cut a bit  maybe some diff vol settings
+					//sample_Accu[6]=sine_count2(0,sine_ptr_temp[0],sine_ptr_temp[0]);  // might unroll later
+				//	sample_Accu[6]=sampler_oneshot(0,sine_ptr_temp[0],sine_ptr_temp[0]);  // might unroll later
+					sample_temp1=(*osc_pointers[0])*note[0].velocity;// needs cut a bit  maybe some diff vol settings
 					sample_temp2=(sample_temp1)>>2;
 				    //sample_Accu[0] =(sample_accus[0]+sample_accus[1])>>8;
-					sample_Accu[7]=sine_count2(1,sine_ptr_temp[1],sine_ptr_temp[1]);  // might unroll later // might unroll later
+					//sample_Accu[7]=sine_count2(1,sine_ptr_temp[1],sine_ptr_temp[1]);  // might unroll later // might unroll later
+				//	sample_Accu[7]=sampler_oneshot(1,sine_ptr_temp[1],sine_ptr_temp[1]);  // might unroll later // might unroll later
 					sample_temp1=(*osc_pointers[1])*note[1].velocity; // needs cut a bit  ,default 20bit
 					sample_temp3=sample_temp1>>2; // 20+8
 					//sample_Accu[1] =sample_accus[2]>>8;
 
-					sample_Accu[8]=sine_count2(2,sine_ptr_temp[2],sine_ptr_temp[2]);  // might unroll later // might unroll later
+					//sample_Accu[8]=sine_count2(2,sine_ptr_temp[2],sine_ptr_temp[2]);  // might unroll later // might unroll later
+			//		sample_Accu[8]=sampler_oneshot(2,sine_ptr_temp[2],sine_ptr_temp[2]);  // might unroll later // might unroll later
+
+					if (note[2].tuned) sample_Accu[8]=(*(sampler.start_ptr+i)-2040)<<11;
 					sample_temp1=(*osc_pointers[2])*note[2].velocity;      // needs some gain fine tune !
 					sample_temp4 =sample_temp1>>2;    // 64 default 20+8
 
 
-					sample_Accu[9]=sine_count2(3,sine_ptr_temp[3],sine_ptr_temp[3]);  // might unroll later // might unroll later
+					//sample_Accu[9]=sine_count2(3,sine_ptr_temp[3],sine_ptr_temp[3]);  // might unroll later // might unroll later
+				//	sample_Accu[9]=sampler_oneshot(3,sine_ptr_temp[3],sine_ptr_temp[3]);  // might unroll later // might unroll later
 					sample_temp1=(*osc_pointers[3])*	note[3].velocity;  // sine out is 16bit, add 4 then 16+8
 					sample_temp5 =sample_temp1>>2;
 					//sample_Accu[3] =sine_out>>4;
@@ -321,46 +334,42 @@ int32_t filter_Accu2;
 //uint16_t* click=&input_holder[0];
 
 
-for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators , filters and final out ,slow 133
-	i_total=i+sample_pointB;
+			for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators , filters and final out ,slow 133
+				i_total=i+sample_pointB;
 
-sampling_position=(i>>6);
-// filter 1
-if (		(note_toggler[i>>5]	)==(1<<(i&31)	)) 				{ADSR[0].attack_trigger =0;  trigger_counter++; trigger_counter=trigger_counter&1023  ;}
+			sampling_position=(i>>6);
+			// filter 1
+			if (		(note_toggler[i>>5]	)==(1<<(i&31)	)) 				{ADSR[0].attack_trigger =0;  trigger_counter++; trigger_counter=trigger_counter&1023  ;}
 
+			sample_Accu[0]=play_holder0[i];
+			sample_Accu[1]=play_holder1[i] ; // saw
+			sample_Accu[2]=play_holder2[i];  // sine input
+			sample_Accu[3]=play_holder3[i] ;
 
-sample_Accu[0]=play_holder0[i];
-sample_Accu[1]=play_holder1[i] ; // saw
-sample_Accu[2]=play_holder2[i];  // sine input
-sample_Accu[3]=play_holder3[i] ;
+			// this section is about 100 tmr cycles
+			if ((i&63)==0){
+			freq_point[0]=freq_pointer[0] [sampling_position];; // load up coeffs
 
-// this section is about 100 tmr cycles
-if ((i&63)==0){
-freq_point[0]=freq_pointer[0] [sampling_position];; // load up coeffs
+			freq_point[2]=freq_pointer[1] [sampling_position];  // ok , array was too short
+			freq_point[4]=freq_pointer[2] [sampling_position];  // ok , array was too short
+			freq_point[6]=freq_pointer[3] [sampling_position];  // ok , array was too short
 
-freq_point[2]=freq_pointer[1] [sampling_position];  // ok , array was too short
-freq_point[4]=freq_pointer[2] [sampling_position];  // ok , array was too short
-freq_point[6]=freq_pointer[3] [sampling_position];  // ok , array was too short
+			if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;// just in case
+			if (freq_point[4]>1) freq_point[4]=1; else if (freq_point[4]<0) freq_point[4]=0;// just in case
+			if (freq_point[2]>1) freq_point[2]=1; else if (freq_point[2]<0) freq_point[2]=0;// just in case
+			if (freq_point[6]>1) freq_point[6]=1; else if (freq_point[6]<0) freq_point[6]=0;// just in case
 
+			freq_point[1]=1-freq_point[0];
+			freq_point[3]=1-freq_point[2];
+			freq_point[5]=1-freq_point[4];
+			freq_point[7]=1-freq_point[6];
 
-if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;// just in case
-if (freq_point[4]>1) freq_point[4]=1; else if (freq_point[4]<0) freq_point[4]=0;// just in case
-if (freq_point[2]>1) freq_point[2]=1; else if (freq_point[2]<0) freq_point[2]=0;// just in case
-if (freq_point[6]>1) freq_point[6]=1; else if (freq_point[6]<0) freq_point[6]=0;// just in case
+			filter_res[0]=freq_point[0]*0.2;
+			filter_res[1]=freq_point[1]*0.2;
+			filter_res[2]=freq_point[2]*0.2;
+			filter_res[3]=freq_point[3]*0.2;
 
-freq_point[1]=1-freq_point[0];
-freq_point[3]=1-freq_point[2];
-freq_point[5]=1-freq_point[4];
-freq_point[7]=1-freq_point[6];
-
-filter_res[0]=freq_point[0]*0.2;
-filter_res[1]=freq_point[1]*0.2;
-filter_res[2]=freq_point[2]*0.2;
-filter_res[3]=freq_point[3]*0.2;
-
-
-
-}
+			}
 
 		//freq_point[0]=0.50;
 
@@ -393,42 +402,39 @@ filter_res[3]=freq_point[3]*0.2;
 						filter_accus[12]=(filter_accus[11]*freq_point[6])+(filter_accus[12]*freq_point[7]);
 						sample_Accu[3]=filter_accus[12];
 
-
-
-
 	//	filter_hold[0]=(filter_accus[5]+filter_accus[11])*0.5; //half sample , nice
 	//	sample_Accu[0] =filter_accus[5]; // out
 	//	filter_accus[11]=filter_accus[5]; //write back new value
 		//sample_Accu[0] =sample_Accu[1];
 
 
-filter_Accu=filter_Accu2=0;
-filter_Accu=(sample_Accu[0]+sample_Accu[1])>>16;
-filter_Accu2=(sample_Accu[2]+sample_Accu[3])>>16; //filter + drum out
+		filter_Accu=filter_Accu2=0;
+		filter_Accu=(sample_Accu[0]+sample_Accu[1])>>16;
+		filter_Accu2=(sample_Accu[2]+sample_Accu[3])>>16; //filter + drum out
 
- if (one_shot!=199)   one_shot++;  //play one attack then stop
+		 if (one_shot!=199)   one_shot++;  //play one attack then stop
 
- //if (filter_Accu>0xFFFF) {filter_Accu=0xFFFF;clipping++;} else if (filter_Accu<-65535) filter_Accu=-65535;  // limiter to 16 bits
- if (filter_Accu>0x3FF) {filter_Accu=0x3FF;clipping++;} else if (filter_Accu<-1023) filter_Accu=-1023;  // limiter to 11 bits
- if (filter_Accu2>0x3FF) {filter_Accu2=0x3FF;clipping++;} else if (filter_Accu2<-1023) filter_Accu2=-1023;  // limiter to 11 bits
-
-
-
- play_sample[(i_total<<1)]=(filter_Accu)+1023;   // final output disable for now 2544
- play_sample[(i_total<<1)+1]=(filter_Accu2)+1023;
- //play_sample[i_total]=(input_holder[i]);  // works good
-
-} // end of filer
+		 //if (filter_Accu>0xFFFF) {filter_Accu=0xFFFF;clipping++;} else if (filter_Accu<-65535) filter_Accu=-65535;  // limiter to 16 bits
+		 if (filter_Accu>0x3FF) {filter_Accu=0x3FF;clipping++;} else if (filter_Accu<-1023) filter_Accu=-1023;  // limiter to 11 bits
+		 if (filter_Accu2>0x3FF) {filter_Accu2=0x3FF;clipping++;} else if (filter_Accu2<-1023) filter_Accu2=-1023;  // limiter to 11 bits
 
 
-//time_final=time_proc;   // in samples
 
-if (bank_write)   error_count++;  // if bank write is high it means too much stall here
-time_final[0]=time_proc;
+		 play_sample[(i_total<<1)]=(filter_Accu)+1023;   // final output disable for now 2544
+		 play_sample[(i_total<<1)+1]=(filter_Accu2)+1023;
+		 //play_sample[i_total]=(input_holder[i]);  // works good
+
+		} // end of filer
 
 
-//bank_write=0;   /// total 320 sample time (39khz)
-}
+		//time_final=time_proc;   // in samples
+
+		if (bank_write)   error_count++;  // if bank write is high it means too much stall here
+		time_final[0]=time_proc;
+
+
+		//bank_write=0;   /// total 320 sample time (39khz)
+		}
 
 void mask_calc(uint8_t mask_select,uint8_t mask_speed){    //calculate mask output from lfos
 uint8_t mask_temp;
@@ -477,38 +483,76 @@ int32_t sine_count(void) {      // sine_out is the output 9  bit  , works
 	}
 
 
-int32_t sine_count2(uint8_t note_selected,  uint32_t* input_array, uint32_t* return_array ) {      // sine_out is the output 9  bit  , works
+int32_t sine_count2(uint8_t note_selected, uint32_t *input_array,
+	uint32_t *return_array)
+    {      // sine_out is the output 9  bit  , works
 
+    //note_selected=(note_selected*3)+3;
+    //uint8_t sine_zero;
+    int32_t sine_tempA;
+    int32_t sine_tempB;
+    uint16_t RAM_size_temp = sampler.length - 2;
 
-	//note_selected=(note_selected*3)+3;
-	//uint8_t sine_zero;
-	int32_t sine_tempA;
-	int32_t sine_tempB;
-	uint16_t RAM_size_temp=sampler.length-2;
+    uint32_t sine_counter_temp = *input_array;
+    uint32_t sine_counterB_temp = *(input_array + 1);
+    uint32_t sine_tuned = *(input_array + 2);
 
-	uint32_t sine_counter_temp=*input_array;
-	uint32_t sine_counterB_temp=*(input_array+1);
-	uint32_t sine_tuned=*(input_array+2);
-
-	if (sine_counterB_temp==0) 	sine_tuned=note[note_selected].tuned;  // this needs to be fractional 20-30
-	sine_counterB_temp=sine_counterB_temp+sine_tuned ;  // sine up counter per cycle , however sine adder needs to wait
-	if (sine_counterB_temp>((RAM_size_temp)<<13)) sine_counterB_temp=0; //fixed for now, last is 19200 then
+    if (sine_counterB_temp == 0)
+	sine_tuned = note[note_selected].tuned; // this needs to be fractional 20-30
+    sine_counterB_temp = sine_counterB_temp + sine_tuned; // sine up counter per cycle , however sine adder needs to wait
+    if (sine_counterB_temp > ((RAM_size_temp) << 13))
+	sine_counterB_temp = 0; //fixed for now, last is 19200 then
 ////////////////////////////////////////////
-	sine_counter_temp=(sine_counterB_temp>>13);  // up countr controlled by counter
-		sine_tempA=((*(sampler.start_ptr+sine_counter_temp))-2040)<<10;
-		sine_counter_temp++;
-	//	if (sine_counter_temp>=RAM_size)  sine_counter_temp=0; // limit sin_counter to sample size  set to sample length
-				sine_tempB=((*(sampler.start_ptr+sine_counter_temp))-2040)<<10;  // convert to signed and +256 to -256
+    sine_counter_temp = (sine_counterB_temp >> 13); // up countr controlled by counter
+    sine_tempA = ((*(sampler.start_ptr + sine_counter_temp)) - 2040) << 10;
+    sine_counter_temp++;
+    //	if (sine_counter_temp>=RAM_size)  sine_counter_temp=0; // limit sin_counter to sample size  set to sample length
+    sine_tempB = ((*(sampler.start_ptr + sine_counter_temp)) - 2040) << 10; // convert to signed and +256 to -256
 
-				sine_tempB=	((sine_tempB-sine_tempA)>>5)*(sine_counterB_temp & 31);   // calculate fraction then add (x/32 )  * (0-31)
-				//note_selected=(note_selected*3)+3;
-				*return_array=sine_counter_temp;  // this needs fixing
-				*(return_array+1)=sine_counterB_temp;
-				*(return_array+2)=sine_tuned;
-				 return  (sine_tempA+sine_tempB)<<1;   // add back to start value -20k-20k  or about 16bit
+    sine_tempB = ((sine_tempB - sine_tempA) >> 5) * (sine_counterB_temp & 31); // calculate fraction then add (x/32 )  * (0-31)
+    //note_selected=(note_selected*3)+3;
+    *return_array = sine_counter_temp;  // this needs fixing
+    *(return_array + 1) = sine_counterB_temp;
+    *(return_array + 2) = sine_tuned;
+    return (sine_tempA + sine_tempB) << 1; // add back to start value -20k-20k  or about 16bit
 
-}
+    }
+int32_t sampler_oneshot(uint8_t note_selected, uint32_t *input_array,
+	uint32_t *return_array)
+    {      // sine_out is the output 9  bit  , works
 
+    //note_selected=(note_selected*3)+3;
+    //uint8_t sine_zero;
+    int32_t sine_tempA;
+    int32_t sine_tempB;
+    uint16_t RAM_size_temp = sampler.length - 2;
+
+//	uint32_t sine_counter_temp=*input_array;
+    uint32_t sine_counterB_temp = *(input_array + 1);
+    uint32_t sine_tuned = *(input_array + 2);
+
+//	if (sine_counterB_temp==0) 	sine_tuned=note[note_selected].tuned;  // this needs to be fractional 20-30
+    if (note[note_selected].tuned)
+	sine_counterB_temp = sine_counterB_temp + 1; // sine up counter per cycle , however sine adder needs to wait
+    if (sine_counterB_temp >= (RAM_size_temp))
+	sine_counterB_temp = 0; //fixed for now, last is 19200 then
+//	if (!sine_counterB_temp)   sine_counterB_temp=0;
+
+    ////////////////////////////////////////////
+//	sine_counter_temp=sine_counterB_temp;  // up countr controlled by counter
+    sine_tempA = ((*(sampler.start_ptr + (sine_counterB_temp))) - 2040) << 11;
+    //	sine_counter_temp++;
+    //	if (sine_counter_temp>=RAM_size)  sine_counter_temp=0; // limit sin_counter to sample size  set to sample length
+    //			sine_tempB=((*(sampler.start_ptr+sine_counter_temp))-2040)<<10;  // convert to signed and +256 to -256
+
+    //			sine_tempB=	((sine_tempB-sine_tempA)>>5)*(sine_counterB_temp & 31);   // calculate fraction then add (x/32 )  * (0-31)
+    //note_selected=(note_selected*3)+3;
+    //		*return_array=sine_counter_temp;  // this needs fixing
+    *(return_array + 1) = sine_counterB_temp;
+    *(return_array + 2) = sine_tuned;
+    return (sine_tempA);   // add back to start value -20k-20k  or about 16bit
+
+    }
 
 
 void LFO_source(void){     // lfo
@@ -524,6 +568,9 @@ uint32_t lfo_accu_temp;
 	uint32_t freq4_temp;
 	int16_t  output_hold;
 	int32_t freq_tri;
+	uint32_t offset2;
+	uint32_t freq_temp_saw;
+	uint32_t delay_value;
 
 	for (lfo_c=0;lfo_c<10;lfo_c++){   //current lfo setup , needs sampling position 0-8  and tempo_sync
 
@@ -531,38 +578,46 @@ uint32_t lfo_accu_temp;
 
 	freq3_temp=lfo_tempo_lut[LFO[lfo_c].rate] ;  // rate. this needs a little log
 		//freq4_temp=freq3_temp*freq3_temp;  // multiply  , dont more then 8000 really
-
+	delay_value=(freq3_temp*8)*(LFO[lfo_c].delay&15);
 
 			freq3_temp=lfo_accu_temp+ freq3_temp;// get lfo value plus rate , will try to get related to tempo for easier sync , at potS 80?/8192/8notes/ 1 bar
 
 
 ///  counts from -16k to +16 k   @ + 0.03125      to   +400    *10    or 13 ms *8 (10 hz ? fastest  )
-		if (freq3_temp>62831) lfo_accu_temp=0; else lfo_accu_temp=freq3_temp; // write back value  counts -16000 to +16000
-		if(!seq.pos)  lfo_accu_temp=0;   // tempo sync, mediocre
-		lfo_accu[lfo_c][sampling_position]=lfo_accu_temp;
-		freq_temp=lfo_accu_temp;
-		freq2_temp=(freq_temp*0.0001);  //0-360
+		if (freq3_temp>(1647099+delay_value)) lfo_accu_temp=0+delay_value ; else lfo_accu_temp=freq3_temp; // write back value  counts -16000 to +16000
 
+
+		if((!next_isr) && (!sampling_position))  lfo_accu_temp=20000;   // tempo sync, mediocre
+		lfo_accu[lfo_c][sampling_position]=lfo_accu_temp;
+		freq_temp=lfo_accu_temp-delay_value;
+		freq2_temp=(freq_temp*0.000003814697);  //0-360  , <<18
+		freq_temp_saw=freq2_temp*10430;
 		freq_temp =arm_sin_f32(freq2_temp); // seems ok   , cmsis is ok  RADIANS !!!!!
 		freq2_temp=freq_temp*LFO[lfo_c].depth*204;
 
-		if (!LFO[lfo_c].offset)    LFO[lfo_c].offset=0;   // se
+	//	if (!LFO[lfo_c].offset)    LFO[lfo_c].offset=0;   // se
  		offset=(LFO[lfo_c].offset<<8); //  limit now for finetuning
-			freq2_temp=(freq2_temp+offset);
+			offset2=offset;
+ 		freq2_temp=(freq2_temp+offset);
 
-		if (freq2_temp>32767)  freq2_temp=32767;
-		if (freq2_temp<-32767) {  freq2_temp=-32767; }  // clip to 13bit -/+ 8000
+		if (freq2_temp>32766)  freq2_temp=32767;
+		if (freq2_temp<-32766) {  freq2_temp=-32767; }  // clip to 13bit -/+ 8000
 
 						output_hold=freq2_temp;
-						if(lfo_accu_temp<32768)   freq_tri=lfo_accu_temp; else freq_tri=65535-lfo_accu_temp;    // 0-32767
-					freq_saw=((lfo_accu_temp*LFO[lfo_c].depth)>>8)+offset;
-					if (freq_saw>65535)  freq_saw=65535;   // clip
+				if (freq_temp_saw>65534)  freq_temp_saw=65535;
+					//	lfo_accu_temp=lfo_accu_temp/6;
+					freq_saw=((freq_temp_saw*LFO[lfo_c].depth)>>8)+offset2;   // 51 000  + offset
 
-					LFO[lfo_c].out[sampling_position]=output_hold+32767;
-				   LFO[lfo_c].out_saw[sampling_position]=freq_saw;
+					if (freq_saw>65534)  freq_saw=65535;   // clip
+				//	freq_saw=65535-freq_saw;
+					LFO[lfo_c].out[sampling_position]=output_hold+32767; // sine out
+				   LFO[lfo_c].out_saw[sampling_position]=freq_saw;    // saw 16 bit
 
-				   freq_tri=((freq_tri*LFO[lfo_c].depth)>>7)+offset;
-				   if (freq_tri>65535)  freq_tri=65535;   // clip
+
+				   if(freq_temp_saw<32768)   freq_tri=freq_temp_saw; else freq_tri=65536-freq_temp_saw;    // 0-32767
+				   freq_tri=((freq_tri*LFO[lfo_c].depth)>>7)+offset2 ; // tri 16 bit
+				//   freq_tri=((freq_tri*255)>>7)+offset2 ; // tri 16 bit
+				   if (freq_tri>65534)  freq_tri=65535;   // clip
 				  LFO[lfo_c].out_tri[sampling_position]=freq_tri;
 
 		} // lfo gen : 0=f1 , 1=tempo,2=pitch

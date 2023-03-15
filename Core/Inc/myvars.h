@@ -125,9 +125,15 @@ void note_reset (void);
 uint8_t seq_pos; // sequencer position linked to isrCount for now but maybe change
 int32_t sine_count(void);
 int32_t sine_count2(uint8_t note_selected,  uint32_t* input_array, uint32_t* return_array );
+int32_t sampler_oneshot(uint8_t note_selected,  uint32_t* input_array, uint32_t* return_array );
 void  mask_calc(uint8_t mask_select,uint8_t mask_speed);
 void sampler_save(void);
 void sampler_ram_record(void);
+void gfx_reverse(uint8_t cursor_pos,uint8_t cursor_partial);
+void gfx_line_fill (uint8_t line_selected);
+void menu3_fill(void);
+void encoder2(void);
+
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
 uint8_t NoteC; // second channel note
@@ -203,7 +209,7 @@ uint16_t enc2_tempB;  // hold old in2
 int8_t enc2_tempC=10;
 uint16_t enc2_dir;    // enc direction2
 int16_t enc_dir;    // enc direction
-int8_t enc2_add=2;   // simple adder 1 or 0 or -1 ,starts on 2    , int !
+int8_t enc2_add=0;   // simple adder 1 or 0 or -1 ,starts on 2    , int !
 uint16_t tempo_count=0; // up counter for tempo reset
  uint8_t bsrr_hold[128]; //store to hold bsrr data ready for transfer in a loop
 uint8_t bs_count=0; //count to 40 on bsrrr
@@ -284,7 +290,7 @@ struct LFO_settings{      // use first 5*10 , leave the rest  , no bueno  32 eac
 	uint8_t depth;	//(p140)
 	uint8_t gain;
 	uint8_t offset;
-	uint8_t delay;  // + lfo_accu_temp
+	uint8_t delay;  // +   ,,essential feature
 	uint8_t phase;  // unsure
 	//uint8_t target;      // lfo modulation target  , number for now , 0-16(index) + (0-27)<<4, variable ptr
 	//uint8_t target_index;
@@ -459,7 +465,14 @@ uint8_t serial_source_temp[256]={0};
 uint8_t serial_up=0;  //counter for serial send
 uint8_t serial_tosend=0;
 uint16_t RAM[16384]={0};
-uint16_t* sample_ram=NULL;   // pointer to ram
+uint16_t* sample_ram=NULL;
+uint32_t sampler_offset;
+uint8_t enc_mem_dir=0;
+uint8_t  last_pos_hold; // multiple cursors
+uint8_t cursor_partial;
+uint16_t disp_up_counter=0;
+uint8_t gfx_send_counter4=0;
+// pointer to ram
  // ram current position for playback/record  0-16384
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!
 

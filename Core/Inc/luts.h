@@ -1,6 +1,6 @@
 
 #define RAM_size 16384
-#define menu_lookup_count    49     // size of the look up variables processor
+#define menu_lookup_count    50     // size of the look up variables processor
 #define seq_sample_rate 32000   // use it for period and tempo calcualtions
 const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Transpos 03Transpos 05Transpos "  // was getting corrupted then screwed everything
 
@@ -9,8 +9,8 @@ const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Tra
 		"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "
 		"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
 		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes2  "
-		"00Rate     00Depth    00Offset      01Rate     01Depth    01Offset    "
-		"02Rate     02Depth    02Offset      03Rate     03Depth    03Offset    "
+		"00Rate     00Depth    00Offset   00Delay    01Rate     01Depth    01Offset   01Delay    "
+		"02Rate     02Depth    02Offset   02Delay    03Rate     03Depth    03Offset   03Delay    "
 		"04Rate     04Depth    04Offset      05Rate     05Depth    05Offset    "
 		"06Rate     06Depth    06Offset      07Rate     07Depth    07Offset    "
 		"08Rate     08Depth    08Offset      09Rate     09Depth    09Offset    "
@@ -32,7 +32,7 @@ const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Tra
 	//	"00Attack   00Decay    00Sustain  00Release          "
 		//	"01Attack   01Decay    01Sustain  01Release          "
 		"00OSC1     01OSC1     02OSC1     03OSC1     06OSC1     07OSC1     08OSC1     09OSC1     "
-		" 00StartMSB 00StartLSB  00EndMSB   00EndLSB       "
+		" 00StartMSB 00StartLSB  00EndMSB   00EndLSB   00SMoffset    "
 
 };   // just for testing text memory , will be modifiable ,  lut
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
@@ -48,13 +48,13 @@ const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,255,255,255,255,40,0,25
 																				255,0,5,5,27,16,31,27,31,255,
 																				27,0,255,255,31,31,27,255,255 ,255,
 																				10,255,255,255,31,40,40,255,255,0 ,
-																				255,255,255,63,255,63,255,0		  };   // right shift divider mainly for LFO  , maybe for lcd too
+																				255,255,255,63,255,63,255,255,255,255		  };   // right shift divider mainly for LFO  , maybe for lcd too
 
 	const char* menu_titles_final[menu_lookup_count]= {"LFO     ", "Rate    ","Depth   " ,"Delay   ", "Offset  ", "Target  ","ADSR    ",
 			"Attack  ", "Decay   ","Sustain ","Release ",
 			"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",
 			"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    ","Cutoff_1","Cutoff_2","Resnance","Q_level ","Level   ","Feedback","Out_mix ","Poles   ",
-			"Tg_ndx  ","Input_1 ","Input_2 ","In_mix  ","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset","StartMSB","StartLSB","EndMSB  ","EndLSB  ",
+			"Tg_ndx  ","Input_1 ","Input_2 ","In_mix  ","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset","StartMSB","StartLSB","EndMSB  ","EndLSB  ","SMoffset",
 	};   // 40 *8
 
 	const uint8_t patch_skip_list[menu_lookup_count]={ 0,1,1,1,1,1,1,1,1,1,
@@ -77,7 +77,7 @@ const uint8_t  display_vars_divider[menu_lookup_count] =						// lcd display val
 				5,0,0,0,0,0,0,0,0,5,
 				0,0,5,5,0,0,5,5,5 ,5,
 				5,5,5,5,0,2,0,0,5,5,
-				5,5,5,5,5,5,5,5,5};
+				5,5,5,5,5,5,5,5,5,5};
 
 
 
