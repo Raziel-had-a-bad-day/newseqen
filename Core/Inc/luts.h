@@ -44,7 +44,7 @@ const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,9,0,5,5,5,
 		,3,3,3,3,3,3,9,9,9,9
 		,9,9,9,9,0,0,0,0,0,0} ; // index number limiter ,fixed IMPORTANT!
 
-const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,255,255,255,255,40,0,255,255,255,
+const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,255,255,15,255,40,0,255,255,255,
 																				255,0,5,5,27,16,31,27,31,255,
 																				27,0,255,255,31,31,27,255,255 ,255,
 																				10,255,255,255,31,40,40,255,255,0 ,

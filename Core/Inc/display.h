@@ -88,14 +88,32 @@ void display_process(void){							// keep data processing here
 
 	memcpy(menu_vars_in,*(menu_titles_final+crap_hold9),8);	// send back for menu vars ok
 	 char temp_char[]="  ";
+	// char temp_char2[]="________";
 				 memcpy(temp_char,menu_index_list+((enc_out1*2)),2);   // copy char to char,ok
 				 menu_index_in=atoi(temp_char)			;   // convert char to int,ok
 
 	menu_vars_var=menu_vars(menu_vars_in,menu_index_in);		//test  for vars ok
 
+//	memcpy(default_menu3+feedback_loc+8,temp_char2,8); // clear line
 	     memcpy(default_menu3+feedback_loc+8, *(menu_titles_final+crap_hold9),8);   // copy feedback data for reading,ok
 	     memcpy(default_menu3+feedback_loc+17,potSource+380,3);
 	     memcpy(default_menu3+feedback_loc+5,temp_char,2);
+
+	     if (menu_vars_ref==5) target_display=1;
+	     if (menu_vars_ref==36) target_display=2;
+	     if (target_display)      // write LFO.target display , might use it for other things too
+	     	{
+	     		uint8_t target_tmp1=*menu_vars_var ;   // this can be put anywhere now
+	     		if (target_tmp1>=menu_lookup_count) target_tmp1=0;    // check in case
+	     		if (target_display==1) memcpy(default_menu3+feedback_loc+8, *(menu_titles_final+target_tmp1),8);  // copy info for LFO
+	     		if (target_display==2) memcpy(default_menu3+feedback_loc+8, *(patch_inputs+target_tmp1),8);  // Limited atm
+	     		 		 	}
+
+	     target_display=0;
+
+
+
+
 
 	     if (disp_stepper==17) {disp_stepper=0;  }     else disp_stepper++;				// count to 16 also make sure full loop before skip lines
 
@@ -149,9 +167,9 @@ spi_send=1;SPI_command();spi_send=0;spi_enable=0;
 }
 
 
-void gfx_send(void){         // send spi to lcd from gfx ram
+void gfx_send(void){         // send spi to lcd from gfx ram, not used
 
-
+    gfx_dma=0;
 			uint8_t spi_store[3];
 			uint8_t spi_store2=0;
 			uint8_t spi_store3=gfx_ram[gfx_send_counter];
@@ -166,12 +184,68 @@ void gfx_send(void){         // send spi to lcd from gfx ram
 					spi_store[1]=((spi_store3>>4)<<4);
 					spi_store[2]=((spi_store3&15)<<4);
 
-
-						HAL_SPI_Transmit(&hspi2,spi_store,3,3);  // ok
+					HAL_SPI_Transmit_DMA(&hspi2,spi_store,3);  // ok works in normal transfer mode
+					//	HAL_SPI_Transmit(&hspi2,spi_store,3,3);  // ok
 					if (gfx_send_counter2==17 ) { gfx_send_counter2=0;    } else gfx_send_counter2++; // check elsewhere if changing gfx_send_counter
 			if (gfx_send_counter==1151 ) { gfx_send_counter=0; disp_end=1; gfx_send_counter2=0;    } else gfx_send_counter++; ;
 
 		}
+void gfx_send_DMA(void){         // send spi to lcd from gfx ram ,not used now
+
+
+			uint8_t spi_store[433];
+			uint8_t spi_store2=0;
+			uint8_t spi_store3=gfx_ram[gfx_send_counter];
+			uint16_t  up_counter=0;
+			gfx_dma=0;
+			for (up_counter=0;up_counter<54;up_counter=up_counter+3){     // no more than one line then needs pause
+
+			    spi_store3=gfx_ram[gfx_send_counter];
+			    if (gfx_send_counter2>1) {spi_store2=250;					// 2ms delay between location commands , data is ok full speed
+
+			}
+
+			else {spi_store2=248;    }//start with msb ,dont forget flip around at end, 250 =data ,248= command if below 8bit
+
+					spi_store[up_counter]=spi_store2;
+					spi_store[up_counter+1]=((spi_store3>>4)<<4);
+					spi_store[up_counter+2]=((spi_store3&15)<<4);
+
+					if (gfx_send_counter2==17 ) { gfx_send_counter2=0;    } else gfx_send_counter2++; // check elsewhere if changing gfx_send_counter
+			if (gfx_send_counter==1151 ) { gfx_send_counter=0; disp_end=1; gfx_send_counter2=0;    } else gfx_send_counter++; ;
+
+			} HAL_SPI_Transmit_DMA(&hspi2,spi_store,54);  // ok
+
+}
+void gfx_TX_block(void){         // send spi to lcd from gfx ram , full page needed initially as it writes commands as well
+
+
+			uint8_t spi_store[3];
+			uint8_t spi_store2=0;
+			uint8_t spi_store3=0;
+			uint16_t  up_counter=0;
+			uint8_t line_counter=0;
+
+			gfx_send_counter=0;
+			for (up_counter=0;up_counter<3456;up_counter=up_counter+3){     // no more than one line then needs pause
+
+
+			    spi_store3=gfx_ram[gfx_send_counter];
+			    if (line_counter>1) {spi_store2=250;					// 2ms delay between location commands , data is ok full speed
+			}
+			else {spi_store2=248;    }//start with msb ,dont forget flip around at end, 250 =data ,248= command if below 8bit
+
+					spi_store[0]=spi_store2;
+					spi_store[1]=((spi_store3>>4)<<4);
+					spi_store[2]=((spi_store3&15)<<4);
+					memcpy(spi_tx_block+up_counter,spi_store,3);
+					if (line_counter==17 ) { line_counter=0;    } else line_counter++; //
+			 gfx_send_counter++; ;
+
+			} ;  // ok
+			gfx_send_counter=0; disp_end=1;
+
+}
 
 void gfx_clear(void){     // simple gfx ram clear ,besides feedback
 
@@ -258,59 +332,81 @@ void gfx_reverse(uint8_t cursor_pos,uint8_t cursor_partial){					 // does what i
 
 }
 
-void gfx_line_fill (uint8_t line_selected){   // fills a line to gfx_ram from default_menu3
+void gfx_line_fill (){   // fills a line to gfx_ram from default_menu3 also fills gfx_block
+		    // this now is the  emain char to disp
+   // uint8_t line_selected=(loop_counter&7)+((menu_title_lut[enc_out1]>>7)*8);
 
+    uint16_t cursor= menu_title_lut[enc_out1];
+    uint16_t line_selected=(loop_counter&7)+((cursor>>7)*8);    // thsi needs to be 1024/16
     uint16_t start_line=(line_selected&7)*144;
      uint16_t end_line=start_line+144;
-
+     disp_end=1;
    //  uint8_t  character=default_menu3[(i-2)+(line_selected*16)]-47;
     uint8_t char_skip=0;
      uint16_t character;
+     uint8_t spi_store[3];
+     uint8_t spi_store3=0;
+     uint8_t reverse[16]={0};
 
-     for (n=start_line;n<end_line ;n=n+18)    {
+
+
+     if ((cursor>>4) == line_selected)    reverse [(cursor&15)]=1;
+
+     for (n=start_line;n<end_line ;n=n+18)    {    //  8*18   , 0-1152
 
 	 for (i=0;i<16;i++){
-	     character=((default_menu3[i+(line_selected*16)]-47)*8)+char_skip;
+		 character=((default_menu3[i+(line_selected*16)]-47)*8)+char_skip;
+		 spi_store3= gfx_char[character&1023 ];     // limited characters
+		spi_store3=spi_store3^(reverse[i]*127);
+		 gfx_ram[n+i+2]=spi_store3;
 
-	     gfx_ram[n+i+2] = gfx_char[   character ]&31;
-
-	 }
-    char_skip++;
-}
-}
+						    spi_store[0]=250;
+						    spi_store[1]=((spi_store3>>4)<<4);
+						    spi_store[2]=((spi_store3&15)<<4);
+						    memcpy(spi_tx_block+(((n+i)*3)+6),spi_store,3);  // writes only data no command
+		     }
+	char_skip++;
+    }
+    }
 
 
 void encoder2(void){  // encoder pos and data input
 
 
-    uint8_t crap_hold9=(menu_title_lut[enc_out1]>>16)&255;
+	uint8_t crap_hold9=(menu_title_lut[enc_out1]>>16)&255;
 
-	memcpy(menu_vars_in,*(menu_titles_final+crap_hold9),8);	// send back for menu vars ok
-	 char temp_char[]="  ";
-				 memcpy(temp_char,menu_index_list+((enc_out1*2)),2);   // copy char to char,ok
-				 menu_index_in=atoi(temp_char)			;   // convert char to int,ok
+	    memcpy(menu_vars_in,*(menu_titles_final+crap_hold9),8);	// send back for menu vars ok
+	     char temp_char[]="  ";
+				     memcpy(temp_char,menu_index_list+((enc_out1*2)),2);   // copy char to char,ok
+				     menu_index_in=atoi(temp_char)			;   // convert char to int,ok
+	    menu_vars_var=menu_vars(menu_vars_in,menu_index_in);		//test  for vars ok
+		if ((*menu_vars_var)>menu_vars_limiter[menu_vars_ref])     *menu_vars_var=menu_vars_limiter[menu_vars_ref];   // limit value sher too
 
-	menu_vars_var=menu_vars(menu_vars_in,menu_index_in);		//test  for vars ok
-	 if ((enc_dir!=enc_mem_dir)  ) *menu_vars_var=enc_dir;   ///write back value if encoder changed ;
+	    // input encode ------------------------
+	    if ((enc_dir!=enc_mem_dir)  )    ///write back value if encoder changed ;
+	    {
+		if (enc_dir>enc_mem_dir) 							*menu_vars_var=((*menu_vars_var)+1)&255;
+	    if ((enc_dir<enc_mem_dir)&&(*menu_vars_var))		 *menu_vars_var=((*menu_vars_var)-1)&255;
+	    }
+	    enc_mem_dir=enc_dir;
 
-    			enc_mem_dir=enc_dir;
+	    // location encode ------------------------
 
+	    if ((enc2_dir!=enc2_mem_dir)  )    ///write back value if encoder changed ;
+	   	    {
+	   		if (enc2_dir>enc2_mem_dir) 							enc_out1++;
+	   	    if ((enc2_dir<enc2_mem_dir))		enc_out1--;
 
-    if ( (enc2_tempC!=enc2_dir) && (!enc2_add))  {      // wait till loop end , ok
+	   	    }
+	   	   if (enc_out1>menu_title_count) enc_out1=0;
+	   	 if (enc_out1<0) enc_out1=menu_title_count;
 
-	if  (enc2_tempC<enc2_dir)	 enc2_add=1;   									// use this to set up or down count for variables , might change
-		if  (enc2_tempC>enc2_dir)	 enc2_add=-1;    // slow but 1 step at a time
-		if  (enc2_tempC<enc2_dir)	 enc2_add=+(enc2_dir-enc2_tempC);   	//  fast but skips
+	    enc2_mem_dir=enc2_dir;
+	   //-------------------
 
-		if  (enc2_tempC>enc2_dir)	 enc2_add=-(enc2_tempC-enc2_dir);
-		enc2_tempC=enc2_dir;	   // loop back until change
+		    enc2_add=0;
 
-		if ((enc_out1>=0)  &&  (enc_out1<=menu_title_count))    {enc_out1=enc_out1+enc2_add;}   // count up or down within limits
-		if (enc_out1<0)  {  enc_out1=menu_title_count; }
-		if (enc_out1>menu_title_count) enc_out1=0;
-		enc2_add=0;
-	}
-}
+    }
 
 
     void menu3_fill(void){   // looping write into default_menu3
@@ -338,6 +434,7 @@ void encoder2(void){  // encoder pos and data input
 
 				uint16_t crap8=menu_title_lut[enc_up];
 				default_menu3[crap8]=div_limit+48;
+				if ((menu_vars_ref==24) | (menu_vars_ref==25))  default_menu3[crap8]=major_notes[lcd_out3&31];
 				disp_up_counter++;
 				disp_up_counter=disp_up_counter&255;
 

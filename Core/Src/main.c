@@ -64,10 +64,12 @@ I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
+DMA_HandleTypeDef hdma_spi2_tx;
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
+TIM_HandleTypeDef htim10;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart6;
@@ -90,10 +92,11 @@ static void MX_SPI2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_I2C2_Init(void);
-static void MX_TIM2_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART6_UART_Init(void);
+static void MX_TIM10_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -137,10 +140,11 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_I2C2_Init();
-  MX_TIM2_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
+  MX_TIM10_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
 main_initial();   // initial setup
@@ -165,10 +169,10 @@ main_initial();   // initial setup
 		if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
 			  if (mem_count>512) mem_count=0; else mem_count++; // write to first this was moved for no logical reason ?
 
-			  cursor_partial=240;
-			if (last_pos_hold)   gfx_reverse(last_pos_hold,cursor_partial);
-			  gfx_reverse(seq.loop[0]+32,cursor_partial);
-			  last_pos_hold=seq.loop[0]+32;
+			//  cursor_partial=255;
+		//	if (last_pos_hold)   gfx_reverse(last_pos_hold,cursor_partial);
+		//	  gfx_reverse(enc_out1&127,cursor_partial);
+		//	  last_pos_hold=enc_out1&127;
 
 			  patch_target_parse(); //
 			  uint16_t mem_count2=0;	// read values from stored
@@ -243,31 +247,18 @@ main_initial();   // initial setup
 		if (init<6)				// after 6 its done for good   // no freeze here
 		{
 			for (i=0;i<6;i++) {display_init();}  //1-2ms ?  change length if flickering ,maybe initial data
+
+		if (init==5)  {HAL_TIM_Base_Start_IT(&htim10);HAL_TIM_Base_Start(&htim10);	 gfx_TX_block(); 					}
 		}
 
 		if (init > 5) {    //  around 3 cycles per single transmit  , plenty quick as is , spi lcd can really slow things down
 
-/*                       // leave this out for , works fine but needs a better solution
-
-			if (gfx_send_swap==2) gfx_send_lines++;		// this is ok for now
-			if (gfx_send_swap==1)  { gfx_send_counter=gfx_send_cursor*144; gfx_send_swap=2; } // jump to cursor pixel line
-			if (gfx_send_lines==144)   { gfx_send_lines=0; gfx_send_counter=1008; gfx_send_swap=0;}  // skip to last char line
-*/
 
 
 
+		    //full page in mem for spi
 
-
-		    //   fills one char line on current page
-		    if(gfx_send_counter==0) gfx_send_counter4=0;
-		    if (!gfx_send_counter2){
-
-		    if ((gfx_send_counter4&7)==0)  {gfx_line_fill((gfx_send_counter4>>3)+((menu_title_lut[enc_out1]>>7)*8));  }  // fills current page
-		    gfx_send_counter4++;
-		    if (gfx_send_counter4>63) gfx_send_counter4=0;
-		    }
-
-		    gfx_send();    // don't loop this without using dma  , just makes things really slow
+		    //  little too fast
 			 menu3_fill();encoder2();
 		}
 
@@ -293,21 +284,12 @@ main_initial();   // initial setup
 			adc_values[2]=	 31-( adc_temp1[2]>>7);
 			//  adc_values[2]=	  adc_temp1[2]>>7;
 
-
-
-			//HAL_ADC_Start_DMA(&hadc1, adc_source, 512);
-
-
 			loop_counter=0;
 		}
 
 		if ((seq.pos==7) && (lcd_send==0)) {lcd_send=1;} // runs just once
-
-
 		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin,(seq.pos & 1)); // easy skip ?
-
-
-		//	adc_flag=0;
+	//	adc_flag=0;
 		if (adc_flag) {     //  only for sending out  , poor quality
 
 
@@ -336,6 +318,15 @@ main_initial();   // initial setup
 		while  (bank_write)                         {							// wait for adc , priority
 
 			sampling();
+
+			uint8_t up_counter2=0;
+			while ((up_counter2<8) && (init > 5) )								{
+
+			gfx_line_fill();   // just run 8 times between sampling , dont need more
+			up_counter2++;
+			loop_counter++;
+			}
+
 
 	  	}   // should trigger this after adc reads also reset sample_point here
 
@@ -620,7 +611,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 65535;
+  htim2.Init.Period = 4294967295;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
@@ -733,17 +724,17 @@ static void MX_TIM4_Init(void)
   htim4.Init.Prescaler = 0;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim4.Init.Period = 65535;
-  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI2;
   sConfig.IC1Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 2;
+  sConfig.IC1Filter = 4;
   sConfig.IC2Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC2Filter = 2;
+  sConfig.IC2Filter = 4;
   if (HAL_TIM_Encoder_Init(&htim4, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -757,6 +748,51 @@ static void MX_TIM4_Init(void)
   /* USER CODE BEGIN TIM4_Init 2 */
 
   /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
+  * @brief TIM10 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM10_Init(void)
+{
+
+  /* USER CODE BEGIN TIM10_Init 0 */
+
+  /* USER CODE END TIM10_Init 0 */
+
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM10_Init 1 */
+
+  /* USER CODE END TIM10_Init 1 */
+  htim10.Instance = TIM10;
+  htim10.Init.Prescaler = 4;
+  htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim10.Init.Period = 50000;
+  htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OC_Init(&htim10) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_TIMING;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_OC_ConfigChannel(&htim10, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM10_Init 2 */
+
+  /* USER CODE END TIM10_Init 2 */
 
 }
 
@@ -834,8 +870,12 @@ static void MX_DMA_Init(void)
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Stream4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
   /* DMA2_Stream4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
@@ -883,7 +923,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(CS1_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 4, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
@@ -907,7 +947,12 @@ static void MX_GPIO_Init(void)
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)   // when finished sending
 	{
-	    spi2_send_enable=1;
+	//    spi2_send_enable=1;
+	    //
+	 //   gfx_dma=1;
+	//    if (SPI2==hspi->Instance) {gfx_dma=1;}
+
+
 	}
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {

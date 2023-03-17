@@ -28,6 +28,8 @@ uint32_t y;
 //uint16_t pwmVel;
 //uint16_t pwmVelB;
 //const uint8_t tempoLUT[];  // lookup table for tempo instead of calculate
+
+const char major_notes[]={"cdefgahCDEFGAHCDEFGAHCDEFGAHCDEFGAH"};
 const uint8_t MajorNote[]= { 0,2,4,6,7,9,11,13,14,16,18,19,21,23,25,26,28,30,31,33,35,37,38,40,42,43,45} ;  // major
 const uint8_t MinorNote[]={ 0,2,3,5,7,8,10,12,14,15,17,19,20,22,24,26,27,29,31,32,34,36,38,39,41,43,44,46}; // minor
 const uint8_t ChromNote[]={0,2,3,5,6,8,9,11,12,14,15,17,18,20,21}; //chromatic, diminished
@@ -130,9 +132,11 @@ void  mask_calc(uint8_t mask_select,uint8_t mask_speed);
 void sampler_save(void);
 void sampler_ram_record(void);
 void gfx_reverse(uint8_t cursor_pos,uint8_t cursor_partial);
-void gfx_line_fill (uint8_t line_selected);
+void gfx_line_fill (void);
 void menu3_fill(void);
 void encoder2(void);
+void gfx_send_DMA(void);
+void gfx_TX_block(void);
 
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
@@ -440,8 +444,9 @@ char menu_vars_in[8];  // incoming string ,ok
 uint8_t menu_index_in=0; // gets the struct index ie LFO[1].rate
 uint16_t default_menu3_size=0;    //  just set size of menu
 
+uint16_t enc2_mem_dir;
 int16_t enc_out1=1;    // menu_title_lut   cursor position
-uint8_t  enc2_store[5];
+uint32_t  enc2_store[5];
 uint8_t enc2_store_count=0;
 uint8_t  lcd_temp=0;   //temp hold
 uint8_t spi2_send_enable=0;
@@ -467,11 +472,15 @@ uint8_t serial_tosend=0;
 uint16_t RAM[16384]={0};
 uint16_t* sample_ram=NULL;
 uint32_t sampler_offset;
-uint8_t enc_mem_dir=0;
+uint16_t enc_mem_dir=0;
 uint8_t  last_pos_hold; // multiple cursors
 uint8_t cursor_partial;
 uint16_t disp_up_counter=0;
 uint8_t gfx_send_counter4=0;
+uint16_t gfx_dma=3;
+uint16_t gf_timer=0;
+static uint8_t spi_tx_block[4096]={0};  // tx store for dma
+static uint16_t block_counter=0;
 // pointer to ram
  // ram current position for playback/record  0-16384
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!

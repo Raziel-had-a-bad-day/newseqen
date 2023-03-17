@@ -577,7 +577,7 @@ uint32_t lfo_accu_temp;
 	lfo_accu_temp=	lfo_accu[lfo_c][sampling_position_b];  // hold
 
 	freq3_temp=lfo_tempo_lut[LFO[lfo_c].rate] ;  // rate. this needs a little log
-		//freq4_temp=freq3_temp*freq3_temp;  // multiply  , dont more then 8000 really
+		//freq4_temp=freq3_temp*freq3_temp;  // multiply  , dont more then 8000 reallys
 	delay_value=(freq3_temp*8)*(LFO[lfo_c].delay&15);
 
 			freq3_temp=lfo_accu_temp+ freq3_temp;// get lfo value plus rate , will try to get related to tempo for easier sync , at potS 80?/8192/8notes/ 1 bar
