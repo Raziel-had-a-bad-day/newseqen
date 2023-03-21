@@ -170,9 +170,9 @@ main_initial();   // initial setup
 			  if (mem_count>512) mem_count=0; else mem_count++; // write to first this was moved for no logical reason ?
 
 			//  cursor_partial=255;
-		//	if (last_pos_hold)   gfx_reverse(last_pos_hold,cursor_partial);
-		//	  gfx_reverse(enc_out1&127,cursor_partial);
-		//	  last_pos_hold=enc_out1&127;
+		//	if (last_pos_hold)   default_menu3[32+seq.loop[0]]=" ";;
+		//	default_menu3[32+seq.loop[0]]=48;
+		//	  last_pos_hold=default_menu3[32+seq.loop[0]] ;
 
 			  patch_target_parse(); //
 			  uint16_t mem_count2=0;	// read values from stored
@@ -187,7 +187,7 @@ main_initial();   // initial setup
 				memcpy(potSource+106+(i*5),&ADSR[i],5 );  // +50  ,
 				memcpy(potSource+316+(i*6),&patch[i],6 );
 				memcpy(potSource+376+(i*6),&LFO_slave1[i],6 ); // ext llof settings
-
+				memcpy(potSource+436+(i*4),&LFO_square[i],4 );
 			}	// copy vars into potSource
 
 			//HAL_UART_Transmit(&huart1,serial_send,4, 100);  //send serial again
@@ -248,7 +248,7 @@ main_initial();   // initial setup
 		{
 			for (i=0;i<6;i++) {display_init();}  //1-2ms ?  change length if flickering ,maybe initial data
 
-		if (init==5)  {HAL_TIM_Base_Start_IT(&htim10);HAL_TIM_Base_Start(&htim10);	 gfx_TX_block(); 					}
+		if (init==6)  {HAL_TIM_Base_Start_IT(&htim10);HAL_TIM_Base_Start(&htim10);	 gfx_TX_block(); 				}
 		}
 
 		if (init > 5) {    //  around 3 cycles per single transmit  , plenty quick as is , spi lcd can really slow things down
@@ -263,7 +263,7 @@ main_initial();   // initial setup
 		}
 
 
-		if (loop_counter2==2024){ // grab adc readings + 3ms , 32 step  // no freeze
+		if (loop_counter2==4000){ // grab adc readings + 3ms , 32 step  // no freeze
 
 
 
@@ -414,7 +414,7 @@ static void MX_ADC1_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV6;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
@@ -434,7 +434,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_9;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -661,7 +661,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 3124;
+  htim3.Init.Period = 2800;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -686,7 +686,7 @@ static void MX_TIM3_Init(void)
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
   sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
@@ -940,7 +940,7 @@ static void MX_GPIO_Init(void)
 	{
 	adc_flag=2;
 
-	HAL_ADC_Stop_DMA(&hadc1); HAL_ADC_Start_DMA(&hadc1,& adc_source, 3072);
+	HAL_ADC_Stop_DMA(&hadc1); HAL_ADC_Start_DMA(&hadc1,& adc_source, 3072);    // try half sample rate   , its 17606  khz
 
 	}
 

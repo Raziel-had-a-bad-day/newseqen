@@ -2,79 +2,7 @@
 
 void display_process(void){							// keep data processing here
 
-/*
 
-	if ((enc2_tempC==enc2_dir) && (!enc2_add))  {
-		if ((disp_stepper==5)&&(!target_display))  {enc2_add=2; 	disp_stepper=17;}   	 // wait till enc2_dir  hasn't changed ,jump and then change feedback
-			}
-
-	if (disp_stepper>1)	init_b=feedback_loc+16+(disp_stepper);  // write lcd3
-	if (disp_stepper>4)	init_b=feedback_loc+(disp_stepper);  // write feedback line
-
-	if ((lcd_temp!=enc_dir)  && (enc2_tempC==enc2_dir) )   {*menu_vars_var=enc_dir;   // enc2_dir =same enc_dir=changed
-	lcd_temp=enc_dir;  }
-*/
-
-		//encoder section
-
-
-/*
-	if ((disp_stepper==0) && (enc2_add==2))			// feedback line info
-	{
-
-
-
-	uint8_t crap_hold9=(menu_title_lut[enc_out1]>>16)&255;   // look up up menu_titles_final
-	if (crap_hold9==5) target_display=1;   // check if LFO.target is on cursor , may use for other things
-	else if (crap_hold9==36) target_display=2;   else target_display=0;
-
-	// fetch values for last line or cursor
-
-	 memcpy(default_menu3+feedback_loc+8, *(menu_titles_final+crap_hold9),8);   // copy feedback data for reading,ok
-	 memcpy(menu_vars_in,*(menu_titles_final+crap_hold9),8);	// send back for menu vars ok
-
-	 char temp_char[]="  ";
-	 memcpy(temp_char,menu_index_list+((enc_out1*2)),2);   // copy char to char,ok
-	 menu_index_in=atoi(temp_char)			;   // convert char to int,ok
-
-
-	 menu_vars_var=menu_vars(menu_vars_in,menu_index_in);		//test  for vars ok
-
-
-	    // grab value on ptr address , also write first char , ok
-
-	}
-	//-------------------------------------------------
-	if ((disp_stepper==0) || (disp_stepper==1))   // repeat first character
-	{
-		uint16_t init_holder=init_b;
-		init_b= menu_title_lut[enc_out1];
-
-		lcd_out3=*menu_vars_var;
-		div_limit=lcd_out3;
-		if (lcd_out3>10)							div_limit= lcd_out3>>2;
-		if (lcd_out3>40)							div_limit= lcd_out3>>5;
-
-		default_menu3[init_b]=div_limit+48; lcd_temp=lcd_out3; enc_dir=lcd_temp;       } // force enc_dir
-
-	//--------------------------------------------------------
-
-	if (disp_stepper>4) {default_menu3[feedback_loc+5]=menu_index_list[enc_out1<<1];   	default_menu3[feedback_loc+6]=menu_index_list[(enc_out1<<1)+1];}   // index display
-	//-------------------------------------------------------------
-	if ((target_display) &&   (disp_stepper>4))      // write LFO.target display , might use it for other things too
-	{
-		uint8_t target_tmp1=*menu_vars_var ;
-		if (target_tmp1>=menu_lookup_count) target_tmp1=0;    // check in case
-		if (target_display==1) memcpy(default_menu3+feedback_loc+8, *(menu_titles_final+target_tmp1),8);  // copy info for LFO
-		if (target_display==2) memcpy(default_menu3+feedback_loc+8, *(patch_inputs+target_tmp1),8);  // Limited atm
-		 		 	}
-	//--------------------------------------------------------
-	if (disp_stepper==1)  gfx_send_cursor=(init_b>>4)&7 ;   //send cursor line
-	if (disp_stepper==2)  {
-
-		default_menu3[feedback_loc+18]=potSource[380]+48;
-		default_menu3[feedback_loc+19]=potSource[381]+48; default_menu3[feedback_loc+20]=potSource[382]+48; }  // write this straight after start ,ok
-*/
 
 
 }   // end o void
@@ -94,20 +22,29 @@ void display_process(void){							// keep data processing here
 
 	menu_vars_var=menu_vars(menu_vars_in,menu_index_in);		//test  for vars ok
 
-//	memcpy(default_menu3+feedback_loc+8,temp_char2,8); // clear line
+
 	     memcpy(default_menu3+feedback_loc+8, *(menu_titles_final+crap_hold9),8);   // copy feedback data for reading,ok
 	     memcpy(default_menu3+feedback_loc+17,potSource+380,3);
 	     memcpy(default_menu3+feedback_loc+5,temp_char,2);
 
 	     if (menu_vars_ref==5) target_display=1;
 	     if (menu_vars_ref==36) target_display=2;
-	     if (target_display)      // write LFO.target display , might use it for other things too
+	     if((48<menu_vars_ref)    && (menu_vars_ref<53)) target_display=3;
+	 //    if((48<menu_vars_ref)    && (menu_vars_ref<53)) memcpy(LCD_Info+3, *(menu_titles_final+(*menu_vars_var)),8);  // send target for LFO_sqr  to LCD_Info
+
+
+		 if (target_display)      // write LFO.target display , might use it for other things too
 	     	{
 	     		uint8_t target_tmp1=*menu_vars_var ;   // this can be put anywhere now
 	     		if (target_tmp1>=menu_lookup_count) target_tmp1=0;    // check in case
 	     		if (target_display==1) memcpy(default_menu3+feedback_loc+8, *(menu_titles_final+target_tmp1),8);  // copy info for LFO
 	     		if (target_display==2) memcpy(default_menu3+feedback_loc+8, *(patch_inputs+target_tmp1),8);  // Limited atm
-	     		 		 	}
+	     	//	if (target_display==3) memcpy(LCD_Info+3,  *(patch[].target+target_tmp1),8);  // Limited atm
+	     		if  (target_display==3)   //  patch feedback works ok
+	     		    {    if (LFO_sqr_list[menu_index_in&7])   {memcpy(LCD_Info+3,  "Note_0",6);LCD_Info[9]=LFO_sqr_list[menu_index_in&7];    }
+	     		 else memcpy(LCD_Info+3,"        ",8);
+	     		    }
+	     	}
 
 	     target_display=0;
 
@@ -427,13 +364,18 @@ void encoder2(void){  // encoder pos and data input
 
 		if (enc_out1==enc_up) 	lcd_temp=lcd_out3;
 
-		div_limit=lcd_out3&7;
-			    /*    if (lcd_out3>10)							div_limit= lcd_out3>>2;
+		div_limit=lcd_out3;
+			if (div_limit>9) div_limit=9;
+
+		/*    if (lcd_out3>10)							div_limit= lcd_out3>>2;
 				if (lcd_out3>40)							div_limit= lcd_out3>>5;*/
 
 
 				uint16_t crap8=menu_title_lut[enc_up];
+
 				default_menu3[crap8]=div_limit+48;
+				if (menu_vars_ref==53)  default_menu3[crap8]=lcd_out3;   // keep in char , ok
+
 				if ((menu_vars_ref==24) | (menu_vars_ref==25))  default_menu3[crap8]=major_notes[lcd_out3&31];
 				disp_up_counter++;
 				disp_up_counter=disp_up_counter&255;

@@ -1,12 +1,12 @@
 
 #define RAM_size 16384
-#define menu_lookup_count    50     // size of the look up variables processor
-#define seq_sample_rate 32000   // use it for period and tempo calcualtions
-const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Transpos 03Transpos 05Transpos "  // was getting corrupted then screwed everything
+#define menu_lookup_count    55     // size of the look up variables processor
+#define   seq_sample_rate  35727   // use it for period and tempo calcualtions
+const char default_menu[] ={"00LCD_Info01LCD_Info02LCD_Info  00Tempo    00Transpos 01Transpos 02Transpos 03Transpos 05Transpos"  // make sure first line uses last char
 
   // was getting corrupted then screwed everything
 				"06Transpos 07Transpos 08Transpos 09Transpos 06Slide    07Slide    08Slide    09Slide    "
-		"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "
+		"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "   //gaps cause it skip at end
 		"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
 		"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes2  "
 		"00Rate     00Depth    00Offset   00Delay    01Rate     01Depth    01Offset   01Delay    "
@@ -15,59 +15,78 @@ const char default_menu[] ={" 00SeqPos   00Tempo     00Transpos 01Transpos 02Tra
 		"06Rate     06Depth    06Offset      07Rate     07Depth    07Offset    "
 		"08Rate     08Depth    08Offset      09Rate     09Depth    09Offset    "
 
-		" 00Input_1  00Target   00Tg_ndx    06Input_1  06Target   06Tg_ndx     "
-		" 01Input_1  01Target   01Tg_ndx    07Input_1  07Target   07Tg_ndx     "
-		" 02Input_1  02Target   02Tg_ndx    08Input_1  08Target   08Tg_ndx     "
-		" 03Input_1  03Target   03Tg_ndx    09Input_1  09Target   09Tg_ndx     "
-		" 04Input_1  04Target   04Tg_ndx            "
-		" 05Input_1  05Target   05Tg_ndx            "
+		" 00Input_1  00Target   00Tg_ndx    01Input_1  01Target   01Tg_ndx     "
+		" 02Input_1  02Target   02Tg_ndx    03Input_1  03Target   03Tg_ndx     "
+		" 04Input_1  04Target   04Tg_ndx    05Input_1  05Target   05Tg_ndx     "
+		" 06Input_1  06Target   06Tg_ndx    07Input_1  07Target   07Tg_ndx     "
+		" 08Input_1  08Target   08Tg_ndx    09Input_1  09Target   09Tg_ndx     "
+	//	" 05Input_1  05Target   05Tg_ndx            "
 
 
 
-				"00S_Rate   00S_Depth  00S_Offset  01S_Rate   01S_Depth  01S_Offset    "
-				"02S_Rate   02S_Depth  02S_Offset  03S_Rate   03S_Depth  03S_Offset    "
+				"00S_Rate   00S_Depth  00S_Offset  01S_Rate   01S_Depth  01S_Offset 00LCD_Info01LCD_Info02LCD_Info"
+
+	"02S_Rate   02S_Depth  02S_Offset  03S_Rate   03S_Depth  03S_Offset    "
 				"04S_Rate   04S_Depth  04S_Offset  05S_Rate   05S_Depth  05S_Offset    "
 			//	"06S_Rate   06S_Depth  06S_Offset  07S_Rate   07S_Depth  07S_Offset    "
 		//		"08S_Rate   08S_Depth  08S_Offset  09S_Rate   09S_Depth  09S_Offset    "
 	//	"00Attack   00Decay    00Sustain  00Release          "
 		//	"01Attack   01Decay    01Sustain  01Release          "
-		"00OSC1     01OSC1     02OSC1     03OSC1     06OSC1     07OSC1     08OSC1     09OSC1     "
-		" 00StartMSB 00StartLSB  00EndMSB   00EndLSB   00SMoffset    "
+		" 00OSC1     01OSC1     02OSC1     03OSC1     06OSC1     07OSC1     08OSC1     09OSC1    "
+		"00StartMSB 00StartLSB  00EndMSB   00EndLSB   00SMoffset   00Resnance  "
+	"                "
+	"                "
+	"                "
+
+
+
+	"00LCD_Info01LCD_Info02LCD_Info 03LCD_Info04LCD_Info05LCD_Info06LCD_Info07LCD_Info08LCD_Info09LCD_Info10LCD_Info    "
+	"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "   //gaps cause it skip at end
+			"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
+			"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes2  "
+	" 00SQ_Start 00SQ___End 00SQ_Depth 00SQOffset 01SQ_Start 01SQ___End 01SQ_Depth 01SQOffset"
+	" 02SQ_Start 02SQ___End 02SQ_Depth 02SQOffset 03SQ_Start 03SQ___End 03SQ_Depth 03SQOffset"
+	" 04SQ_Start 04SQ___End 04SQ_Depth 04SQOffset 05SQ_Start 05SQ___End 05SQ_Depth 05SQOffset"
+	" 06SQ_Start 02SQ___End 06SQ_Depth 06SQOffset 07SQ_Start 07SQ___End 07SQ_Depth 07SQOffset"
+
+
 
 };   // just for testing text memory , will be modifiable ,  lut
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
 
 char default_menu3[1024]={0}; // hold all string for output  128 per page , needs to resize
-const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,9,0,5,5,5,
-		5,0,9,9,9,9,9,9,9,9,
-		9,0,0,0,15,15,9,3,3
+const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,9,0,5,5,5      // add + 1 to menu lookup count !!!
+		,5,0,9,9,9,9,9,9,9,9
+		,9,0,0,0,15,15,9,3,3
 		,3,3,3,3,3,3,9,9,9,9
-		,9,9,9,9,0,0,0,0,0,0} ; // index number limiter ,fixed IMPORTANT!
+		,9,9,9,9,0,0,0,0,0,9
+		,9,9,9,9,99,				    } ; // index number limiter ,fixed IMPORTANT!
 
 const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,255,255,15,255,40,0,255,255,255,
-																				255,0,5,5,27,16,31,27,31,255,
+																				255,0,6,6,27,16,31,27,31,255,
 																				27,0,255,255,31,31,27,255,255 ,255,
 																				10,255,255,255,31,40,40,255,255,0 ,
-																				255,255,255,63,255,63,255,255,255,255		  };   // right shift divider mainly for LFO  , maybe for lcd too
+																				255,255,255,63,255,63,255,255,255,120,
+																				255,255,7,255	,255			    };   // right shift divider mainly for LFO  , maybe for lcd too
 
 	const char* menu_titles_final[menu_lookup_count]= {"LFO     ", "Rate    ","Depth   " ,"Delay   ", "Offset  ", "Target  ","ADSR    ",
 			"Attack  ", "Decay   ","Sustain ","Release ",
 			"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",
 			"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    ","Cutoff_1","Cutoff_2","Resnance","Q_level ","Level   ","Feedback","Out_mix ","Poles   ",
-			"Tg_ndx  ","Input_1 ","Input_2 ","In_mix  ","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset","StartMSB","StartLSB","EndMSB  ","EndLSB  ","SMoffset",
+			"Tg_ndx  ","Input_1 ","Input_2 ","In_mix  ","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset","StartMSB","StartLSB","EndMSB  ","EndLSB  ","SMoffset","SQ___End","SQ_Depth ","SQOffset","SQ_Start","LCD_Info"
 	};   // 40 *8
 
 	const uint8_t patch_skip_list[menu_lookup_count]={ 0,1,1,1,1,1,1,1,1,1,
 			1,1,1,1,1,1,1,1,1,0,
-			0,1,1,1,1,1,1,0,1,1,
+			0,1,1,1,1,1,1,0,1,0,
 			1,1,1,1,1,1,1,1,1,1,
-			1,1,1,1,1,1,1,1,1,1
-	};  // skip most of it for now
+			1,1,1,1,1,1,1,1,1,1,
+			1,1,1,1,1,1};  // skip most of it for now
  const char* patch_inputs[]={
-		"LFO0 sin","LFO0 saw","LFO0 tri","LFO0 tri" ,"LFO1 sin","LFO1 saw","LFO1 tri","LFO1 tri" ,"LFO2 sin","LFO2 saw","LFO2 tri","LFO2 tri" ,
-		"LFO3 sin","LFO3 saw","LFO3 tri","LFO3 tri" ,"LFO4 sin","LFO4 saw","LFO4 tri","LFO4 tri" ,"LFO5 sin","LFO5 saw","LFO5 tri","LFO5 tri" ,
-		"LFO6 sin","LFO6 saw","LFO6 tri","LFO6 tri" ,"LFO7 sin","LFO7 saw","LFO7 tri","LFO7 tri" ,"LFO8 sin","LFO8 saw","LFO8 tri","LFO8 tri" ,
-		"LFO9 sin","LFO9 saw","LFO9 tri","LFO9 tri","LFO9 tri"
+		"LFO0 sin","LFO0 saw","LFO0 tri","LFO0 sqr" ,"LFO1 sin","LFO1 saw","LFO1 tri","LFO1 sqr" ,"LFO2 sin","LFO2 saw","LFO2 tri","LFO2 sqr" ,
+		"LFO3 sin","LFO3 saw","LFO3 tri","LFO3 sqr" ,"LFO4 sin","LFO4 saw","LFO4 tri","LFO4 sqr" ,"LFO5 sin","LFO5 saw","LFO5 tri","LFO5 sqr" ,
+		"LFO6 sin","LFO6 saw","LFO6 tri","LFO6 sqr" ,"LFO7 sin","LFO7 saw","LFO7 tri","LFO7 sqr" ,"LFO8 sin","LFO8 saw","LFO8 tri","LFO8 sqr" ,
+		"LFO9 sin","LFO9 saw","LFO9 tri","LFO9 sqr","LFO9 sqr"
 
 
 
@@ -77,7 +96,8 @@ const uint8_t  display_vars_divider[menu_lookup_count] =						// lcd display val
 				5,0,0,0,0,0,0,0,0,5,
 				0,0,5,5,0,0,5,5,5 ,5,
 				5,5,5,5,0,2,0,0,5,5,
-				5,5,5,5,5,5,5,5,5,5};
+				5,5,5,5,5,5,5,5,5,5
+				,5,5,0,0,0};
 
 
 
@@ -205,3 +225,19 @@ const uint8_t gfx_char[1024]={   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  0x00
 	     0x00, 0x04, 0x02, 0x1F, 0x02, 0x04, 0x00,  0x00,
 	     0x00, 0x04, 0x08, 0x1F, 0x08, 0x04, 0x00,  0x00
 	      }; //various alphabet and other characters,for now 5*8 , 26*8 bytes+others , will update
+
+
+const uint16_t LFO_sync_table[256]={65535,63488,61440,59392,57344,55296,53248,51200,49152,47104,45056,43008,40960,38912,36864,34816,32768,32768,31744,30720,29696,28672,
+	27648,26624,25600,24576,23552,22528,21504,20480,19456,18432,17408,16384,16384,15872,15360,14848,14336,13824,13312,12800,12288,11776,
+	11264,10752,10240,9728,9216,8704,8192,8192,7936,7680,7424,7168,6912,6656,6400,6144,5888,5632,5376,5120,4864,4608,4352,4096,4096,
+	3968,3840,3712,3584,3456,3328,3200,3072,2944,2816,2688,2560,2432,2304,2176,2048,2048,1984,1920,1856,1792,1728,1664,1600,1536,1472,
+	1408,1344,1280,1216,1152,1088,1024,1024,992,960,928,896,864,832,800,768,736,704,672,640,608,576,544,512,512,496,480,464,448,432,
+	416,400,384,368,352,336,320,304,288,272,256,256,248,240,232,224,216,208,200,192,184,176,168,160,152,144,136,128,128,124,120,116,112,
+	108,104,100,96,92,88,84,80,76,72,68,64,64,62,60,58,56,54,52,50,48,46,44,42,40,38,36,34,32,32,31,30,29,28,27,26,25,24,23,22,21,20
+	,19,18,17,16,16,15,15,14,14,13,13,12,12,11,11,10,10,9,9,8,8,8,7,7,7,7,6,6,6,6,5,5,5,5,4,4,4,4,4,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
+
+
+
+
+

@@ -17,7 +17,7 @@
 
 // flash start 0x08000000    , prog size  59B0  22,960 bytes  end   0x080059B0 , 64k ends at 0x08010000 , maybe after or D2F0 which is 54k so 0x0800D2F0
 // source , select mask type , speed of playback
-#define seq_sample_rate 39308
+//#define seq_sample_rate 39308
 // clock/period
 
 const uint32_t flash_start=0x0800D2F0; // flash start address , 2048 page saize or 0x800
@@ -30,16 +30,22 @@ uint32_t y;
 //const uint8_t tempoLUT[];  // lookup table for tempo instead of calculate
 
 const char major_notes[]={"cdefgahCDEFGAHCDEFGAHCDEFGAHCDEFGAH"};
-const uint8_t MajorNote[]= { 0,2,4,6,7,9,11,13,14,16,18,19,21,23,25,26,28,30,31,33,35,37,38,40,42,43,45} ;  // major
+const uint8_t MajorNote[30]= { 0,2,4,5,7,9,11,12,14,16,17,19,21,23,24,26,28,29,31,33,35,36,38,40,41,43,45,47,48,50} ;  // major
 const uint8_t MinorNote[]={ 0,2,3,5,7,8,10,12,14,15,17,19,20,22,24,26,27,29,31,32,34,36,38,39,41,43,44,46}; // minor
 const uint8_t ChromNote[]={0,2,3,5,6,8,9,11,12,14,15,17,18,20,21}; //chromatic, diminished
 //const uint8_t noteReference[] = {10,10,10,10,0,10,0,8,1,10,1,8,2,10,3,10,3,8,4,10,4,8,5,10,5,8,6,10,0,11,0,8,1,11,1,8,2,11,3,11,3,8,4,11,4,8,5,9,5,8,6,9,10,11,10,20,10,11,10,12,10,13,10,14,10,15,10,16,10,17,10,18,10,19,11,20,11,11 };// cant read last
-const uint16_t timerValues[]= {34400,32469,30647,28927,27303,25771,24324,22959,21670,20454,19306,18222,17200,16234,15323,14463,13651,12885,12162,11479,10835,10227,9653,9111,8600,8117,7661
+const uint16_t timerValues[]= {34400,34400,32469,30647,28927,27303,25771,24324,22959,21670,20454,19306,18222,17200,16234,15323,14463,13651,12885,12162,11479,10835,10227,9653,9111,8600,8117,7661
 ,7231,6825,6442,6081,5739,5417,5113,4826,4555,4300,4058,3830,3615,3412,3221,3040,2869,2708,2556,2413,2277} ;   // timer values C2-C6
-const uint16_t sample_Noteadd[50]= { 2135,2262,2396,2539,2690,2850,3019,3199,3389,3590,3804,4030,4270,4524,4793,5077,5379,5699,6038,6397,6778,7181,7608,8060,8539,9047,9585,10155,10759,11399,12076,12794,13555,14362,15216,
-		16120,17079,18094,19170,20310,21518,22798,24153,25589,27111,28723,30431,32241};  // 35khz add c2-c6  >>12 for correct value , 0-255 samples sawtooth , /2 for extra notes ,prefer circular , replaced first 2059 with 0
+const uint16_t sample_Noteadd[52]= { 1920,2034,2155,2283,2419,2562,2715,2876,3047,3228,3420,3624,3839,4068,4309,4566,4837,5125,5430,5752,6095,6457,6841,7248,7679,8135,8619,9131
+	,9674,10250,10859,11505,12189,12914,13682,14495,15357,16270,17238,18263,19349,20499,21718,23010,24378,25828,27363,28991,30714,32541,34476,
+	36526};
+const uint16_t sample_counts[52]={35023,33061,31209,29461,27811,26254,24784,23396,22087,20851,19684,18583,17543,16562,15636,14762,13937,13159,12424,11730,11075,10457,9874,9323,
+	8804,8313,7850,7413,7001,6611,6244,5897,5570,5261,4969,4694,4434,4189,3957,3739,3532,3338,3154,2981,2817,2662,2517,2379,2249,2126,2011,1901};
 
-//static unsigned short playWave;
+
+
+
+
 const uint16_t freq_lut[]={4186,4434,4698,4978,5274,5587,5919,6271,6644,7039,7458,7902,8371,8869,9397,9955,10547,11175,11839,12543,13289,14079,14916,15803,16743,17739,
 		18794,19911,21095,22350,23679,25087,26578,28160,29834,31608,33488,35479,37589,39824,42192,44701,47359,50175,53158,56319,59668,63216};  // freq lookup x64  64hz_>987hz , C2-C6 Note 1-48
 //const uint8_t disp_lut [18] [16]= {                    // menu look up
@@ -58,7 +64,8 @@ int _write(int file, char *ptr, int len)
 }
 
 uint16_t menu_locA=0;
-
+uint16_t sample_counts_holder[40];
+uint16_t sample_accu_counter[8]={0};   //holds counter value
 uint8_t noteTiming;  // set timing shift
 uint8_t potValues [512]={0};   //low res values mostly for display
 
@@ -137,6 +144,11 @@ void menu3_fill(void);
 void encoder2(void);
 void gfx_send_DMA(void);
 void gfx_TX_block(void);
+void LFO_square_one_pulse(void);
+void LFO_source_synced(void);
+void  frq_point(void);
+void patch_lists(void);
+
 
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
@@ -322,6 +334,16 @@ struct LFO_settings_slave{      // use first 5*10 , leave the rest  , no bueno  
 
 struct LFO_settings_slave LFO_slave1[10]={0};       // create lfo settings for slave1
 
+struct LFO_square_settings{   // pwm square   , may also use it for trigger
+	uint8_t rate; // (p130)
+	uint8_t depth;	//(p140)
+	uint8_t offset;
+	uint8_t delay;  // + lfo_accu_temp
+	uint16_t out[8]; //tracks position , gets reset
+
+};
+struct LFO_square_settings LFO_square[10];
+
 
 
 
@@ -349,7 +371,7 @@ struct note_settings{								//default note/osc/patch settings  14*8 bytes (112)
 	uint8_t osc2;		// second wave for decays or stacking
 	uint8_t pitch;
 	uint8_t duration;   // note length
-	uint8_t position;   // note position in sequence loop
+	uint8_t position;   //  use it for sample trigger for now
 	uint8_t transpose;   // pshift note pitch up or down (p 72,73)
 	uint8_t timeshift; // shift position left or right in seuqence for 8 note looper   (pvalues 32,33) ,slide
 	uint8_t velocity;				// gain level or output mod
@@ -360,7 +382,9 @@ struct note_settings{								//default note/osc/patch settings  14*8 bytes (112)
 
 };
 struct note_settings note[10]={[0].velocity=255,[1].velocity=255,[2].velocity=255,[3].velocity=255,[4].velocity=255,[5].velocity=255,[6].velocity=255
-															,[0].detune=127,[1].detune=127,[2].detune=127,[3].detune=127,[4].detune=127,[5].detune=127,[6].detune=127};
+															,[0].detune=0,[1].detune=0,[2].detune=0,[3].detune=0,[4].detune=0,[5].detune=0,[6].detune=0
+
+};
 //struct note_settings note[7];
 
 
@@ -386,7 +410,9 @@ struct filter_settings{
 	uint8_t feedback;  // 159
 
 };
-struct filter_settings filter[4]={[0].cutoff_1=159,[1].cutoff_1=159,[2].cutoff_1=159,[3].cutoff_1=159,[0].level=64,[1].level=64,[2].level=64,[3].level=64};
+struct filter_settings filter[4]={[0].cutoff_1=0,[1].cutoff_1=0,[2].cutoff_1=0,[3].cutoff_1=0,[0].level=64,[1].level=64,[2].level=64,[3].level=64
+	,[0].resonance=0,[1].resonance=0,[2].resonance=0,[3].resonance=0,
+};
 
 struct patch_settings{					// use this instead of lfo  or other modulators
 	uint8_t input1;   // in1 ,default , modulation source , lfo+type and adsr for now
@@ -481,6 +507,16 @@ uint16_t gfx_dma=3;
 uint16_t gf_timer=0;
 static uint8_t spi_tx_block[4096]={0};  // tx store for dma
 static uint16_t block_counter=0;
+uint16_t lfo_tempo_synced[256];     // tempo lut table duplicate every 16 steps
+uint8_t LFO_sqr_list[10];
+int32_t phase_bank0[32];
+int32_t phase_bank1[32];
+int32_t phase_bank2[32];
+int32_t phase_bank3[32];
+uint8_t LCD_Info[99]={0};   // lcd_numbers or text  data anywhere on screen
+
+//static uint16_t tuned_list[10];
+
 // pointer to ram
  // ram current position for playback/record  0-16384
 //  USE THE BREAK WITH SWITCH STATEMENT MORON!!!

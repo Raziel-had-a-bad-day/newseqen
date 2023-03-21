@@ -23,7 +23,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 2:     menu_vars_var1= &LFO[var_index].depth    ; break;
 	case 3:     menu_vars_var1= &LFO[var_index].delay    ; break;
 	case 4:     menu_vars_var1= &LFO[var_index].offset    ; break;
-	case 5:     menu_vars_var1= &patch[var_index].target    ; break;
+	case 5:     menu_vars_var1= &patch[var_index].target    ; break;  // velocity etc
 	case 6:     menu_vars_var1= NULL   ; break;
 	case 7:     menu_vars_var1= &ADSR[var_index].attack    ; break;
 	case 8:     menu_vars_var1= &ADSR[var_index].decay    ; break;
@@ -53,7 +53,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 32: 	menu_vars_var1=&filter[var_index].feedback ;break;
 	case 33: 	menu_vars_var1=&filter[var_index].out_mix ;break;
 	case 34: 	menu_vars_var1=&filter[var_index].poles ;break;
-	case 35:     menu_vars_var1= &patch[var_index].target_index    ; break;
+	case 35:     menu_vars_var1= &patch[var_index].target_index    ; break;     // select note
 	case 36: 	menu_vars_var1=&patch[var_index].input1 ;break;
 	case 37: 	menu_vars_var1=&patch[var_index].input2 ;break;
 	case 38: 	menu_vars_var1=&patch[var_index].in_mix ;break;
@@ -67,6 +67,12 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 46: 	menu_vars_var1=&sampler.end_MSB ;break;
 	case 47: 	menu_vars_var1=&sampler.end_LSB ;break;
 	case 48: 	menu_vars_var1=&sampler.offset ;break;
+	case 49:     menu_vars_var1= &LFO_square[var_index].rate   ; break;
+	case 50:     menu_vars_var1= &LFO_square[var_index].depth    ; break;
+	case 51:     menu_vars_var1= &LFO_square[var_index].offset    ; break;
+	case 52:     menu_vars_var1= &LFO_square[var_index].delay    ; break;
+	case 53:     menu_vars_var1= &LCD_Info[var_index]    ; break; // send as char
+
 
 	default :		menu_vars_var1= NULL   ; break;
 
@@ -106,10 +112,10 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 		    {
 
 			    if ((menu_counter>110 )&&(menu_counter<128 )) menu_counter=menu_counter+16;   // skip to second page
-			    if((menu_counter>237)&&(menu_counter<256 )) menu_counter=menu_counter+16; // skip
-			    if((menu_counter>365)&&(menu_counter<384 )) menu_counter=menu_counter+16; // skip
-			    if((menu_counter>493)&&(menu_counter<512 )) menu_counter=menu_counter+16; // skip
-			    if((menu_counter>621)&&(menu_counter<640 )) menu_counter=menu_counter+16; // skip
+			    if((menu_counter>238)&&(menu_counter<256 )) menu_counter=menu_counter+16; // skip
+			    if((menu_counter>367)&&(menu_counter<384 )) menu_counter=menu_counter+16; // skip
+			    if((menu_counter>495)&&(menu_counter<512 )) menu_counter=menu_counter+16; // skip
+			    if((menu_counter>623)&&(menu_counter<640 )) menu_counter=menu_counter+16; // skip
 			    menu_title_lut[menu_title_count]=  (string_counter <<16)+(menu_counter&1023);   // search result  and disp lcd position counter
     			    memcpy(menu_index_list+(menu_title_count*2),default_menu+string_search-2,2); // get array  index under ,LFO[1]  etc ,ok
         			    menu_title_count++;
@@ -138,8 +144,9 @@ uint8_t skip=0;
 						case 0:   output_hold=&LFO[input_hold>>2].out[0];break;
 						case 1:   output_hold=&LFO[input_hold>>2].out_saw[0];break;
 						case 2:   output_hold=&LFO[input_hold>>2].out_tri[0];break;
-						case 3:   output_hold=&LFO[input_hold>>2].out_tri[0];break;
-						}
+						//case 3:   output_hold=&LFO[input_hold>>2].out_tri[0];break;
+						case 3:   output_hold=&LFO_square[input_hold>>2].out[0];break;
+			}
 
 			patch[n].in1_ptr=output_hold;   // sets input pointer to first sample , default is lfo[0].out [0]
 			if (patch[n].target) {  // test if above zero
@@ -279,8 +286,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)    // unreliable
 void note_reset (void){          // reset deafult values before modulation , in case it gets left  with no modulator
 
 	note[0].velocity=255;note[1].velocity=255;note[2].velocity=255;note[3].velocity=255;note[4].velocity=255;note[5].velocity=255;note[6].velocity=255
-																;note[0].detune=127;note[1].detune=127;note[2].detune=127;note[3].detune=127;note[4].detune=127;
-	note[5].detune=127;note[6].detune=127;
+																;note[0].detune=0;note[1].detune=0;note[2].detune=0;note[3].detune=0;note[4].detune=0;
+	note[5].detune=0;note[6].detune=0;
 
 
 }
@@ -402,11 +409,10 @@ void main_initial(void){
 	    for(mem_counter=0;mem_counter<10;mem_counter++){
 
 			memcpy(&LFO[mem_counter],potSource+46+(mem_counter*6),6 );  // + 60 ,ok here
-
 			memcpy(&ADSR[mem_counter],potSource+106+(mem_counter*5),5 );  // +50  ,
 			memcpy(&patch[mem_counter],potSource+316+(mem_counter*6),6 );
 			memcpy(&LFO_slave1[mem_counter],potSource+376+(mem_counter*6),6 );  // + 60 ,ok here
-
+			memcpy(&LFO_square[mem_counter],potSource+436+(mem_counter*4),4 );
 	    }
 
 
@@ -444,7 +450,7 @@ void main_initial(void){
 		gfx_clear();
 	uint16_t pars_counter;
 
-	for (pars_counter=0;pars_counter<600;pars_counter++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
+	for (pars_counter=0;pars_counter<1000;pars_counter++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
 
 			menu_parser();  // run it closer to default_menu size ,times, if default_menu is corrupt gfx breaks pretty bad
 
@@ -465,7 +471,7 @@ void main_initial(void){
 			menu_title_count--;  //count back one
 			display_clear ();
 			for (pars_counter=0;pars_counter<menu_title_count;pars_counter++)	default_menu3 [menu_title_lut[pars_counter]&1023]=48;
-
+			note_reset();
 		menuSelect=0;
 	// fill up sample
 	firstbarLoop=0;
@@ -563,6 +569,15 @@ void sampler_save(void){
 
 }
 
+void patch_lists(void){
+    uint8_t  list_counter;
+    for (list_counter=0;list_counter<10;list_counter++){
 
+	if ((patch[list_counter].input1&3)== 3   )     LFO_sqr_list[patch[list_counter].input1>>2]   =  (patch[list_counter].target_index&7)+48;
+
+
+    }
+
+}
 
 
