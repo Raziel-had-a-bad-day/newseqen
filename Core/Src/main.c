@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include "string.h"
 #include "arm_math.h"
+#include"math.h"
+#include "flash.h"
 
 //#define __FPU_PRESENT   1
 
@@ -64,6 +66,7 @@ I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
+DMA_HandleTypeDef hdma_spi1_rx;
 DMA_HandleTypeDef hdma_spi2_tx;
 
 TIM_HandleTypeDef htim2;
@@ -167,12 +170,10 @@ main_initial();   // initial setup
 
 
 		if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
-			  if (mem_count>512) mem_count=0; else mem_count++; // write to first this was moved for no logical reason ?
 
-			//  cursor_partial=255;
-		//	if (last_pos_hold)   default_menu3[32+seq.loop[0]]=" ";;
-		//	default_menu3[32+seq.loop[0]]=48;
-		//	  last_pos_hold=default_menu3[32+seq.loop[0]] ;
+		    if (mem_count>510) mem_count=0; else mem_count++;
+		    if (mem_count>460) mem_count=461;  // this might feedback
+		   // write to first this was moved for no logical reason ?
 
 			  patch_target_parse(); //
 			  uint16_t mem_count2=0;	// read values from stored
@@ -185,7 +186,8 @@ main_initial();   // initial setup
 
 				memcpy(potSource+46+(i*6),&LFO[i],6 );  // + 60  ,ok
 				memcpy(potSource+106+(i*5),&ADSR[i],5 );  // +50  ,
-				memcpy(potSource+316+(i*6),&patch[i],6 );
+				memcpy(potSource+316+(i*3),&patch[i],3 );
+				memcpy(potSource+346+(i*3),&patch[i+10],3 );
 				memcpy(potSource+376+(i*6),&LFO_slave1[i],6 ); // ext llof settings
 				memcpy(potSource+436+(i*4),&LFO_square[i],4 );
 			}	// copy vars into potSource
@@ -197,14 +199,24 @@ main_initial();   // initial setup
 					// mem_verify=0;
 
 					// for patch write start at 2048 for now
+			 uint8_t mem_buf_list[50]={0};
+			 uint8_t mem_verify_list[50]={0};
+			 uint8_t read_counter=0;
+			//  --   compare 50 bytes
+			 memcpy(&mem_buf_list, potSource+mem_count,50);  // copy 50 from potsource
+			 mem_count2=((1+(mem_count>>6))<<6)+(mem_count&63);
+			 HAL_I2C_Mem_Read(&hi2c2, 160,mem_count2, 2,mem_verify_list, 50,100);    // reading is quick , 50 bytse
+			 for (read_counter=0;read_counter<50;read_counter++){
 
+			     if (mem_verify_list[read_counter]!=mem_buf_list[read_counter])  { break;}  // exit if found difference
+			     mem_count++;
+
+			 }
+						 // ----- write changed data , might shift these off by one after a while to stop wear
 						 mem_buf=potSource[mem_count];
-					//	 if (mem_buf>159) mem_buf=159;
 						 mem_count2=((1+(mem_count>>6))<<6)+(mem_count&63);
-						 //mem_count2=mem_count2+2048;   // Relocate mem for patch
 
-						 HAL_I2C_Mem_Read(&hi2c2, 160,mem_count2, 2,&mem_verify, 1,100);
-						 if (mem_verify!=mem_buf) HAL_I2C_Mem_Write(&hi2c2, 160,mem_count2 , 2, &mem_buf, 1, 100);
+						HAL_I2C_Mem_Write(&hi2c2, 160,mem_count2 , 2, &mem_buf, 1, 100);   // write changed
 
 			 // "&hi2c2"  actual register address  , write only when needed
 
@@ -537,7 +549,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -876,6 +888,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
   /* DMA2_Stream4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
@@ -943,6 +958,21 @@ static void MX_GPIO_Init(void)
 	HAL_ADC_Stop_DMA(&hadc1); HAL_ADC_Start_DMA(&hadc1,& adc_source, 3072);    // try half sample rate   , its 17606  khz
 
 	}
+
+
+	void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)   // when finished sending
+		{
+		//    spi2_send_enable=1;
+		    //
+		 //   gfx_dma=1;
+		   if (SPI1==hspi->Instance) {
+
+		       memcpy( &flash_read_block, flash_read_block2,512);
+
+		       HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  //  end
+		   }
+		}
+
 
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)   // when finished sending

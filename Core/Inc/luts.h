@@ -2,6 +2,7 @@
 #define RAM_size 16384
 #define menu_lookup_count    55     // size of the look up variables processor
 #define   seq_sample_rate  35727   // use it for period and tempo calcualtions
+#define pitch_limit 60
 const char default_menu[] ={"00LCD_Info01LCD_Info02LCD_Info  00Tempo    00Transpos 01Transpos 02Transpos 03Transpos 05Transpos"  // make sure first line uses last char
 
   // was getting corrupted then screwed everything
@@ -15,11 +16,11 @@ const char default_menu[] ={"00LCD_Info01LCD_Info02LCD_Info  00Tempo    00Transp
 		"06Rate     06Depth    06Offset      07Rate     07Depth    07Offset    "
 		"08Rate     08Depth    08Offset      09Rate     09Depth    09Offset    "
 
-		" 00Input_1  00Target   00Tg_ndx    01Input_1  01Target   01Tg_ndx     "
-		" 02Input_1  02Target   02Tg_ndx    03Input_1  03Target   03Tg_ndx     "
-		" 04Input_1  04Target   04Tg_ndx    05Input_1  05Target   05Tg_ndx     "
-		" 06Input_1  06Target   06Tg_ndx    07Input_1  07Target   07Tg_ndx     "
-		" 08Input_1  08Target   08Tg_ndx    09Input_1  09Target   09Tg_ndx     "
+		"00Input_1 00Target  00Tg_ndx   01Input_1 01Target  01Tg_ndx   02Input_1 02Target  02Tg_ndx   03Input_1 03Target  03Tg_ndx   "
+	"04Input_1 04Target  04Tg_ndx   05Input_1 05Target  05Tg_ndx   06Input_1 06Target  06Tg_ndx   07Input_1 07Target  07Tg_ndx   "
+	"08Input_1 08Target  08Tg_ndx   09Input_1 09Target  09Tg_ndx   10Input_1 10Target  10Tg_ndx   11Input_1 11Target  11Tg_ndx   "
+	"12Input_1 12Target  12Tg_ndx   13Input_1 13Target  13Tg_ndx   14Input_1 14Target  14Tg_ndx   15Input_1 15Target  15Tg_ndx   "
+	"16Input_1 16Target  16Tg_ndx   17Input_1 17Target  17Tg_ndx   18Input_1 18Target  18Tg_ndx   19Input_1 19Target  19Tg_ndx   "
 	//	" 05Input_1  05Target   05Tg_ndx            "
 
 
@@ -44,10 +45,10 @@ const char default_menu[] ={"00LCD_Info01LCD_Info02LCD_Info  00Tempo    00Transp
 	"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "   //gaps cause it skip at end
 			"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
 			"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes2  "
-	" 00SQ_Start 00SQ___End 00SQ_Depth 00SQOffset 01SQ_Start 01SQ___End 01SQ_Depth 01SQOffset"
-	" 02SQ_Start 02SQ___End 02SQ_Depth 02SQOffset 03SQ_Start 03SQ___End 03SQ_Depth 03SQOffset"
-	" 04SQ_Start 04SQ___End 04SQ_Depth 04SQOffset 05SQ_Start 05SQ___End 05SQ_Depth 05SQOffset"
-	" 06SQ_Start 02SQ___End 06SQ_Depth 06SQOffset 07SQ_Start 07SQ___End 07SQ_Depth 07SQOffset"
+	"00SQ_Start 00SQ___End 00SQ_Depth 00SQOffset  01SQ_Start 01SQ___End 01SQ_Depth 01SQOffset"
+	"02SQ_Start 02SQ___End 02SQ_Depth 02SQOffset  03SQ_Start 03SQ___End 03SQ_Depth 03SQOffset"
+	"04SQ_Start 04SQ___End 04SQ_Depth 04SQOffset  05SQ_Start 05SQ___End 05SQ_Depth 05SQOffset"
+	"06SQ_Start 02SQ___End 06SQ_Depth 06SQOffset  07SQ_Start 07SQ___End 07SQ_Depth 07SQOffset"
 
 
 
@@ -55,18 +56,18 @@ const char default_menu[] ={"00LCD_Info01LCD_Info02LCD_Info  00Tempo    00Transp
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
 
 char default_menu3[1024]={0}; // hold all string for output  128 per page , needs to resize
-const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,9,0,5,5,5      // add + 1 to menu lookup count !!!
+const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,19,0,5,5,5      // add + 1 to menu lookup count !!!
 		,5,0,9,9,9,9,9,9,9,9
 		,9,0,0,0,15,15,9,3,3
-		,3,3,3,3,3,3,9,9,9,9
+		,3,3,3,3,3,3,19,19,19,19
 		,9,9,9,9,0,0,0,0,0,9
 		,9,9,9,9,99,				    } ; // index number limiter ,fixed IMPORTANT!
 
-const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,255,255,15,255,40,0,255,255,255,
-																				255,0,6,6,27,16,31,27,31,255,
-																				27,0,255,255,31,31,27,255,255 ,255,
+const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,10,255,15,255,40,0,255,255,255,   // patch[x].limiter
+																				255,0,6,6,60,16,31,60,31,255,
+																				60,0,255,255,31,31,27,255,255 ,255,
 																				10,255,255,255,31,40,40,255,255,0 ,
-																				255,255,255,63,255,63,255,255,255,120,
+																				255,255,255,63,255,63,255,255,7,120,
 																				255,255,7,255	,255			    };   // right shift divider mainly for LFO  , maybe for lcd too
 
 	const char* menu_titles_final[menu_lookup_count]= {"LFO     ", "Rate    ","Depth   " ,"Delay   ", "Offset  ", "Target  ","ADSR    ",

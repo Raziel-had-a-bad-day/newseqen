@@ -2,7 +2,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 
 
 	char menu_string2[8];
-	var_index=var_index&15;    //set var index ie  LFO[1].rate
+	//var_index=var_index&15;    //set var index ie  LFO[1].rate ,false
 	uint8_t menu_countr=0; //  menu vars
 	uint8_t *menu_vars_var1=NULL;
 
@@ -133,11 +133,13 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 
 void patch_target_parse(void){    // records ptr for target options , works ok
 uint8_t skip=0;
-		for (n=0;n<10;n++){
+		uint8_t counter;
+
+for (counter=0;counter<20;counter++){
 
 			uint16_t* output_hold;
-			uint8_t input_hold=patch[n].input1;
-			if (patch[n].input1>=menu_lookup_count) patch[n].input1=0;    // limit
+			uint8_t input_hold=patch[counter].input1;
+			if (patch[counter].input1>=menu_lookup_count) patch[counter].input1=0;    // limit
 
 			switch(input_hold&3){     // lfo now , can add adsr later
 
@@ -148,24 +150,25 @@ uint8_t skip=0;
 						case 3:   output_hold=&LFO_square[input_hold>>2].out[0];break;
 			}
 
-			patch[n].in1_ptr=output_hold;   // sets input pointer to first sample , default is lfo[0].out [0]
-			if (patch[n].target) {  // test if above zero
-				uint8_t target_input=patch[n].target; // copy to avoid messed up pointer
+			patch[counter].in1_ptr=output_hold;   // sets input pointer to first sample , default is lfo[0].out [0]
+			if (patch[counter].target) {  // test if above zero
+				uint8_t target_input=patch[counter].target; // copy to avoid messed up pointer
 			for(skip=target_input ;skip<menu_lookup_count;skip++){
 					if (patch_skip_list[target_input]==1)  target_input++;
-				}  // test against list
+				}  // test against list and skip option if on 1
 				if (target_input>(menu_lookup_count-1)) target_input=menu_lookup_count-1;
 				if (target_input!=35)  {     // make target index is not selected
-			patch[n].target=target_input; // write back corrected value
-			uint8_t target_index=patch[n].target_index;
+			patch[counter].target=target_input; // write back corrected value
+
+			uint8_t target_index=patch[counter].target_index;
 			if (target_index>menu_vars_index_limit[target_index]  )   // test limit
 			{	target_index=menu_vars_index_limit[target_index]; }
-			patch[n].target_index=target_index;
+			patch[counter].target_index=target_index;
 			uint8_t*  target_out_ptr= menu_vars(menu_titles_final[target_input] , target_index    );
-			if (target_out_ptr)           {patch[n].out_ptr =target_out_ptr;     // write ptr
-			patch[n].limiter=menu_vars_limiter[menu_vars_ref]; }
+			if (target_out_ptr)           {patch[counter].out_ptr =target_out_ptr;     // write ptr
+			patch[counter].limiter=menu_vars_limiter[menu_vars_ref]; }      // writes limiter value for particular patch , deosnt save
 				}
-				else patch[n].target=0;  // write back 0 if failed
+				else patch[counter].target=0;  // write back 0 if failed
 			}
 		}
 	}
@@ -173,7 +176,7 @@ uint8_t skip=0;
 void patch_target_modify(void){					// modify original value  careful position ,not using it now  ,ok
 
 	uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
-	for (n=0;n<10;n++){
+	for (n=0;n<20;n++){
 		if (patch[n].input1>=menu_lookup_count) patch[n].input1=0;    // limit
 		if (patch[n].target) {         // check first for enable
 			uint8_t  *ptr_to_modify =patch[n].out_ptr;       // select address , not always 8 bit ,ok
@@ -190,23 +193,23 @@ void patch_target_modify(void){					// modify original value  careful position ,
 
 	void patch_target_replace(void){					// sttaight value replace  ,ok
 	    uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
-
-	    for (n=0;n<10;n++){
-
-
-
-		    if (patch[n].target) {         // check first for enable
-
-			    patch[n].output[loop_position]=*(patch[n].in1_ptr+(loop_position));   //write output here
+	    uint8_t counter;
+	    for (counter=0;counter<20;counter++){
 
 
-			    uint8_t  *ptr_to_modify =patch[n].out_ptr;       // select address , not always 8 bit ,ok
-			    uint16_t lfo_out_temp=  (patch[n].output [loop_position])>>8;  // 0-256,
+
+		    if (patch[counter].target) {         // check first for enable
+
+			    patch[counter].output[loop_position]=*(patch[counter].in1_ptr+(loop_position));   //write output here
+
+
+			    uint8_t  *ptr_to_modify =patch[counter].out_ptr;       // select address , not always 8 bit ,ok
+			    uint16_t lfo_out_temp=  (patch[counter].output [loop_position])>>8;  // 0-256,
 			    uint8_t lfo_mod1=ptr_to_modify; //ok
 
 			    uint8_t  var_replaced =  lfo_out_temp &255 ;   // grab lfo out *    data to be modfied
 
-			    if (var_replaced>patch[n].limiter) var_replaced=patch[n].limiter;  // limit lfo output
+			    if (var_replaced>patch[counter].limiter) var_replaced=patch[counter].limiter;  // limit lfo output
 
 			    *ptr_to_modify =var_replaced;   // replace original value,ok
 		    }
@@ -241,7 +244,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)    // unreliable
 
 
 	    menuSelect = cursor_menu[2]>>4;		//x *7  main menu select
-		    menuSelectX=cursor_menu[2]&15;  // Y select inside page
+		//    menuSelectX=cursor_menu[2]&15;  // Y select inside page
         		    cursor_menu[1]=0;
    		    cursor_menu[2]=enc2_dir;
 
@@ -277,7 +280,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)    // unreliable
 					    enc2_tempB=enc2_temp; // to effective as counter not getting reset
 
 
-    potValues[counterVarB]=(potSource[counterVarB]>>4) & 15 ;  // reduce values for now ,use original for others , slow count
+ //   potValues[counterVarB]=(potSource[counterVarB]>>4) & 15 ;  // reduce values for now ,use original for others , slow count
 
 
     }
@@ -318,9 +321,10 @@ void main_initial(void){
 	HAL_ADC_Start(&hadc1);
 	HAL_ADC_Start_DMA(&hadc1, adc_source, 3072); //dma start ,needs this and adc start ,set sampling time to very long or it will fail
 	HAL_DMA_Init(&hdma_spi2_tx);
+	HAL_DMA_Init(&hdma_spi1_rx);
 
 	HAL_I2C_MspInit(&hi2c2);
-	uint8_t send_spi1[5]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
+	//uint8_t send_spi1[20]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
 	/*
 	HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000); // send dummy,dummy , then whatever command for manuf
 	HAL_SPI_Receive(&hspi1, return_spi1, 2, 1000);   // manuf return sif correct , 0xEF,0x17 which is correct, then repeats when more request
@@ -329,19 +333,19 @@ void main_initial(void){
 
 
 	HAL_Delay(5);
-
+/*
 	//               ----                  16Mbyte   flash   , w25q128   -----  16M (24bit) * 8bits   ( 1 page 256 bytes)
 		send_spi1[0]=0x06; //enable write  , only lasts for single operation
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // start
+		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);       // enable write
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // end
 		HAL_Delay(5);
 		send_spi1[0]=0x20; //sector erase
 		send_spi1[1]=0; //24bit address msb
 		send_spi1[2]=0; //24bit address
 		send_spi1[3]=1; //24bit address lsb
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
-		HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works
+		HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works       4kbytes   (block erase=32kbytes)
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 
 
@@ -363,18 +367,18 @@ void main_initial(void){
 
 		//uint8_t temp_spi1[]={0x02,0,0,1,"H","E","L","L","O"," ","W","O","R","L","D",250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
 		uint8_t temp_spi1[]={0x02,0,0,1,128,129,130,131,132,133,134,135,136,137,138,250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
-		memcpy  (send_spi1,temp_spi1, 14);   // copy new array over old
+		memcpy  (send_spi1,temp_spi1, 16);   // copy new array over old
 
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-		HAL_SPI_Transmit(&hspi1, send_spi1, 14, 1000);  //address,page program
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);   // low
+		HAL_SPI_Transmit(&hspi1, send_spi1, 16, 1000);  //address,then data
 
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // high end
 
 		HAL_Delay(25);
 		send_spi1[0]=0x04; //disable write
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // low
 		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // high end
 
 		HAL_Delay(5);
 		memcpy  (send_spi1,return_spi1, 14);   // clear out
@@ -385,24 +389,126 @@ void main_initial(void){
 
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
 
-		HAL_SPI_Transmit (&hspi1, send_spi1, 4, 100);
-		HAL_SPI_Receive (&hspi1, return_spi1, 10, 100);   // works fine
+		HAL_SPI_Transmit (&hspi1, send_spi1, 4, 100); // request data
+		HAL_SPI_Receive (&hspi1, return_spi1, 12, 100);   // works fine
 
-		//HAL_SPI_TransmitReceive(&hspi1, send_spi1, return_spi1,14, 100);  // better in case skip , 4 bytes is null then data , slow
-		//HAL_Delay(5);
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // high end
 
-		//HAL_SPI_Receive(&hspi1, return_spi1, 12, 1000);  // reverse msb ?
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-
-		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);*/
 
 
 	uint8_t potSource2[64]={0};    // { [0 ... 112] = 64 };
 	uint16_t mem_count2=0;
+	uint16_t mem_counter=0;
+	uint8_t flash_test;
+	uint8_t send_spi1[520];
+
+
+	for(mem_counter=0;mem_counter<64;mem_counter++){       // spi write test
+
+	if ((mem_counter&7)==0)                        flash_test=  flash_sector_erase( (mem_counter<<9) );  // erase 4kbyte
+
+
+	send_spi1[0]=0x05; //read status register  if writing
+		send_spi1[1]=0; //24bit address msb
+		status_reg[1]=1; // set busy on
+
+		while (status_reg[1]&1){								// check if write busy
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+			HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1); }
+
+
+//	HAL_Delay(20);
+
+
+	flash_test=  flash_page_write((mem_counter<<9),gfx_char);
+	//HAL_Delay(20);
+	/// wait
+
+		send_spi1[0]=0x05; //read status register  if writing
+		send_spi1[1]=0; //24bit address msb
+		status_reg[1]=1; // set busy on
+
+		while (status_reg[1]&1){								// check if write busy
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+			HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1); }
+
+
+
+	}
+
+/*
+
+
+	//flash_test=  flash_sector_erase (1<<9);
+	//HAL_Delay(100);
+
+
+
+	send_spi1[0]=0x06; //enable write  , only lasts for single operation
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // start
+			HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);       // enable write
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // end
+
+
+
+
+
+
+	send_spi1[0]=0x02; //write page
+	send_spi1[1]=0;
+	send_spi1[2]=1;
+	send_spi1[3]=0;
+	memcpy  (send_spi1+4,gfx_char, 512);
+
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);   // low
+			HAL_SPI_Transmit(&hspi1, send_spi1,516, 1000);  //address,then data
+
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // high end
+
+			HAL_Delay(100);
+			send_spi1[0]=0x04; //disable write
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // low
+			HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // high end
+
+			send_spi1[0]=0x05; //read status register  if writing
+				send_spi1[1]=0; //24bit address msb
+				status_reg[1]=1; // set busy on
+
+				while (status_reg[1]&1){								// check if write busy
+				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+					HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
+					HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1); }
+*/
+
+	//----------------------------------------------
+	send_spi1[0]=0x03; //read page 1
+	send_spi1[1]=0;
+	send_spi1[2]=1;
+	send_spi1[3]=0;     // can start anywhere
+
+//	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
+
+//	HAL_SPI_Transmit (&hspi1, send_spi1, 4, 10); // request data
+
+
+
+	//HAL_SPI_Receive (&hspi1, flash_read_block, 512, 100);   // works fine
+
+//	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // when readin low till the end
+	//	HAL_SPI_Receive_DMA(&hspi1, flash_read_block2, 512);  // never starts
+
+//	HAL_SPI_Receive (&hspi1, flash_read_block, 512, 100);
+
+//	HAL_SPI_Receive_DMA(&hspi1, flash_read_block2, 512);
+
 
 	HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 512,1000); //ok
 
-		uint16_t mem_counter=0;
+
 		memcpy(&seq,potSource,46 );  // load from potSource  ,, causes problems with memory ,NEEDS TO BE CONTINUOS OR  WILL  GET CORRUPT
 	    memcpy(&note,potSource+156,160 );   // this works but keep checking for fragmentation
 
@@ -410,7 +516,8 @@ void main_initial(void){
 
 			memcpy(&LFO[mem_counter],potSource+46+(mem_counter*6),6 );  // + 60 ,ok here
 			memcpy(&ADSR[mem_counter],potSource+106+(mem_counter*5),5 );  // +50  ,
-			memcpy(&patch[mem_counter],potSource+316+(mem_counter*6),6 );
+			memcpy(&patch[mem_counter],potSource+316+(mem_counter*3),3 );
+			memcpy(&patch[mem_counter+10],potSource+346+(mem_counter*3),3 );
 			memcpy(&LFO_slave1[mem_counter],potSource+376+(mem_counter*6),6 );  // + 60 ,ok here
 			memcpy(&LFO_square[mem_counter],potSource+436+(mem_counter*4),4 );
 	    }
@@ -482,9 +589,10 @@ void main_initial(void){
 void sampler_save(void){
 
 	//  ----------- w25q128   -----   page program, = 1ms          32kbyte block erase = 120ms  byte program = 30uS then 2.5uS after that  ,total 4 minutes of sampling time
-	HAL_TIM_PWM_Stop(&htim3,TIM_CHANNEL_1);   // disable pwm to stop irq trigger
-	HAL_TIM_PWM_Stop(&htim3,TIM_CHANNEL_2);
+	//HAL_TIM_PWM_Stop(&htim3,TIM_CHANNEL_1);   // disable pwm to stop irq trigger
+	//HAL_TIM_PWM_Stop(&htim3,TIM_CHANNEL_2);
 
+/*
 
 
 	uint8_t send_spi1[5]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
@@ -564,16 +672,22 @@ void sampler_save(void){
 
 
 		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+*/
 
 
 
 }
 
-void patch_lists(void){
+void patch_lists(void){   //   ok
     uint8_t  list_counter;
-    for (list_counter=0;list_counter<10;list_counter++){
+    uint8_t list_counter2=0;
+    for (list_counter=0;list_counter<20;list_counter++){
 
-	if ((patch[list_counter].input1&3)== 3   )     LFO_sqr_list[patch[list_counter].input1>>2]   =  (patch[list_counter].target_index&7)+48;
+	if ((patch[list_counter].input1&3)== 3   )    { LFO_sqr_list[list_counter2]   =  (patch[list_counter].target_index&7)+48;   // only writes sqr related  to list ,others left off
+	sqr_target_list[list_counter2] =  (patch[list_counter].target);   //just
+	list_counter2++;
+	}
+
 
 
     }

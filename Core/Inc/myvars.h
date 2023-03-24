@@ -31,7 +31,7 @@ uint32_t y;
 
 const char major_notes[]={"cdefgahCDEFGAHCDEFGAHCDEFGAHCDEFGAH"};
 const uint8_t MajorNote[30]= { 0,2,4,5,7,9,11,12,14,16,17,19,21,23,24,26,28,29,31,33,35,36,38,40,41,43,45,47,48,50} ;  // major
-const uint8_t MinorNote[]={ 0,2,3,5,7,8,10,12,14,15,17,19,20,22,24,26,27,29,31,32,34,36,38,39,41,43,44,46}; // minor
+const uint8_t MinorNote[30]={ 0,2,3,5,7,8,10,12,14,15,17,19,20,22,24,26,27,29,31,32,34,36,38,39,41,43,44,46,48,49}; // minor
 const uint8_t ChromNote[]={0,2,3,5,6,8,9,11,12,14,15,17,18,20,21}; //chromatic, diminished
 //const uint8_t noteReference[] = {10,10,10,10,0,10,0,8,1,10,1,8,2,10,3,10,3,8,4,10,4,8,5,10,5,8,6,10,0,11,0,8,1,11,1,8,2,11,3,11,3,8,4,11,4,8,5,9,5,8,6,9,10,11,10,20,10,11,10,12,10,13,10,14,10,15,10,16,10,17,10,18,10,19,11,20,11,11 };// cant read last
 const uint16_t timerValues[]= {34400,34400,32469,30647,28927,27303,25771,24324,22959,21670,20454,19306,18222,17200,16234,15323,14463,13651,12885,12162,11479,10835,10227,9653,9111,8600,8117,7661
@@ -73,7 +73,7 @@ uint8_t potSource[512]={0}; // high res version of potValues used when needed 40
 
 uint32_t sine_counter[24];  // up counter for sine reading
 float sine_counter_float[5];
-
+uint16_t isr_change=0;
 uint16_t sine_counterB;  // up counter for sine reading ,fractional * 8
 int32_t sine_out;     // generated sine output 9 bit
 uint16_t sine_temp2;
@@ -148,8 +148,9 @@ void LFO_square_one_pulse(void);
 void LFO_source_synced(void);
 void  frq_point(void);
 void patch_lists(void);
-
-
+uint8_t  flash_sector_erase( uint32_t address );   // needs 24bit address , returns 1 if fail  else 0
+uint8_t flash_page_write(uint32_t address,uint8_t  block);  //256 bytes
+uint8_t flash_page_read (uint32_t address);  //512bytes
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
 uint8_t NoteC; // second channel note
@@ -372,7 +373,7 @@ struct note_settings{								//default note/osc/patch settings  14*8 bytes (112)
 	uint8_t pitch;
 	uint8_t duration;   // note length
 	uint8_t position;   //  use it for sample trigger for now
-	uint8_t transpose;   // pshift note pitch up or down (p 72,73)
+	uint8_t transpose;   // pshift note pitch up or down (p 72,73) 0-31 major 31-64 minor 64-96 chrom ?
 	uint8_t timeshift; // shift position left or right in seuqence for 8 note looper   (pvalues 32,33) ,slide
 	uint8_t velocity;				// gain level or output mod
 	uint8_t detune; 					// finetune maybe for lfos or some default tune
@@ -416,17 +417,17 @@ struct filter_settings filter[4]={[0].cutoff_1=0,[1].cutoff_1=0,[2].cutoff_1=0,[
 
 struct patch_settings{					// use this instead of lfo  or other modulators
 	uint8_t input1;   // in1 ,default , modulation source , lfo+type and adsr for now
+	uint8_t target;	//target  type
+	uint8_t target_index;	//index
 	uint8_t input2;  // secondary input, optional
 	uint8_t in_mix;  // mix in1 and in2, 0 default
 	uint8_t in_offset;  // offset values
-	uint8_t target;	//target  type
-	uint8_t target_index;	//index
 	uint16_t output[10];  // actual output
 	uint8_t*  out_ptr;  // output target , might change that
 	uint16_t*   in1_ptr;     // use ptr for reading
     uint8_t limiter;   // output limiter for target  8 bit
 };
-struct patch_settings patch[10];    // patch board
+struct patch_settings patch[20];    // patch board
 
 struct sampler_settings{
 uint8_t record_enable;   //record to ram max 1-2 sec for now
@@ -514,6 +515,14 @@ int32_t phase_bank1[32];
 int32_t phase_bank2[32];
 int32_t phase_bank3[32];
 uint8_t LCD_Info[99]={0};   // lcd_numbers or text  data anywhere on screen
+uint8_t sqr_target_list[20];  // keep record of patch target for LCD_info using  menu_titles_final  as  a list ref
+
+uint16_t seqpos_i;// i+1
+float debug_value;
+uint32_t tempo_large;
+static uint8_t flash_read_block[512]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+uint8_t flash_read_block2[512];
+//uint8_t flash_busy=0;
 
 //static uint16_t tuned_list[10];
 

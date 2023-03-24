@@ -64,7 +64,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/filtering_functions.h \
  C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/support_functions.h \
  C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/quaternion_math_functions.h \
- ../Core/Inc/maincode.h ../Core/Inc/sampling.h ../Core/Inc/display.h
+ ../Core/Inc/flash.h ../Core/Inc/maincode.h ../Core/Inc/sampling.h \
+ ../Core/Inc/display.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -132,6 +133,7 @@ C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/complex_math
 C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/filtering_functions.h:
 C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/support_functions.h:
 C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/dsp/quaternion_math_functions.h:
+../Core/Inc/flash.h:
 ../Core/Inc/maincode.h:
 ../Core/Inc/sampling.h:
 ../Core/Inc/display.h:

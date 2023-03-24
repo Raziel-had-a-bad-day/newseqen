@@ -41,8 +41,10 @@ void display_process(void){							// keep data processing here
 	     		if (target_display==2) memcpy(default_menu3+feedback_loc+8, *(patch_inputs+target_tmp1),8);  // Limited atm
 	     	//	if (target_display==3) memcpy(LCD_Info+3,  *(patch[].target+target_tmp1),8);  // Limited atm
 	     		if  (target_display==3)   //  patch feedback works ok
-	     		    {    if (LFO_sqr_list[menu_index_in&7])   {memcpy(LCD_Info+3,  "Note_0",6);LCD_Info[9]=LFO_sqr_list[menu_index_in&7];    }
-	     		 else memcpy(LCD_Info+3,"        ",8);
+	     		    {    if (LFO_sqr_list[menu_index_in&7])   {memcpy(LCD_Info+3,  menu_titles_final[sqr_target_list[menu_index_in&7]],6);LCD_Info[10]=LFO_sqr_list[menu_index_in&7];
+
+	     		    }  // ok
+	     		 else memcpy(LCD_Info+3,"        ",8); //11
 	     		    }
 	     	}
 
