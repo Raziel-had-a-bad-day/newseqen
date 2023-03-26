@@ -67,6 +67,7 @@ I2C_HandleTypeDef hi2c2;
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 DMA_HandleTypeDef hdma_spi1_rx;
+DMA_HandleTypeDef hdma_spi1_tx;
 DMA_HandleTypeDef hdma_spi2_tx;
 
 TIM_HandleTypeDef htim2;
@@ -315,12 +316,12 @@ main_initial();   // initial setup
 			for (i=0;i<512;i++){
 				adc_convert_count=(i*3)+adc_page;
 
-				adc_convert_temp=adc_source[adc_convert_count]+adc_source[adc_convert_count+1]+adc_source[adc_convert_count+2];
+				adc_convert_temp=adc_source[adc_convert_count]+adc_source[adc_convert_count+1]+adc_source[adc_convert_count+2]; //  17 470 khz  ~
 				input_holder[i]=adc_convert_temp/3;
 				//	input_holder[i]=adc_source[(i*3)+adc_page];
 
 			}
-			if (sampler.record_enable)  {sampler_ram_record(); sampler.start_MSB=0; sampler.start_LSB=0;sampler.end_MSB=63;}
+		//	if (sampler.record_enable)  {sampler_ram_record(); sampler.start_MSB=0; sampler.start_LSB=0;sampler.end_MSB=63;}
 
 			adc_flag=0;
 		}
@@ -891,6 +892,9 @@ static void MX_DMA_Init(void)
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   /* DMA2_Stream4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
@@ -960,15 +964,13 @@ static void MX_GPIO_Init(void)
 	}
 
 
-	void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)   // when finished sending
+	void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef * hspi)   // when finished sending
 		{
-		//    spi2_send_enable=1;
-		    //
-		 //   gfx_dma=1;
+
 		   if (SPI1==hspi->Instance) {
 
-		       memcpy( &flash_read_block, flash_read_block2,512);
-
+		       memcpy( &flash_read_block, flash_read_block2+4,512);
+		       flash_flag=1;
 		       HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  //  end
 		   }
 		}
@@ -997,54 +999,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 
 
-
-
-/*
-	sine_counter++;
-	sine_counter = sine_counter & 511;
-		switch (sine_counter >> 7) {
-		case 0:
-			sine_out = 512 - sine_block[127 - sine_counter];
-			break;     	//0-127
-		case 1:
-			sine_out = 512 - sine_block[sine_counter - 127];
-			break;		// 128-255
-		case 2:
-			sine_out = sine_block[383 - sine_counter];
-			break;			//256-383
-		case 3:
-			sine_out = sine_block[sine_counter - 384];
-			break;    //384-511
-		default:
-			break;
- // future goal = interpolate instead of add
-if ((note_holdA) && (adsr[1] ==128)) adsr[1]=1;  // dont use note for trigger ,works
-if (adsr[1]==1) {
-	adsr_time[1]=(isrCount+17) &1023; note_channel[5]=127; adsr[1]=2;} // set counter , clear trigger, works , 16 per note
-if ((isrCount>=adsr_time[1]) && (adsr[1]==2))	 {adsr[1]=128;note_channel[5]=0; } // simple start finish, wwatch isrcount ,works
-if (note_channel[0] && (adsr[0] ==128)) adsr[0]=1;  // dont use note for trigger ,works
-if (adsr[0]==1) {
-	adsr_time[0]=(isrCount+17) &1023; note_channel[4]=127; adsr[0]=2;} // set counter , clear trigger, works , 16 per note
-if ((isrCount>=adsr_time[0]) && (adsr[0]==2))	 {adsr[0]=128;note_channel[4]=0; } // simple start finish, wwatch isrcount ,works
-*/
-
-
-
-/*			HAL_GPIO_WritePin(GPIOB, D4_Pin, ((lcddata) & 1));
-HAL_GPIO_WritePin(GPIOB, D5_Pin, ((lcddata >> 1) & 1));
-HAL_GPIO_WritePin(GPIOB, D6_Pin, ((lcddata >> 2) & 1));
-HAL_GPIO_WritePin(GPIOB, D7_Pin, ((lcddata >> 3) & 1)); // true or 0 return , value not important , works
-*/
-/*
-	 HAL_GPIO_WritePin(GPIOB, D4_Pin, ((lcddata >> 4) & 1));
-		HAL_GPIO_WritePin(GPIOB, D5_Pin, ((lcddata >> 5) & 1));
-			HAL_GPIO_WritePin(GPIOB, D6_Pin, ((lcddata >> 6) & 1));
-			HAL_GPIO_WritePin(GPIOB, D7_Pin, ((lcddata >> 7) & 1)); // true or 0 return , value not important , works
-tim example
- if (GPIOE->IDR & 0x01) TIM2->CNT = 0; // reset counter
- if (GPIOE->IDR & 0x02) TIM2->CR1 |= 0x01; // enable counter
- if (GPIOE->IDR & 0x04) TIM2->CR1 &= ~0x01; // disable counter
-*/
 
 
 /* USER CODE END 4 */

@@ -21,9 +21,6 @@ const char default_menu[] ={"00LCD_Info01LCD_Info02LCD_Info  00Tempo    00Transp
 	"08Input_1 08Target  08Tg_ndx   09Input_1 09Target  09Tg_ndx   10Input_1 10Target  10Tg_ndx   11Input_1 11Target  11Tg_ndx   "
 	"12Input_1 12Target  12Tg_ndx   13Input_1 13Target  13Tg_ndx   14Input_1 14Target  14Tg_ndx   15Input_1 15Target  15Tg_ndx   "
 	"16Input_1 16Target  16Tg_ndx   17Input_1 17Target  17Tg_ndx   18Input_1 18Target  18Tg_ndx   19Input_1 19Target  19Tg_ndx   "
-	//	" 05Input_1  05Target   05Tg_ndx            "
-
-
 
 				"00S_Rate   00S_Depth  00S_Offset  01S_Rate   01S_Depth  01S_Offset 00LCD_Info01LCD_Info02LCD_Info"
 
@@ -37,10 +34,7 @@ const char default_menu[] ={"00LCD_Info01LCD_Info02LCD_Info  00Tempo    00Transp
 		"00StartMSB 00StartLSB  00EndMSB   00EndLSB   00SMoffset   00Resnance  "
 	"                "
 	"                "
-	"                "
-
-
-
+	"                " // need these
 	"00LCD_Info01LCD_Info02LCD_Info 03LCD_Info04LCD_Info05LCD_Info06LCD_Info07LCD_Info08LCD_Info09LCD_Info10LCD_Info    "
 	"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "   //gaps cause it skip at end
 			"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
@@ -48,7 +42,7 @@ const char default_menu[] ={"00LCD_Info01LCD_Info02LCD_Info  00Tempo    00Transp
 	"00SQ_Start 00SQ___End 00SQ_Depth 00SQOffset  01SQ_Start 01SQ___End 01SQ_Depth 01SQOffset"
 	"02SQ_Start 02SQ___End 02SQ_Depth 02SQOffset  03SQ_Start 03SQ___End 03SQ_Depth 03SQOffset"
 	"04SQ_Start 04SQ___End 04SQ_Depth 04SQOffset  05SQ_Start 05SQ___End 05SQ_Depth 05SQOffset"
-	"06SQ_Start 02SQ___End 06SQ_Depth 06SQOffset  07SQ_Start 07SQ___End 07SQ_Depth 07SQOffset"
+	"06SQ_Start 06SQ___End 06SQ_Depth 06SQOffset  07SQ_Start 07SQ___End 07SQ_Depth 07SQOffset"
 
 
 
@@ -239,6 +233,6 @@ const uint16_t LFO_sync_table[256]={65535,63488,61440,59392,57344,55296,53248,51
 	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
 
 
-
-
-
+uint16_t RAM[]={   // this works ok
+#include "test.hex"
+};

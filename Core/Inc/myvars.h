@@ -148,9 +148,11 @@ void LFO_square_one_pulse(void);
 void LFO_source_synced(void);
 void  frq_point(void);
 void patch_lists(void);
-uint8_t  flash_sector_erase( uint32_t address );   // needs 24bit address , returns 1 if fail  else 0
-uint8_t flash_page_write(uint32_t address,uint8_t  block);  //256 bytes
-uint8_t flash_page_read (uint32_t address);  //512bytes
+void  flash_sector_erase( uint32_t address_erase_s );   // needs 24bit address , returns 1 if fail  else 0
+void flash_page_write(uint32_t address_write,uint8_t*  block);  //256 bytes
+void flash_page_read (uint32_t address_read);  //512bytes  DMA
+void  flash_block_erase(uint32_t address_erase_b);  // 32 kbyte
+void byte_swap(uint16_t* to_swap, uint32_t  array_size);
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
 uint8_t NoteC; // second channel note
@@ -496,7 +498,9 @@ uint8_t serial_source[256]={0};
 uint8_t serial_source_temp[256]={0};
 uint8_t serial_up=0;  //counter for serial send
 uint8_t serial_tosend=0;
-uint16_t RAM[16384]={0};
+//uint16_t RAM[16384]={0};
+
+
 uint16_t* sample_ram=NULL;
 uint32_t sampler_offset;
 uint16_t enc_mem_dir=0;
@@ -520,8 +524,9 @@ uint8_t sqr_target_list[20];  // keep record of patch target for LCD_info using 
 uint16_t seqpos_i;// i+1
 float debug_value;
 uint32_t tempo_large;
-static uint8_t flash_read_block[512]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
-uint8_t flash_read_block2[512];
+static uint8_t flash_read_block[520]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+uint8_t flash_read_block2[520];
+uint8_t flash_flag=1;
 //uint8_t flash_busy=0;
 
 //static uint16_t tuned_list[10];

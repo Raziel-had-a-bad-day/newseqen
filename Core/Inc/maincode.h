@@ -320,11 +320,14 @@ void main_initial(void){
 	TIM2->CNT=32000;
 	HAL_ADC_Start(&hadc1);
 	HAL_ADC_Start_DMA(&hadc1, adc_source, 3072); //dma start ,needs this and adc start ,set sampling time to very long or it will fail
+
 	HAL_DMA_Init(&hdma_spi2_tx);
 	HAL_DMA_Init(&hdma_spi1_rx);
+	HAL_DMA_Init(&hdma_spi1_tx);
+
 
 	HAL_I2C_MspInit(&hi2c2);
-	//uint8_t send_spi1[20]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
+	uint8_t	send_spi1[260]={0x02,0,1,0,128,129,130,131,132,133,134,135,136,137,138,250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
 	/*
 	HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000); // send dummy,dummy , then whatever command for manuf
 	HAL_SPI_Receive(&hspi1, return_spi1, 2, 1000);   // manuf return sif correct , 0xEF,0x17 which is correct, then repeats when more request
@@ -333,7 +336,7 @@ void main_initial(void){
 
 
 	HAL_Delay(5);
-/*
+
 	//               ----                  16Mbyte   flash   , w25q128   -----  16M (24bit) * 8bits   ( 1 page 256 bytes)
 		send_spi1[0]=0x06; //enable write  , only lasts for single operation
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // start
@@ -381,7 +384,7 @@ void main_initial(void){
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // high end
 
 		HAL_Delay(5);
-		memcpy  (send_spi1,return_spi1, 14);   // clear out
+	//	memcpy  (send_spi1,return_spi1, 14);   // clear out
 		send_spi1[0]=0x03; //read page 1
 		send_spi1[1]=0; //24bit address msb
 		send_spi1[2]=0; //24bit address
@@ -394,20 +397,21 @@ void main_initial(void){
 
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // high end
 
-		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);*/
+		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
 
 
 	uint8_t potSource2[64]={0};    // { [0 ... 112] = 64 };
 	uint16_t mem_count2=0;
 	uint16_t mem_counter=0;
 	uint8_t flash_test;
-	uint8_t send_spi1[520];
+	//uint8_t send_spi1[520];
 
+//flash_block_erase(0);
+/*
 
-	for(mem_counter=0;mem_counter<64;mem_counter++){       // spi write test
+	for(mem_counter=0;mem_counter<128;mem_counter++){       // spi write test
 
-	if ((mem_counter&7)==0)                        flash_test=  flash_sector_erase( (mem_counter<<9) );  // erase 4kbyte
-
+//	if ((mem_counter&15)==0)                        flash_test=  flash_sector_erase( (mem_counter<<8) );  // erase 4kbyte , ok
 
 	send_spi1[0]=0x05; //read status register  if writing
 		send_spi1[1]=0; //24bit address msb
@@ -419,62 +423,78 @@ void main_initial(void){
 			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1); }
 
 
-//	HAL_Delay(20);
-
-
-	flash_test=  flash_page_write((mem_counter<<9),gfx_char);
+//	flash_page_write((mem_counter<<8),&gfx_char);
 	//HAL_Delay(20);
-	/// wait
-
-		send_spi1[0]=0x05; //read status register  if writing
-		send_spi1[1]=0; //24bit address msb
-		status_reg[1]=1; // set busy on
-
-		while (status_reg[1]&1){								// check if write busy
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-			HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1); }
-
 
 
 	}
 
-/*
+
+	send_spi1[0]=0x06; //enable write again
+				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
+				HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 
 
-	//flash_test=  flash_sector_erase (1<<9);
-	//HAL_Delay(100);
+	send_spi1[0]=0x20; //sector erase
+	send_spi1[1]=0; //24bit address msb
+	send_spi1[2]=0; //24bit address
+	send_spi1[3]=0; //24bit address lsb
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
+	HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works       4kbytes   (block erase=32kbytes)
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+
+	HAL_Delay(500);
 
 
 
-	send_spi1[0]=0x06; //enable write  , only lasts for single operation
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // start
-			HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);       // enable write
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // end
-
-
-
-
-
-
-	send_spi1[0]=0x02; //write page
-	send_spi1[1]=0;
-	send_spi1[2]=1;
-	send_spi1[3]=0;
-	memcpy  (send_spi1+4,gfx_char, 512);
-
-	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);   // low
-			HAL_SPI_Transmit(&hspi1, send_spi1,516, 1000);  //address,then data
-
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // high end
-
-			HAL_Delay(100);
-			send_spi1[0]=0x04; //disable write
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // low
+	send_spi1[0]=0x06; //enable write again
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
 			HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // high end
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 
-			send_spi1[0]=0x05; //read status register  if writing
+
+			//uint8_t temp_spi1[]={0x02,0,0,1,"H","E","L","L","O"," ","W","O","R","L","D",250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
+
+		 send_spi1[0]=0x02; //enable write again
+		 send_spi1[1]=0;
+		 	send_spi1[2]=0;
+		 	send_spi1[3]=0;
+		// memcpy  (&send_spi1[4],&gfx_char, 256);   // copy new array over old
+
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);   // low
+			HAL_SPI_Transmit(&hspi1, send_spi1, 20, 100);  //address,then data
+
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // high end
+	HAL_Delay(50);
+
+	uint8_t send_spi2[520]={0,0,0,0,0,0,0,0,0,0,0,0,0,0} ;
+	uint32_t address=sampler.ram_seq<<1 ;
+//	send_spi1[0]=0x03; //read page 1
+//	send_spi1[1]=(address>>16)&255;
+//	send_spi1[2]=(address>>8)&255;
+//	send_spi1[3]=address&255;     // can start anywhere
+	send_spi2[0]=0x03; //read page 1
+	send_spi2[1]=0;
+	send_spi2[2]=0;
+	send_spi2[3]=0;     // can start anywhere
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);   // low
+	HAL_SPI_Transmit(&hspi1, send_spi2, 4,100);
+	HAL_SPI_Receive(&hspi1, send_spi1,20,100);  // ignore first 4 bytes
+	//HAL_Delay(50);
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // high end
+
+*/
+//	uint8_t send_spi2[520]={0,0,0,0,0,0,0,0,0,0,0,0,0,0} ;
+//
+//	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // goes low after calling dma
+//	HAL_SPI_TransmitReceive_DMA(&hspi1, send_spi2,flash_read_block2,512);  // ignore first 4 bytes
+//	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // goes low after calling dma
+//
+
+
+
+		/*	send_spi1[0]=0x05; //read status register  if writing
 				send_spi1[1]=0; //24bit address msb
 				status_reg[1]=1; // set busy on
 
@@ -483,28 +503,35 @@ void main_initial(void){
 					HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
 					HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1); }
 */
+/*
+
+	HAL_Delay(250);
+			send_spi1[0]=0x04; //disable write
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // low
+			HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // high end
+*/
+
+
+
+
+	//flash_test=  flash_sector_erase (1<<9);
+	//HAL_Delay(100);
+
+
 
 	//----------------------------------------------
+/*
 	send_spi1[0]=0x03; //read page 1
 	send_spi1[1]=0;
 	send_spi1[2]=1;
 	send_spi1[3]=0;     // can start anywhere
 
-//	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
-
-//	HAL_SPI_Transmit (&hspi1, send_spi1, 4, 10); // request data
-
-
-
-	//HAL_SPI_Receive (&hspi1, flash_read_block, 512, 100);   // works fine
-
-//	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // when readin low till the end
-	//	HAL_SPI_Receive_DMA(&hspi1, flash_read_block2, 512);  // never starts
-
-//	HAL_SPI_Receive (&hspi1, flash_read_block, 512, 100);
-
-//	HAL_SPI_Receive_DMA(&hspi1, flash_read_block2, 512);
-
+	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
+	HAL_SPI_Receive_DMA(&hspi1, flash_read_block2, 512);  // ignore first 4 bytes
+	HAL_SPI_Transmit (&hspi1, send_spi1, 516, 10); // request data
+*/
+//flash_page_read(256);
 
 	HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 512,1000); //ok
 
@@ -563,7 +590,7 @@ void main_initial(void){
 
 		}
 	for (i=0;i<16384;i++) {     // change for 32khz   1-256 bpm
-	RAM[i]=0;
+//	RAM[i]=0;      disable for now
 	}
 	for (i=0;i<1024;i++) {     // change for 32khz   1-256 bpm
 		//default_menu3[i]=64; not it
@@ -579,7 +606,8 @@ void main_initial(void){
 			display_clear ();
 			for (pars_counter=0;pars_counter<menu_title_count;pars_counter++)	default_menu3 [menu_title_lut[pars_counter]&1023]=48;
 			note_reset();
-		menuSelect=0;
+			byte_swap(RAM,sizeof(RAM));
+			menuSelect=0;
 	// fill up sample
 	firstbarLoop=0;
 	//sample_ram =  &RAM[0];    //  allocate half a second
@@ -688,10 +716,27 @@ void patch_lists(void){   //   ok
 	list_counter2++;
 	}
 
+    }
+
+}
+void byte_swap(uint16_t* to_swap, uint32_t  array_size){   // sample byte  swap
+    uint32_t counter;
+    uint32_t swap_size=array_size; // in bytes !
+
+
+    for (counter=0;counter<swap_size;counter=counter+2){
+
+	uint8_t* byte1=&to_swap[counter>>1];
+	uint8_t* byte2=&to_swap[counter>>1]+1;
+
+	to_swap[counter>>1]=((*byte2)<<8)+(*byte1);
 
 
     }
 
-}
 
+
+
+
+}
 
