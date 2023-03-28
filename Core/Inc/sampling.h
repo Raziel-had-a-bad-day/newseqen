@@ -343,31 +343,20 @@ uint8_t send_spi1[4];
 	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
 */
 
-	uint8_t send_spi2[520]={0,0,0,0,0,0,0,0,0,0,0,0,0,0} ;
-	uint32_t address=sampler.ram_seq<<1 ;
-//	send_spi1[0]=0x03; //read page 1
-//	send_spi1[1]=(address>>16)&255;
-//	send_spi1[2]=(address>>8)&255;
-//	send_spi1[3]=address&255;     // can start anywhere
-	send_spi2[0]=0x03; //read page 1
-	send_spi2[1]=0;
-	send_spi2[2]=0;
-	send_spi2[3]=0;     // can start anywhere*/
 
-	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  //    reading is ok , problem is writing
-	HAL_SPI_TransmitReceive_DMA(&hspi1, send_spi2,flash_read_block2,512);  // ignore first 4 bytes
-	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // goes low after calling dma
+
+	if(counter_16>64) counter_16=0;
+
+	  uint32_t sample_flash_address=(511<<16)+((128+counter_16) <<8);  // change this soemthing mroe friendly
+	sampler_1k_load(sample_flash_address);
+
+	counter_16=counter_16+2;   // jump 512 bytes
+
+	uint16_t*   ram_ptr=  &flash_read_block;  // pointer goes to LSB !!!!
 
 
 
 
-	//HAL_SPI_Transmit (&hspi1, send_spi1, 4, 10); // request data
-	//
-	uint16_t byte_temp;
-
-//
-//if (sampler.record_enable==0)      flash_result = flash_page_read (sampler.ram_seq<<1 );   // should jump 256
-//  memcpy(&sample_block_temp,flash_read_block,512);
 
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators
 	i_total=i+sample_pointB;
@@ -377,32 +366,13 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	sample_adc=input_holder[i>>1];
 	sample_adc=(sample_adc-2040)<<11;
 
-	//uint8_t* byte1=&RAM[sampler.ram_seq];
-	//uint8_t* byte2=&RAM[sampler.ram_seq]+1;
-
-	ram_temp=RAM[sampler.ram_seq];
-
-
-	//ram_temp=(ram_temp&255)<<8;
-	//ram_temp=((RAM[sampler.ram_seq])>>8)+ram_temp;  // back to front
-//	tempvar = myvar.byte[0];
-	//   myvar.byte[0] = myvar.byte[1];
-	//   myvar.byte[1] = tempvar
-
+	    ram_temp=*(ram_ptr+(i>>1));    // works
+	debug_value=ram_temp;
 	ram_temp=(ram_temp-32767)<<4;
-	//debug_value=ram_temp;
-
-	//ram_temp=ram_temp<<4;
-	//	ram_temp=flash_read_block[(sampler.ram_seq&255)];
-	//memcpy(ram_temp,&RAM+(sampler.ram_seq<<1),2);
-	//ram_temp=(ram_temp-2040)<<11;    // will clip sometimes
 
 
 
-	//ram_temp=(ram_temp)<<4;    // will clip sometimes
-
-
-	if(i&1)  sampler.ram_seq=sampler.ram_seq+1;
+	if(i&1)  sampler.ram_seq=sampler.ram_seq+1;  // half speed
 
 	if (i==seqpos_i) {sample_counts_temp[20]=sample_counts_temp[30]; 		//delay tuned changed till correct time
 	sample_counts_temp[21]=sample_counts_temp[31];
@@ -477,6 +447,9 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 
 
 					sample_temp1=(*osc_pointers[3])*	note[3].velocity;  // sine out is 16bit, add 4 then 16+8
+
+
+
 					sample_temp5 =sample_temp1>>2;
 					//sample_Accu[3] =sine_out>>4;
 	play_holder0[i]=sample_temp2;  // write to bank
@@ -485,15 +458,15 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 	play_holder3[i]=sample_temp5;
 	} // end of osc , doing some sound
 
-						if(note[3].position)		sine_counter[9]=sine_counter[9]+256;  // count up when on
+						    if(note[3].position)		sine_counter[9]=sine_counter[9]+256;  // count up when on
 
-memcpy(&sample_accus_hold,sample_accus,16);
-memcpy(&sample_accu_counter,accu_count,8);   // copy back
-memcpy(&sample_counts_holder,sample_counts_temp,80);
-int32_t filter_Accu;
-int32_t filter_Accu2;
+    memcpy(&sample_accus_hold,sample_accus,16);
+    memcpy(&sample_accu_counter,accu_count,8);   // copy back
+    memcpy(&sample_counts_holder,sample_counts_temp,80);
+    int32_t filter_Accu;
+    int32_t filter_Accu2;
 
-//uint16_t* click=&input_holder[0];
+    //uint16_t* click=&input_holder[0];
 
 
 			for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators , filters and final out ,slow 133
@@ -832,7 +805,7 @@ void LFO_source_synced(void){     // lfo , ok
 
 	// if (lfo_c==0)     debug_value=lfo_accu_temp;
 
-	 delay_value=8192*(LFO[lfo_c].delay&7);
+	 delay_value=8192*(LFO[lfo_c].delay&7);  //not ok
 
 	 freq_temp=lfo_accu_temp*0.0000479376;
 
@@ -896,7 +869,6 @@ void  frq_point(void){
 			filter_res[3]=freq_point[3]*0.2;
 
 }
-
 
 
 

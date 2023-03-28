@@ -29,7 +29,7 @@
 #include "string.h"
 #include "arm_math.h"
 #include"math.h"
-#include "flash.h"
+
 
 //#define __FPU_PRESENT   1
 
@@ -82,7 +82,8 @@ UART_HandleTypeDef huart6;
 #include "maincode.h"			// void
 #include "sampling.h"     // audio process
 #include "display.h"
-// 32khz froom now on
+#include "flash.h"
+#include"sample_play.h"     // needs to be after private variables
 
 
 /* USER CODE END PV */
@@ -550,7 +551,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -887,7 +888,7 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
@@ -896,7 +897,7 @@ static void MX_DMA_Init(void)
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   /* DMA2_Stream4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
 
 }
@@ -963,17 +964,43 @@ static void MX_GPIO_Init(void)
 
 	}
 
+	void HAL_SPI_TxRxHalfCpltCallback(SPI_HandleTypeDef * hspi) {
+
+	    if (SPI1==hspi->Instance) {
+
+				if  ((flash_read_block2[10]+   flash_read_block2[11]+  flash_read_block2[12]+  flash_read_block2[13])== 1020                  )
+
+				    {
+				    error_count++;
+			memcpy(&error_data,flash_read_block2,127);  // maybe skipping address,, yup idiot Internet advice
+
+						flash_flag=1;}
+
+
+	}		}
+
+
+
 
 	void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef * hspi)   // when finished sending
 		{
 
 		   if (SPI1==hspi->Instance) {
 
-		       memcpy( &flash_read_block, flash_read_block2+4,512);
-		       flash_flag=1;
+
+		       flash_flag=2;
 		       HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  //  end
 		   }
 		}
+
+
+	void HAL_SPI_ErrorCallback(SPI_HandleTypeDef * hspi) {
+	   if (SPI1==hspi->Instance) {
+error_count++;
+
+		   }
+	}
+
 
 
 

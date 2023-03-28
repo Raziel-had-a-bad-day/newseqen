@@ -1,6 +1,6 @@
 // external spi flash related
 void flash_sector_erase(uint32_t address_erase_s ){      // 24bit address
-    SPI_HandleTypeDef hspi1;
+
 
     uint8_t send_spi1[20]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
    // if (address==0) return 1; // no zero
@@ -33,7 +33,7 @@ void flash_sector_erase(uint32_t address_erase_s ){      // 24bit address
 
 void flash_page_write(uint32_t address_write,uint8_t*  block){   // write full page (256bytes)    , or 128x 16bit audio  LSB should always be zero if 256 byte blockor it wraps around
 
-    SPI_HandleTypeDef hspi1;
+
 
     uint8_t send_spi1[520]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
   //  if (address==0) return 1; // no zero
@@ -67,7 +67,7 @@ void flash_page_write(uint32_t address_write,uint8_t*  block){   // write full p
 
 void   flash_page_read (uint32_t address_read){   // returns 512 byte pointer  (256 samples)   REMINDER 2*256 BYTES HERE !!!!
 
-    SPI_HandleTypeDef hspi1;  //  too slow
+
 
         uint8_t send_spi1[520]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
      //   if (address==0) return 1 ; // quit
@@ -77,24 +77,12 @@ void   flash_page_read (uint32_t address_read){   // returns 512 byte pointer  (
 	send_spi1[2]=(address_read>>8)&255;
 	send_spi1[3]=address_read&255;     // can start anywhere
 
-	flash_read_block[0]=0x03; //read page 1
-	flash_read_block[1]=0;
-	flash_read_block[2]=1;
-	flash_read_block[3]=0;     // can start anywhere
-
-
-
-	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
-
-	HAL_SPI_Receive_DMA(&hspi1, flash_read_block2, 512);  // ignore first 4 bytes
-	HAL_SPI_Transmit (&hspi1, flash_read_block, 516, 10); // request data
-
 
 
 }
 
 void  flash_block_erase(uint32_t address_erase_b ){      // 24bit address      32 kbyte
-    SPI_HandleTypeDef hspi1;
+
 
     uint8_t send_spi1[20]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
 

@@ -300,6 +300,9 @@ void main_initial(void){
 
 
 
+	HAL_DMA_Init(&hdma_spi2_tx);
+	HAL_DMA_Init(&hdma_spi1_rx);
+	HAL_DMA_Init(&hdma_spi1_tx);
 
 
 	//LL_SPI_Enable(SPI2);
@@ -321,9 +324,6 @@ void main_initial(void){
 	HAL_ADC_Start(&hadc1);
 	HAL_ADC_Start_DMA(&hadc1, adc_source, 3072); //dma start ,needs this and adc start ,set sampling time to very long or it will fail
 
-	HAL_DMA_Init(&hdma_spi2_tx);
-	HAL_DMA_Init(&hdma_spi1_rx);
-	HAL_DMA_Init(&hdma_spi1_tx);
 
 
 	HAL_I2C_MspInit(&hi2c2);
@@ -343,17 +343,17 @@ void main_initial(void){
 		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);       // enable write
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // end
 		HAL_Delay(5);
-		send_spi1[0]=0x20; //sector erase
-		send_spi1[1]=0; //24bit address msb
-		send_spi1[2]=0; //24bit address
-		send_spi1[3]=1; //24bit address lsb
+		send_spi1[0]=0x52; //sector erase
+		send_spi1[1]=255; //24bit address msb
+		send_spi1[2]=128; //24bit address
+		send_spi1[3]=0; //24bit address lsb
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
 		HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works       4kbytes   (block erase=32kbytes)
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 
 
 		send_spi1[0]=0x05; //read status register  if writing
-		send_spi1[1]=0; //24bit address msb
+		send_spi1[1]=0; //2
 		status_reg[1]=1; // set busy on
 
 		while (status_reg[1]&1){								// check if write busy
@@ -362,42 +362,45 @@ void main_initial(void){
 			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 		}
 
-		send_spi1[0]=0x06; //enable write again
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-		HAL_Delay(5);
 
-		//uint8_t temp_spi1[]={0x02,0,0,1,"H","E","L","L","O"," ","W","O","R","L","D",250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
-		uint8_t temp_spi1[]={0x02,0,0,1,128,129,130,131,132,133,134,135,136,137,138,250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
-		memcpy  (send_spi1,temp_spi1, 16);   // copy new array over old
+		send_spi1[0]=0x06; //enable write  , only lasts for single operation
+				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // start
+				HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);       // enable write
+				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // end
+				HAL_Delay(5);
+				send_spi1[0]=0x52; //sector erase
+				send_spi1[1]=255; //24bit address msb
+				send_spi1[2]=0; //24bit address
+				send_spi1[3]=0; //24bit address lsb
+				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
+				HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works       4kbytes   (block erase=32kbytes)
+				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);   // low
-		HAL_SPI_Transmit(&hspi1, send_spi1, 16, 1000);  //address,then data
 
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // high end
 
-		HAL_Delay(25);
+
+
+
+
+		HAL_Delay(250);
 		send_spi1[0]=0x04; //disable write
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // low
 		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // high end
 
-		HAL_Delay(5);
-	//	memcpy  (send_spi1,return_spi1, 14);   // clear out
-		send_spi1[0]=0x03; //read page 1
-		send_spi1[1]=0; //24bit address msb
-		send_spi1[2]=0; //24bit address
-		send_spi1[3]=1; //24bit address lsb
 
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
 
-		HAL_SPI_Transmit (&hspi1, send_spi1, 4, 100); // request data
-		HAL_SPI_Receive (&hspi1, return_spi1, 12, 100);   // works fine
 
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // high end
 
-		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
+		byte_swap(RAM,sizeof(RAM));    // correct order
+				sample_save(511,RAM, sizeof(RAM));  // write sample no 255
+				send_spi1[0]=sampler_ram_clear_test(511);  // test written ok
+
+
+
+
+
+
 
 
 	uint8_t potSource2[64]={0};    // { [0 ... 112] = 64 };
@@ -407,131 +410,17 @@ void main_initial(void){
 	//uint8_t send_spi1[520];
 
 //flash_block_erase(0);
-/*
-
-	for(mem_counter=0;mem_counter<128;mem_counter++){       // spi write test
-
-//	if ((mem_counter&15)==0)                        flash_test=  flash_sector_erase( (mem_counter<<8) );  // erase 4kbyte , ok
-
-	send_spi1[0]=0x05; //read status register  if writing
-		send_spi1[1]=0; //24bit address msb
-		status_reg[1]=1; // set busy on
-
-		while (status_reg[1]&1){								// check if write busy
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-			HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1); }
-
-
-//	flash_page_write((mem_counter<<8),&gfx_char);
-	//HAL_Delay(20);
-
-
-	}
-
-
-	send_spi1[0]=0x06; //enable write again
-				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-				HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-
-
-	send_spi1[0]=0x20; //sector erase
-	send_spi1[1]=0; //24bit address msb
-	send_spi1[2]=0; //24bit address
-	send_spi1[3]=0; //24bit address lsb
-	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
-	HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works       4kbytes   (block erase=32kbytes)
-	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-
-	HAL_Delay(500);
 
 
 
-	send_spi1[0]=0x06; //enable write again
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-			HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
+	flash_read_block2[0]=0x03; //read page 1
+		flash_read_block2[1]=255;			// last patch for now
+		flash_read_block2[2]=128;		// 1->127  = 32kbyte,but need 512 per step , only counts to 16383 ,    64*512
+		flash_read_block2[3]=0;
+
+		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);HAL_SPI_TransmitReceive_DMA(&hspi1,flash_read_block2,flash_read_block2,1028);HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
 
 
-			//uint8_t temp_spi1[]={0x02,0,0,1,"H","E","L","L","O"," ","W","O","R","L","D",250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
-
-		 send_spi1[0]=0x02; //enable write again
-		 send_spi1[1]=0;
-		 	send_spi1[2]=0;
-		 	send_spi1[3]=0;
-		// memcpy  (&send_spi1[4],&gfx_char, 256);   // copy new array over old
-
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);   // low
-			HAL_SPI_Transmit(&hspi1, send_spi1, 20, 100);  //address,then data
-
-	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // high end
-	HAL_Delay(50);
-
-	uint8_t send_spi2[520]={0,0,0,0,0,0,0,0,0,0,0,0,0,0} ;
-	uint32_t address=sampler.ram_seq<<1 ;
-//	send_spi1[0]=0x03; //read page 1
-//	send_spi1[1]=(address>>16)&255;
-//	send_spi1[2]=(address>>8)&255;
-//	send_spi1[3]=address&255;     // can start anywhere
-	send_spi2[0]=0x03; //read page 1
-	send_spi2[1]=0;
-	send_spi2[2]=0;
-	send_spi2[3]=0;     // can start anywhere
-	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);   // low
-	HAL_SPI_Transmit(&hspi1, send_spi2, 4,100);
-	HAL_SPI_Receive(&hspi1, send_spi1,20,100);  // ignore first 4 bytes
-	//HAL_Delay(50);
-	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // high end
-
-*/
-//	uint8_t send_spi2[520]={0,0,0,0,0,0,0,0,0,0,0,0,0,0} ;
-//
-//	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  // goes low after calling dma
-//	HAL_SPI_TransmitReceive_DMA(&hspi1, send_spi2,flash_read_block2,512);  // ignore first 4 bytes
-//	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // goes low after calling dma
-//
-
-
-
-		/*	send_spi1[0]=0x05; //read status register  if writing
-				send_spi1[1]=0; //24bit address msb
-				status_reg[1]=1; // set busy on
-
-				while (status_reg[1]&1){								// check if write busy
-				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-					HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
-					HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1); }
-*/
-/*
-
-	HAL_Delay(250);
-			send_spi1[0]=0x04; //disable write
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // low
-			HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // high end
-*/
-
-
-
-
-	//flash_test=  flash_sector_erase (1<<9);
-	//HAL_Delay(100);
-
-
-
-	//----------------------------------------------
-/*
-	send_spi1[0]=0x03; //read page 1
-	send_spi1[1]=0;
-	send_spi1[2]=1;
-	send_spi1[3]=0;     // can start anywhere
-
-	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
-	HAL_SPI_Receive_DMA(&hspi1, flash_read_block2, 512);  // ignore first 4 bytes
-	HAL_SPI_Transmit (&hspi1, send_spi1, 516, 10); // request data
-*/
-//flash_page_read(256);
 
 	HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 512,1000); //ok
 
@@ -606,7 +495,8 @@ void main_initial(void){
 			display_clear ();
 			for (pars_counter=0;pars_counter<menu_title_count;pars_counter++)	default_menu3 [menu_title_lut[pars_counter]&1023]=48;
 			note_reset();
-			byte_swap(RAM,sizeof(RAM));
+
+
 			menuSelect=0;
 	// fill up sample
 	firstbarLoop=0;
@@ -615,93 +505,6 @@ void main_initial(void){
 }
 
 void sampler_save(void){
-
-	//  ----------- w25q128   -----   page program, = 1ms          32kbyte block erase = 120ms  byte program = 30uS then 2.5uS after that  ,total 4 minutes of sampling time
-	//HAL_TIM_PWM_Stop(&htim3,TIM_CHANNEL_1);   // disable pwm to stop irq trigger
-	//HAL_TIM_PWM_Stop(&htim3,TIM_CHANNEL_2);
-
-/*
-
-
-	uint8_t send_spi1[5]={0x90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
-
-	//HAL_Delay(5);
-
-	//               ----                  16Mbyte   flash   , w25q128   -----  16M (24bit) * 8bits   ( 1 page 256 bytes)
-		send_spi1[0]=0x06; //enable write  , only lasts for single operation
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-		HAL_Delay(5);
-		send_spi1[0]=0x20; //sector erase
-		send_spi1[1]=0; //24bit address msb
-		send_spi1[2]=0; //24bit address
-		send_spi1[3]=1; //24bit address lsb
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
-		HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-
-
-		send_spi1[0]=0x05; //read status register  if writing
-		send_spi1[1]=0; //24bit address msb
-		status_reg[1]=1; // set busy on
-
-		while (status_reg[1]&1){								// check if write busy
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-			HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-		}
-
-		send_spi1[0]=0x06; //enable write again
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-		HAL_Delay(5);
-
-
-
-
-		//uint8_t temp_spi1[]={0x02,0,0,1,"H","E","L","L","O"," ","W","O","R","L","D",250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
-		uint8_t temp_spi1[]={0x02,0,0,1,128,129,130,131,132,133,134,135,136,137,138,250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
-		memcpy  (send_spi1,temp_spi1, 14);   // copy new array over old
-
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-		HAL_SPI_Transmit(&hspi1, send_spi1, 14, 1000);  //address,page program
-
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-
-
-
-
-		HAL_Delay(25);
-		send_spi1[0]=0x04; //disable write
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-
-		HAL_Delay(5);
-		memcpy  (send_spi1,return_spi1, 14);   // clear out
-		send_spi1[0]=0x03; //read page 1
-		send_spi1[1]=0; //24bit address msb
-		send_spi1[2]=0; //24bit address
-		send_spi1[3]=1; //24bit address lsb
-
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  // when readin low till the end
-
-		HAL_SPI_Transmit (&hspi1, send_spi1, 4, 100);
-		HAL_SPI_Receive (&hspi1, return_spi1, 10, 100);   // works fine
-
-		//HAL_SPI_TransmitReceive(&hspi1, send_spi1, return_spi1,14, 100);  // better in case skip , 4 bytes is null then data , slow
-		//HAL_Delay(5);
-
-		//HAL_SPI_Receive(&hspi1, return_spi1, 12, 1000);  // reverse msb ?
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-
-
-
-		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-*/
-
 
 
 }
@@ -719,24 +522,5 @@ void patch_lists(void){   //   ok
     }
 
 }
-void byte_swap(uint16_t* to_swap, uint32_t  array_size){   // sample byte  swap
-    uint32_t counter;
-    uint32_t swap_size=array_size; // in bytes !
 
-
-    for (counter=0;counter<swap_size;counter=counter+2){
-
-	uint8_t* byte1=&to_swap[counter>>1];
-	uint8_t* byte2=&to_swap[counter>>1]+1;
-
-	to_swap[counter>>1]=((*byte2)<<8)+(*byte1);
-
-
-    }
-
-
-
-
-
-}
 

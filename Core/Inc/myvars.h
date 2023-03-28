@@ -152,7 +152,11 @@ void  flash_sector_erase( uint32_t address_erase_s );   // needs 24bit address ,
 void flash_page_write(uint32_t address_write,uint8_t*  block);  //256 bytes
 void flash_page_read (uint32_t address_read);  //512bytes  DMA
 void  flash_block_erase(uint32_t address_erase_b);  // 32 kbyte
-void byte_swap(uint16_t* to_swap, uint32_t  array_size);
+void byte_swap(uint8_t* to_swap, uint32_t  array_size);
+uint8_t  sampler_ram_clear_test(uint16_t sample_number);
+void sample_save(uint16_t sample_number, uint8_t* sample_data ,uint16_t  sample_size);
+void  sampler_1k_load(uint32_t load_address);
+
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
 uint8_t NoteC; // second channel note
@@ -301,7 +305,7 @@ uint8_t return_spi1[16]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 uint8_t status_reg[2]={0,1};
  uint16_t  time_final[2]={0,0};  // tick timer
  uint16_t time_proc=0; // tick start
-uint16_t  error_count=0;
+volatile static uint16_t  error_count=0;
 
 struct LFO_settings{      // use first 5*10 , leave the rest  , no bueno  32 each
 
@@ -524,9 +528,16 @@ uint8_t sqr_target_list[20];  // keep record of patch target for LCD_info using 
 uint16_t seqpos_i;// i+1
 float debug_value;
 uint32_t tempo_large;
-static uint8_t flash_read_block[520]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
-uint8_t flash_read_block2[520];
-uint8_t flash_flag=1;
+ static uint8_t flash_read_block[530]={0};
+ static uint8_t flash_read_block2[1030];
+volatile uint8_t flash_flag=4;
+uint8_t  flash_bank_read=0;   // switch fifo for playback
+uint16_t counter_16=0;
+uint8_t current_spi[4];
+uint8_t error_data[128]={0};
+
+
+
 //uint8_t flash_busy=0;
 
 //static uint16_t tuned_list[10];
