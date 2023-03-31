@@ -13,7 +13,7 @@
 */
 
 // flash start
-
+#define menu_title_counter_limit    512
 
 // flash start 0x08000000    , prog size  59B0  22,960 bytes  end   0x080059B0 , 64k ends at 0x08010000 , maybe after or D2F0 which is 54k so 0x0800D2F0
 // source , select mask type , speed of playback
@@ -29,7 +29,7 @@ uint32_t y;
 //uint16_t pwmVelB;
 //const uint8_t tempoLUT[];  // lookup table for tempo instead of calculate
 
-const char major_notes[]={"cdefgahCDEFGAHCDEFGAHCDEFGAHCDEFGAH"};
+const char major_notes[]={"cdefgahCDEFGAHcdefgahCDEFGAHcdefgahCDEFGAHcdefgahCDEFGAHcdefgah"};
 const uint8_t MajorNote[30]= { 0,2,4,5,7,9,11,12,14,16,17,19,21,23,24,26,28,29,31,33,35,36,38,40,41,43,45,47,48,50} ;  // major
 const uint8_t MinorNote[30]={ 0,2,3,5,7,8,10,12,14,15,17,19,20,22,24,26,27,29,31,32,34,36,38,39,41,43,44,46,48,49}; // minor
 const uint8_t ChromNote[]={0,2,3,5,6,8,9,11,12,14,15,17,18,20,21}; //chromatic, diminished
@@ -41,9 +41,6 @@ const uint16_t sample_Noteadd[52]= { 1920,2034,2155,2283,2419,2562,2715,2876,304
 	36526};
 const uint16_t sample_counts[52]={35023,33061,31209,29461,27811,26254,24784,23396,22087,20851,19684,18583,17543,16562,15636,14762,13937,13159,12424,11730,11075,10457,9874,9323,
 	8804,8313,7850,7413,7001,6611,6244,5897,5570,5261,4969,4694,4434,4189,3957,3739,3532,3338,3154,2981,2817,2662,2517,2379,2249,2126,2011,1901};
-
-
-
 
 
 const uint16_t freq_lut[]={4186,4434,4698,4978,5274,5587,5919,6271,6644,7039,7458,7902,8371,8869,9397,9955,10547,11175,11839,12543,13289,14079,14916,15803,16743,17739,
@@ -156,7 +153,7 @@ void byte_swap(uint8_t* to_swap, uint32_t  array_size);
 uint8_t  sampler_ram_clear_test(uint16_t sample_number);
 void sample_save(uint16_t sample_number, uint8_t* sample_data ,uint16_t  sample_size);
 void  sampler_1k_load(uint32_t load_address);
-
+void LCD_Info_feedback(void);
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
 uint8_t NoteC; // second channel note
@@ -436,21 +433,37 @@ struct patch_settings{					// use this instead of lfo  or other modulators
 struct patch_settings patch[20];    // patch board
 
 struct sampler_settings{
-uint8_t record_enable;   //record to ram max 1-2 sec for now
+
+    uint8_t start_MSB;
+    uint8_t start_LSB;
+    uint8_t end_MSB;
+    uint8_t end_LSB;
+    uint8_t trigger_1;   // uses +1 to enable
+    uint8_t trigger_2;
+    uint8_t trigger_3;
+    uint8_t trigger_4;
+    uint8_t repeat;
+    uint8_t offset;  // offset to seq.pos or to start of sample ?
+    uint8_t sample_select;    // sample to play 0-255 for now , maybe starting from 0 mem
+
+
+    uint8_t sample_save;  // location to save to , 32-64kb
+    uint16_t trigger_position;  // enabled for start with byte position for retirgger  , reset counter to sampler.start  . +1 to enable
+    uint8_t record_enable;   //record to ram max 1-2 sec for now
 uint8_t sample_location;   // save location on flash ,preset for now
 uint8_t sample_save_enable ;   // save flag to flash
 uint8_t one_shot; // one shot bit flag , 0-7 notes
-uint8_t offset;  // offset to seq.pos or to start of sample ?
+
 uint16_t  start;    // for trimming  start ,calucalted
  uint16_t end;	// for trimming end ,calculated
 uint16_t length;  // length for looping  ,calucalted
 uint16_t ram_pos;  //record pos
-uint8_t start_MSB;
-uint8_t start_LSB;
-uint8_t end_MSB;
-uint8_t end_LSB;
+
 uint16_t* start_ptr;
 uint16_t ram_seq;   // seq current position
+
+
+
 };
 static struct sampler_settings sampler={.record_enable=0, .sample_location=0,.sample_save_enable=0,.ram_pos=0
 		,.end_MSB=63, .end_LSB=255,.start_MSB=0,.start_LSB=0,.length=1024,.one_shot=255  };                                     // needs to be protected
@@ -464,13 +477,13 @@ uint16_t menu_counter=0;  // 127 per page needs plenty
 uint8_t space_check=0;   // look for gaps
 
 
-uint8_t menu_title_count=0;   // holds the counter for menu_title_lut
+uint16_t menu_title_count=0;   // holds the counter for menu_title_lut
 
-uint32_t  menu_var_lut[256]={0};   // hold pointers for variables , for now its enougg
+uint32_t  menu_var_lut [menu_title_counter_limit]={0};   // hold pointers for variables ,  menu_title_count
 
-uint32_t menu_title_lut[256]={0};  // hold pointer for feedback line , points to default_menu first character(1<<8)   as well the current display loc(0)  , skip empty areas for now
+uint32_t menu_title_lut[menu_title_counter_limit]={0};  // hold pointer for feedback line , points to default_menu first character(1<<8)   as well the current display loc(0)  , skip empty areas for now
 
-char menu_index_list[512]={0};   //  use along the menu_var_lut uses double the records !! gets weird when using 256
+char menu_index_list[menu_title_counter_limit*2]={0};   //  use along the menu_var_lut uses double the records !! gets weird when using 256
 char* menu_vars_menu=0;    // return pointer to menu_titles final
 uint8_t * menu_vars_var=0;			// return memory location to var !
 char menu_vars_in[8];  // incoming string ,ok
@@ -535,9 +548,9 @@ uint8_t  flash_bank_read=0;   // switch fifo for playback
 uint16_t counter_16=0;
 uint8_t current_spi[4];
 uint8_t error_data[128]={0};
-
-
-
+uint8_t stop_toggle=0;
+uint32_t  millis_stored=0;
+uint32_t  millis_stored2=0;
 //uint8_t flash_busy=0;
 
 //static uint16_t tuned_list[10];

@@ -33,8 +33,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Core/Inc/myvars.h ../Core/Inc/luts.h \
- C:/Users/Bobon/Documents/GitHub/newseqen/samples/test.hex \
+ ../Core/Inc/luts.h \
+ C:/Users/Bobon/Documents/GitHub/newseqen/samples/test2.hex \
+ ../Core/Inc/myvars.h \
  C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math.h \
  C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math_types.h \
  ../Drivers/CMSIS/Include/cmsis_compiler.h \
@@ -102,9 +103,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
-../Core/Inc/myvars.h:
 ../Core/Inc/luts.h:
-C:/Users/Bobon/Documents/GitHub/newseqen/samples/test.hex:
+C:/Users/Bobon/Documents/GitHub/newseqen/samples/test2.hex:
+../Core/Inc/myvars.h:
 C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math.h:
 C:/Users/Bobon/Documents/GitHub/sound_slave1/extras\ for\ cmsis/arm_math_types.h:
 ../Drivers/CMSIS/Include/cmsis_compiler.h:

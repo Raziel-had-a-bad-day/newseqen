@@ -1,4 +1,4 @@
-bin2hex.exe --i drum2.raw --o test.hex  --b 2
+bin2hex.exe --i drum2.raw --o test.hex  --b 1
 
 for soem reason unsigned 16 bit raw lower byte first but ok otherwise ,little endian might just 
 do it in python

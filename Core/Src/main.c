@@ -23,8 +23,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
-#include "myvars.h"			// variables
 #include "luts.h"    // big tables
+#include "myvars.h"			// variables
+
 #include <stdlib.h>
 #include "string.h"
 #include "arm_math.h"
@@ -34,13 +35,7 @@
 //#define __FPU_PRESENT   1
 
 /* Use ARM MATH for Cortex-M4 */
-//#define "arm_math.h"    cmsis
-//#include "math.h"   standard
-//#include <string.h>
-//#include "stdio.h"
-//#include <string.h>       for some errors with strings
-//#include <stdlib.h>
-//#include "myvars.h"
+
 
 /* USER CODE END Includes */
 
@@ -103,7 +98,7 @@ static void MX_USART6_UART_Init(void);
 static void MX_TIM10_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
-
+void stop_start	(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -167,11 +162,14 @@ main_initial();   // initial setup
 	  loop_counter2++;// this pretty slow now thanks to gfx , no skips though
 
 	  // if (menu_page<320) lcd_feedback();  //curious no issues with lcd without this  , maybe spell writing
+	  uint32_t  millis = HAL_GetTick();
 
-			  if 	((loop_counter2&7)==6)      {analoginputloopb();} // this is ok , plenty quick , no freeze here
 
+	  if 	((loop_counter2&7)==6)      {analoginputloopb();} // this is ok , plenty quick , no freeze here
+			  if ((seq.tempo<40)&&(stop_toggle==0))    {stop_toggle=1; stop_start();stop_toggle=3; seq.tempo=50; }
+			  if ((seq.tempo<40)&&(stop_toggle==3))    {stop_toggle=2; stop_start();  stop_toggle=0;seq.tempo=50; }
 
-		if (loop_counter2==4024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
+	if (loop_counter2==9024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
 
 		    if (mem_count>510) mem_count=0; else mem_count++;
 		    if (mem_count>460) mem_count=461;  // this might feedback
@@ -182,7 +180,7 @@ main_initial();   // initial setup
 
 
 			memcpy(potSource,&seq,46); // about 35
-
+			memcpy(potSource+476,&sampler,11);
 			for(i=0;i<10;i++){
 					memcpy(potSource+156+(i*14),&note[i],14 );  //grab note settings ,112 total , works
 
@@ -192,6 +190,8 @@ main_initial();   // initial setup
 				memcpy(potSource+346+(i*3),&patch[i+10],3 );
 				memcpy(potSource+376+(i*6),&LFO_slave1[i],6 ); // ext llof settings
 				memcpy(potSource+436+(i*4),&LFO_square[i],4 );
+				 //
+
 			}	// copy vars into potSource
 
 			//HAL_UART_Transmit(&huart1,serial_send,4, 100);  //send serial again
@@ -221,10 +221,6 @@ main_initial();   // initial setup
 						HAL_I2C_Mem_Write(&hi2c2, 160,mem_count2 , 2, &mem_buf, 1, 100);   // write changed
 
 			 // "&hi2c2"  actual register address  , write only when needed
-
-
-
-		//if (mem_buf!=mem_verify)	 mem_errors++;  // check writes
 
 		loop_counter2=0; //reset
 
@@ -277,7 +273,7 @@ main_initial();   // initial setup
 		}
 
 
-		if (loop_counter2==4000){ // grab adc readings + 3ms , 32 step  // no freeze
+		if ((loop_counter2&1023)==0){ // grab adc readings + 3ms , 32 step  // no freeze
 
 
 
@@ -293,9 +289,9 @@ main_initial();   // initial setup
 			adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
 			HAL_ADCEx_InjectedStop(&hadc1) ;
 			//  adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
-			adc_values[0]=	31- ( adc_temp1[0]>>7);
-			adc_values[1]=	 31-( adc_temp1[1]>>7);
-			adc_values[2]=	 31-( adc_temp1[2]>>7);
+			adc_values[0]=	(4095-  adc_temp1[0])<<4;
+			adc_values[1]=	 (4095- adc_temp1[1])<<4;
+			adc_values[2]=	 (4095-adc_temp1[2])<<4;
 			//  adc_values[2]=	  adc_temp1[2]>>7;
 
 			loop_counter=0;
@@ -333,25 +329,19 @@ main_initial();   // initial setup
 
 			sampling();
 
-			uint8_t up_counter2=0;
-			while ((up_counter2<8) && (init > 5) )								{
-
-			gfx_line_fill();   // just run 8 times between sampling , dont need more
-			up_counter2++;
-			loop_counter++;
-			}
-
-
 	  	}   // should trigger this after adc reads also reset sample_point here
 
+		if((millis-millis_stored)>5) {   // run gfx_line
 
-	  	/*	HAL_SPI_Transmit(&hspi2,(uint8_t *)248,1,1);
-	  	HAL_SPI_Transmit(&hspi2,(uint8_t *)64,1,1);
-	  	HAL_SPI_Transmit(&hspi2,(uint8_t *)0,1,1);
-	  */
+		  LCD_Info_feedback();
+		    uint8_t up_counter2=0;
+					while ((up_counter2<8) && (init > 5) )								{
 
-	   //works ok, write opp bank
-
+					gfx_line_fill();   // just run 8 times between sampling , dont need more
+					up_counter2++;
+					loop_counter++;
+					}   millis_stored=millis;
+		}
 
 
 	    }  // while loop , total 250/350  cycles/   5/7ms   , max allowed is 13ms
@@ -972,7 +962,7 @@ static void MX_GPIO_Init(void)
 
 				    {
 				    error_count++;
-			memcpy(&error_data,flash_read_block2,127);  // maybe skipping address,, yup idiot Internet advice
+		//	memcpy(&error_data,flash_read_block2,127);  // maybe skipping address,, yup idiot Internet advice
 
 						flash_flag=1;}
 
@@ -1019,13 +1009,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
    sampler.record_enable=1;
   }
 }
+//NVIC_DisableIRQ(TIM3_IRQn);   //  disables all tim irq
+void stop_start	(void)             {
+  //  if (TIM3==htim ->Instance)
+    if  (stop_toggle ==1) {HAL_TIM_Base_Stop_IT(&htim3);}
+    if  (stop_toggle ==2) HAL_TIM_Base_Start_IT(&htim3);;
 
-
-
-// if (counterVarB==n_lcd)lcd_blink = !lcd_blink;
-
-
-
+}
 
 
 /* USER CODE END 4 */

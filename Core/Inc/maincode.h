@@ -72,7 +72,12 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 51:     menu_vars_var1= &LFO_square[var_index].offset    ; break;
 	case 52:     menu_vars_var1= &LFO_square[var_index].delay    ; break;
 	case 53:     menu_vars_var1= &LCD_Info[var_index]    ; break; // send as char
-
+	case 54: 	menu_vars_var1=&sampler.trigger_1 ;break;
+	case 55: 	menu_vars_var1=&sampler.trigger_2 ;break;
+	case 56: 	menu_vars_var1=&sampler.trigger_3 ;break;
+	case 57: 	menu_vars_var1=&sampler.trigger_4 ;break;
+	case 58: 	menu_vars_var1=&sampler.repeat  ;break;
+	case 59: 	menu_vars_var1=&sampler.sample_select  ;break;
 
 	default :		menu_vars_var1= NULL   ; break;
 
@@ -111,11 +116,12 @@ void menu_parser(void){          // parse out menus , shouldn't have to run (in 
 		    if  ((strncmp(menu_string,menu_string2,8))==0) 								// compare and if true pass var,seq
 		    {
 
-			    if ((menu_counter>110 )&&(menu_counter<128 )) menu_counter=menu_counter+16;   // skip to second page
-			    if((menu_counter>238)&&(menu_counter<256 )) menu_counter=menu_counter+16; // skip
+			    if ((menu_counter>111 )&&(menu_counter<128 )) menu_counter=menu_counter+16;   // skip to second page
+			    if((menu_counter>239)&&(menu_counter<256 )) menu_counter=menu_counter+16; // skip
 			    if((menu_counter>367)&&(menu_counter<384 )) menu_counter=menu_counter+16; // skip
 			    if((menu_counter>495)&&(menu_counter<512 )) menu_counter=menu_counter+16; // skip
 			    if((menu_counter>623)&&(menu_counter<640 )) menu_counter=menu_counter+16; // skip
+
 			    menu_title_lut[menu_title_count]=  (string_counter <<16)+(menu_counter&1023);   // search result  and disp lcd position counter
     			    memcpy(menu_index_list+(menu_title_count*2),default_menu+string_search-2,2); // get array  index under ,LFO[1]  etc ,ok
         			    menu_title_count++;
@@ -139,7 +145,7 @@ for (counter=0;counter<20;counter++){
 
 			uint16_t* output_hold;
 			uint8_t input_hold=patch[counter].input1;
-			if (patch[counter].input1>=menu_lookup_count) patch[counter].input1=0;    // limit
+			if (patch[counter].input1>=(menu_lookup_count))    patch[counter].input1=0;    // limit
 
 			switch(input_hold&3){     // lfo now , can add adsr later
 
@@ -149,6 +155,10 @@ for (counter=0;counter<20;counter++){
 						//case 3:   output_hold=&LFO[input_hold>>2].out_tri[0];break;
 						case 3:   output_hold=&LFO_square[input_hold>>2].out[0];break;
 			}
+			if (patch[counter].input1==41) output_hold=&adc_values[1];   // waiting on 8 values
+			if (patch[counter].input1==42) output_hold=&adc_values[2]; // do this for other single values
+			if (patch[counter].input1==43) output_hold=&adc_values[0];
+
 
 			patch[counter].in1_ptr=output_hold;   // sets input pointer to first sample , default is lfo[0].out [0]
 			if (patch[counter].target) {  // test if above zero
@@ -175,6 +185,7 @@ for (counter=0;counter<20;counter++){
 
 void patch_target_modify(void){					// modify original value  careful position ,not using it now  ,ok
 
+/*
 	uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
 	for (n=0;n<20;n++){
 		if (patch[n].input1>=menu_lookup_count) patch[n].input1=0;    // limit
@@ -187,20 +198,25 @@ void patch_target_modify(void){					// modify original value  careful position ,
 			uint8_t  var_replaced= (modified_var>>7);   // scale to 8 bit for now
 		if (var_replaced>patch[n].limiter) var_replaced=patch[n].limiter;
 			*ptr_to_modify =var_replaced;   // replace original value,ok
+
 		}
-	}
+	}*/
 }
 
 	void patch_target_replace(void){					// sttaight value replace  ,ok
 	    uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
 	    uint8_t counter;
+	   uint8_t input_loop_position;
+
 	    for (counter=0;counter<20;counter++){
 
 
 
 		    if (patch[counter].target) {         // check first for enable
 
-			    patch[counter].output[loop_position]=*(patch[counter].in1_ptr+(loop_position));   //write output here
+			if (patch[counter].input1>40) input_loop_position=0;  else input_loop_position=loop_position;// hack
+
+			patch[counter].output[loop_position]=*(patch[counter].in1_ptr+(input_loop_position));   //write output here
 
 
 			    uint8_t  *ptr_to_modify =patch[counter].out_ptr;       // select address , not always 8 bit ,ok
@@ -328,78 +344,27 @@ void main_initial(void){
 
 	HAL_I2C_MspInit(&hi2c2);
 	uint8_t	send_spi1[260]={0x02,0,1,0,128,129,130,131,132,133,134,135,136,137,138,250,0,0} ; //page program ,24bit(address)  +1-255 byte data  (page)
-	/*
-	HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000); // send dummy,dummy , then whatever command for manuf
-	HAL_SPI_Receive(&hspi1, return_spi1, 2, 1000);   // manuf return sif correct , 0xEF,0x17 which is correct, then repeats when more request
-
-	*/
 
 
 	HAL_Delay(5);
 
-	//               ----                  16Mbyte   flash   , w25q128   -----  16M (24bit) * 8bits   ( 1 page 256 bytes)
-		send_spi1[0]=0x06; //enable write  , only lasts for single operation
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // start
-		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);       // enable write
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // end
-		HAL_Delay(5);
-		send_spi1[0]=0x52; //sector erase
-		send_spi1[1]=255; //24bit address msb
-		send_spi1[2]=128; //24bit address
-		send_spi1[3]=0; //24bit address lsb
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
-		HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works       4kbytes   (block erase=32kbytes)
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-
-
-		send_spi1[0]=0x05; //read status register  if writing
-		send_spi1[1]=0; //2
-		status_reg[1]=1; // set busy on
-
-		while (status_reg[1]&1){								// check if write busy
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);
-			HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);
-			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
-		}
-
-
-		send_spi1[0]=0x06; //enable write  , only lasts for single operation
-				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // start
-				HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);       // enable write
-				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // end
-				HAL_Delay(5);
-				send_spi1[0]=0x52; //sector erase
-				send_spi1[1]=255; //24bit address msb
-				send_spi1[2]=0; //24bit address
-				send_spi1[3]=0; //24bit address lsb
-				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);         // enable for sector erase   , stays empty when enabled
-				HAL_SPI_Transmit(&hspi1, send_spi1, 4, 1000);   //erase sector ,works       4kbytes   (block erase=32kbytes)
-				HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);
 
 
 
+		//uint16_t sample_size=sizeof(RAM);
+
+		uint16_t sample_size=32678;
 
 
 
+		uint8_t* ram_ptr=&RAM[0];
+	//	 sample_size=16382;
+		//		 ram_ptr=&RAM[16384];
+		// FORMATTING NEEDS TO BE SPOT ON OR THERE IS NO WRITE
 
-		HAL_Delay(250);
-		send_spi1[0]=0x04; //disable write
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // low
-		HAL_SPI_Transmit(&hspi1, send_spi1, 1, 1000);
-		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);   // high end
-
-
-
-
-
-		byte_swap(RAM,sizeof(RAM));    // correct order
-				sample_save(511,RAM, sizeof(RAM));  // write sample no 255
-				send_spi1[0]=sampler_ram_clear_test(511);  // test written ok
-
-
-
-
-
+	//	byte_swap(ram_ptr,sample_size);    // correct order
+				sample_save(2,ram_ptr, sample_size);  // write sample no 255
+				send_spi1[0]=sampler_ram_clear_test(2);  // test written ok
 
 
 
@@ -427,6 +392,7 @@ void main_initial(void){
 
 		memcpy(&seq,potSource,46 );  // load from potSource  ,, causes problems with memory ,NEEDS TO BE CONTINUOS OR  WILL  GET CORRUPT
 	    memcpy(&note,potSource+156,160 );   // this works but keep checking for fragmentation
+	    memcpy(&sampler,potSource+476,11 );
 
 	    for(mem_counter=0;mem_counter<10;mem_counter++){
 
@@ -436,6 +402,9 @@ void main_initial(void){
 			memcpy(&patch[mem_counter+10],potSource+346+(mem_counter*3),3 );
 			memcpy(&LFO_slave1[mem_counter],potSource+376+(mem_counter*6),6 );  // + 60 ,ok here
 			memcpy(&LFO_square[mem_counter],potSource+436+(mem_counter*4),4 );
+
+
+
 	    }
 
 
@@ -473,7 +442,7 @@ void main_initial(void){
 		gfx_clear();
 	uint16_t pars_counter;
 
-	for (pars_counter=0;pars_counter<1000;pars_counter++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
+	for (pars_counter=0;pars_counter<menu_parser_limit;pars_counter++)	{   // fill up display data , needs to run a lot more though or wont finish string_search
 
 			menu_parser();  // run it closer to default_menu size ,times, if default_menu is corrupt gfx breaks pretty bad
 
@@ -522,5 +491,4 @@ void patch_lists(void){   //   ok
     }
 
 }
-
 

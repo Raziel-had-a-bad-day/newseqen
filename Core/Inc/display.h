@@ -24,7 +24,7 @@ void display_process(void){							// keep data processing here
 
 
 	     memcpy(default_menu3+feedback_loc+8, *(menu_titles_final+crap_hold9),8);   // copy feedback data for reading,ok
-	     memcpy(default_menu3+feedback_loc+17,potSource+380,3);
+	     memcpy(default_menu3+feedback_loc+17,potSource+380,3);  // lcd out
 	     memcpy(default_menu3+feedback_loc+5,temp_char,2);
 
 	     if (menu_vars_ref==5) target_display=1;
@@ -364,7 +364,7 @@ void encoder2(void){  // encoder pos and data input
 
 			lcd_out3=*menu_vars_var;
 
-		if (enc_out1==enc_up) 	lcd_temp=lcd_out3;
+		if (enc_out1==enc_up) 	lcd_temp=lcd_out3;  // this may be a problem
 
 		div_limit=lcd_out3;
 			if (div_limit>9) div_limit=9;
@@ -380,7 +380,26 @@ void encoder2(void){  // encoder pos and data input
 
 				if ((menu_vars_ref==24) | (menu_vars_ref==25))  default_menu3[crap8]=major_notes[lcd_out3&31];
 				disp_up_counter++;
-				disp_up_counter=disp_up_counter&255;
+				if(disp_up_counter>menu_title_count) disp_up_counter=0;  // just auto scans lcd_data , can be an issue
 
     }
+
+    void LCD_Info_feedback(void){
+	  potSource[380]=(lcd_temp/100) +48;  // still works   , potsource ref is located in feedback line var  ,was sendin x16 values
+			    potSource[381]=((lcd_temp %100)/10)+48;		 // 0-160 to 0-10
+			    potSource[382]=(lcd_temp%10)+48;
+
+			    LCD_Info[0]  =( seq.pos/100) +48;
+			    LCD_Info[1]  =( (seq.pos%100) /10)+48;
+			    LCD_Info[2]  =( seq.pos%10)+48 ;
+
+			    LCD_Info[11]  =( seq.pos>>6) +49;   // +1
+			    LCD_Info[12]  =( (seq.pos&63)>>4) +49;
+			    LCD_Info[13]  =( (((seq.pos&15)+1)%100)/10)+48 ;
+			    LCD_Info[14]  =( ((seq.pos&15)+1)%10)+48 ;
+
+
+
+    }
+
 
