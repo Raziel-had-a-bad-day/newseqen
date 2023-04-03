@@ -171,8 +171,8 @@ main_initial();   // initial setup
 
 	if (loop_counter2==9024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
 
-		    if (mem_count>510) mem_count=0; else mem_count++;
-		    if (mem_count>460) mem_count=461;  // this might feedback
+		    if (mem_count>EPROM_limit) mem_count=0; else mem_count++;
+		    if (mem_count>(EPROM_limit-50)) mem_count=461;  // this might feedback
 		   // write to first this was moved for no logical reason ?
 
 			  patch_target_parse(); //
@@ -186,8 +186,8 @@ main_initial();   // initial setup
 
 				memcpy(potSource+46+(i*6),&LFO[i],6 );  // + 60  ,ok
 				memcpy(potSource+106+(i*5),&ADSR[i],5 );  // +50  ,
-				memcpy(potSource+316+(i*3),&patch[i],3 );
-				memcpy(potSource+346+(i*3),&patch[i+10],3 );
+				memcpy(potSource+316+(i*6),&patch[i],6 );
+				memcpy(potSource+512+(i*6),&patch[i+10],6 );
 				memcpy(potSource+376+(i*6),&LFO_slave1[i],6 ); // ext llof settings
 				memcpy(potSource+436+(i*4),&LFO_square[i],4 );
 				 //
@@ -263,7 +263,17 @@ main_initial();   // initial setup
 
 		if (init > 5) {    //  around 3 cycles per single transmit  , plenty quick as is , spi lcd can really slow things down
 
+			if(sampler.sample_save_enable>10){
 
+			    uint16_t sample_size=sizeof(RAM);
+
+			    		uint8_t* ram_ptr=&RAM[0];
+
+			    				sample_save(sampler.sample_save,ram_ptr, sample_size);  // write sample no 255
+			    sampler.sample_save_enable=0;
+			    sampler.sample_save=0;   // reset position jus tin case
+			    sampler.RAM_free=0; //
+			}
 
 
 		    //full page in mem for spi
@@ -289,7 +299,7 @@ main_initial();   // initial setup
 			adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
 			HAL_ADCEx_InjectedStop(&hadc1) ;
 			//  adc_temp1[2] =HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_3);
-			adc_values[0]=	(4095-  adc_temp1[0])<<4;
+			adc_values[0]=	(4095-  adc_temp1[0])<<4;  //  4095 = 0
 			adc_values[1]=	 (4095- adc_temp1[1])<<4;
 			adc_values[2]=	 (4095-adc_temp1[2])<<4;
 			//  adc_values[2]=	  adc_temp1[2]>>7;
@@ -314,11 +324,14 @@ main_initial();   // initial setup
 				adc_convert_count=(i*3)+adc_page;
 
 				adc_convert_temp=adc_source[adc_convert_count]+adc_source[adc_convert_count+1]+adc_source[adc_convert_count+2]; //  17 470 khz  ~
-				input_holder[i]=adc_convert_temp/3;
+				adc_convert_temp=(adc_convert_temp/3);   // dc offset nearly spot on
+				input_holder[i]=adc_convert_temp<<4;
+
+
 				//	input_holder[i]=adc_source[(i*3)+adc_page];
 
 			}
-		//	if (sampler.record_enable)  {sampler_ram_record(); sampler.start_MSB=0; sampler.start_LSB=0;sampler.end_MSB=63;}
+			if (sampler.record_enable)  {sampler.RAM_free=1;  loop_counter2=111;   sampler_ram_record(); }  //stop loop counter2
 
 			adc_flag=0;
 		}

@@ -1,8 +1,9 @@
 
 #define RAM_size 16384
-#define menu_lookup_count    61     // size of the look up variables processor
+#define menu_lookup_count    63     // size of the look up variables processor
 #define   seq_sample_rate  35727   // use it for period and tempo calcualtions
 #define pitch_limit 60
+#define EPROM_limit   614   //me used in eeprom for now
 
 
 #define menu_parser_limit 1200   // search limits
@@ -26,20 +27,21 @@ const char default_menu[] ={"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 00Tempo   
 		    "                "
 		    "                "
 		    "                "
-		    "                "
-		    "                "
 
-		"00Input_1 00Target  00Tg_ndx   01Input_1 01Target  01Tg_ndx   02Input_1 02Target  02Tg_ndx   03Input_1 03Target  03Tg_ndx   "
-	"04Input_1 04Target  04Tg_ndx   05Input_1 05Target  05Tg_ndx   06Input_1 06Target  06Tg_ndx   07Input_1 07Target  07Tg_ndx   "
-	"08Input_1 08Target  08Tg_ndx   09Input_1 09Target  09Tg_ndx   10Input_1 10Target  10Tg_ndx   11Input_1 11Target  11Tg_ndx   "
-	"12Input_1 12Target  12Tg_ndx   13Input_1 13Target  13Tg_ndx   14Input_1 14Target  14Tg_ndx   15Input_1 15Target  15Tg_ndx   "
-	"16Input_1 16Target  16Tg_ndx   17Input_1 17Target  17Tg_ndx   18Input_1 18Target  18Tg_ndx   19Input_1 19Target  19Tg_ndx   "
+	"00Input__100Input__200Inputmix00Target  00Tg_ndx      01Input__101Input__201Inputmix01Target  01Tg_ndx    "
+	"02Input__102Input__202Inputmix02Target  02Tg_ndx      03Input__103Input__203Inputmix03Target  03Tg_ndx    "
+
+	"04Input__104Input__204Inputmix04Target  04Tg_ndx      05Input__105Input__205Inputmix05Target  05Tg_ndx    "
+	"06Input__106Input__206Inputmix06Target  06Tg_ndx      07Input__107Input__207Inputmix07Target  07Tg_ndx    "
+	"08Input__108Input__208Inputmix08Target  08Tg_ndx      09Input__109Input__209Inputmix09Target  09Tg_ndx    "
+	"10Input__110Input__210Inputmix10Target  10Tg_ndx      11Input__111Input__211Inputmix11Target  11Tg_ndx    "
+	"12Input__112Input__212Inputmix12Target  12Tg_ndx      13Input__113Input__213Inputmix13Target  13Tg_ndx    "
 
 
 	"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 03LCD_Info04LCD_Info05LCD_Info06LCD_Info07LCD_Info08LCD_Info09LCD_Info10LCD_Info   "
 	"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "   //gaps cause it skip at end
-			"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
-			"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes2  "
+	"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
+	"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes2  "
 	"00SQ_Start 00SQ___End 00SQ_Depth 00SQOffset  01SQ_Start 01SQ___End 01SQ_Depth 01SQOffset"
 	"02SQ_Start 02SQ___End 02SQ_Depth 02SQOffset  03SQ_Start 03SQ___End 03SQ_Depth 03SQOffset"
 	"04SQ_Start 04SQ___End 04SQ_Depth 04SQOffset  05SQ_Start 05SQ___End 05SQ_Depth 05SQOffset"
@@ -49,10 +51,14 @@ const char default_menu[] ={"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 00Tempo   
 
 	"02S_Rate   02S_Depth  02S_Offset  03S_Rate   03S_Depth  03S_Offset    "
 	"04S_Rate   04S_Depth  04S_Offset  05S_Rate   05S_Depth  05S_Offset    "
+	"                "
+	"                "
+	"                "
+	"                "
 	" 00OSC1     01OSC1     02OSC1     03OSC1     06OSC1     07OSC1     08OSC1     09OSC1    "
 	"00StartMSB 00StartLSB  00EndMSB   00EndLSB   00SMoffset   00Resnance   "
 	"00S_Select  00Trigger1 00Trigger2 00Trigger3 00Trigger4  00S_Repeat  "
-	"                "
+	"00SmplSave   Save_nbl           "
 
 
 };   // just for testing text memory , will be modifiable ,  lut
@@ -67,19 +73,19 @@ const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,19,0,5,5,5  
 		,9,9,9,9,99,0,0,0,0,0,0				    } ; // index number limiter ,fixed IMPORTANT!
 
 const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,10,255,15,255,43,0,255,255,255,   // patch[x].limiter
-																				255,0,6,6,60,16,31,60,31,255,
+																				255,0,8,6,60,16,31,60,31,255,
 																				60,0,255,255,31,31,27,255,255 ,255,
-																				10,255,255,255,31,43,43,255,255,0 ,
-																				255,255,255,63,255,63,255,255,7,63,
+																				10,255,255,255,31,43,43,43,16,0 ,
+																				255,255,255,255,63,255,63,255,7,63,
 																				255,255,63,255	,17,17,17,17,4,255,
-																				255,255			    };   // right shift divider mainly for LFO  , maybe for lcd too
+																				255,255.255			    };   // right shift divider mainly for LFO  , maybe for lcd too
 
 	const char* menu_titles_final[menu_lookup_count]= {"LFO     ", "Rate    ","Depth   " ,"Delay   ", "Offset  ", "Target  ","ADSR    ",
 			"Attack  ", "Decay   ","Sustain ","Release ",
 			"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",
 			"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    ","Cutoff_1","Cutoff_2","Resnance","Q_level ","Level   ","Feedback","Out_mix ","Poles   ",
-			"Tg_ndx  ","Input_1 ","Input_2 ","In_mix  ","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset","StartMSB","StartLSB","EndMSB  ","EndLSB  ","SMoffset","SQ___End","SQ_Depth ","SQOffset","SQ_Start","LCD_Info"
-			,"Trigger1","Trigger2","Trigger3","Trigger4","S_Repeat","S_Select"
+			"Tg_ndx  ","Input__1","Input__2","Inputmix","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset","StartMSB","StartLSB","EndMSB  ","EndLSB  ","SMoffset","SQ___End","SQ_Depth ","SQOffset","SQ_Start","LCD_Info"
+			,"Trigger1","Trigger2","Trigger3","Trigger4","S_Repeat","S_Select","SmplSave","Save_nbl"
 
 	};   // 40 *8
 
@@ -88,7 +94,8 @@ const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,10,255,15,255,43,0,255,
 			0,1,1,1,1,1,1,0,1,0,
 			1,1,1,1,1,1,1,1,1,1,
 			1,1,1,1,1,1,1,1,1,1,
-			1,1,1,1,1,1,1,1,1,1,1};  // skip most of it for now
+			1,1,1,1,1,1,1,1,1,1,
+			1,1,1};  // skip most of it for now
  const char* patch_inputs[]={
 		"LFO0 sin","LFO0 saw","LFO0 tri","LFO0 sqr" ,"LFO1 sin","LFO1 saw","LFO1 tri","LFO1 sqr" ,"LFO2 sin","LFO2 saw","LFO2 tri","LFO2 sqr" ,
 		"LFO3 sin","LFO3 saw","LFO3 tri","LFO3 sqr" ,"LFO4 sin","LFO4 saw","LFO4 tri","LFO4 sqr" ,"LFO5 sin","LFO5 saw","LFO5 tri","LFO5 sqr" ,
@@ -103,8 +110,9 @@ const uint8_t  display_vars_divider[menu_lookup_count] =						// lcd display val
 				5,0,0,0,0,0,0,0,0,5,
 				0,0,5,5,0,0,5,5,5 ,5,
 				5,5,5,5,0,2,0,0,5,5,
-				5,5,5,5,5,5,5,5,5,5
-				,5,5,0,0,0,0,0,0,0,0,0,0};
+				5,5,5,5,5,5,5,5,5,5,
+				5,5,0,0,0,0,0,0,0,0,
+				0,0,0};
 
 
 

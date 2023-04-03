@@ -173,3 +173,38 @@
 		    flash_flag=0;  }
 
 	}
+	void sampler_ram_record(void) {
+	  if (!record_counter) {stop_toggle=1;  stop_start();}   // halt
+	    memcpy(	&RAM[record_counter], input_holder,1024);   // transfer
+	record_counter =record_counter+1024;
+	if (record_counter>=32767) { record_counter=0; sampler.record_enable=0; stop_toggle=2; RAM_normalise();  stop_start(); }  // reset and stop record
+
+	}
+
+void RAM_normalise(void){
+	    uint16_t counter=0;
+	    uint16_t peak=0;
+	    uint16_t*   ram_ptr=  &RAM;
+	    float process1=32767 ;
+	   int32_t incoming;
+	    for (counter=0;counter<16384;counter++){
+
+		incoming= *(ram_ptr+counter);
+		if (incoming>peak ) peak=incoming;
+	    }
+	    process1=(32767/(peak-process1))*0.9;
+
+	    for (counter=0;counter<16384;counter++){
+		incoming= (*(ram_ptr+counter))-32767;
+		incoming=(incoming*process1)+32767;
+
+		*(ram_ptr+counter)=incoming&65535;
+
+	    }
+
+	}
+
+
+
+
+

@@ -20,13 +20,13 @@ void sampling(void){						// 330 atm or 8.5ms
 uint8_t mask_i;
 int32_t sample_Accu[10] ={0,0,0,0,0,0,0,0,0,0};   // accu for sample output or lookup
 uint16_t tuned_list[10];
-int32_t sample_adc;
-int32_t ram_temp;
+int32_t sample_adc=0;
+int32_t ram_temp=0;
 uint16_t sample_counts_temp[40]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 uint8_t flash_result;
-int32_t sample_input;
-
-
+int32_t sample_input=0;
+tempo_lut[131]=1023;   // force to an even count on samples
+int32_t sample_loop_input=0;
 //if ((sampler.record_enable==0) && (flash_flag))   {  flash_page_read ((sampler.ram_seq)<<1 ); flash_flag=0;}
 
 if (bank_write==2)  {sample_pointD=512;}  else sample_pointD=0;
@@ -41,6 +41,8 @@ uint16_t i_total;
 uint16_t tempo_mod=tempo_lut[seq.tempo];  // set tempo,speed from lut 40-200bpm  ,changed to 4x for note lenght
 //if (seq.tempo<40)  tempo_mod=511;  // syncs to main loop
 uint8_t l;			// 35.002khz(0.02857ms) sample, 1 sample is temp count (16x=0.00045712) , *16=1 note ,at 300 (437bpm),(1/(0.00002857*tempo count*16)=1beat in s
+
+
 
 tempo_sync=16384/((tempo_mod*16)/512) ; // 8000 at slowest 15.625 updates to lfo at 1 note 16384/15.625=1048.576+ per update  at setting 80
 tempo_sync=tempo_sync/80;  // bit weird her , this is adsr !
@@ -86,10 +88,10 @@ uint8_t pars_counter;
 	 if (note[pars_counter].osc==0) osc_pointers[pars_counter]=&sample_Accu[5];  // zero
 	 	 	 	 if (note[pars_counter].osc==1) osc_pointers[pars_counter]=&sample_accus[pars_counter];   // saw
 	 			if (note[pars_counter].osc==2) osc_pointers[pars_counter]=&sample_Accu[pars_counter];		// tri
-	 			if (note[pars_counter].osc==3) { osc_pointers[pars_counter]=&sample_Accu[pars_counter+6];sampler.one_shot=sampler.one_shot | (1<<pars_counter);}   // sine
-	 			if (note[pars_counter].osc==4) { osc_pointers[pars_counter]=&sample_Accu[pars_counter+6];sampler.one_shot=sampler.one_shot &  ~(1<<pars_counter);}  // looping sample
+	 			if (note[pars_counter].osc==3) { osc_pointers[pars_counter]=&sample_Accu[pars_counter+6];}   // sample_input
+	 			if (note[pars_counter].osc==4) { osc_pointers[pars_counter]=&sample_input;}  // sampleinput
 	 			if (note[pars_counter].osc==5) osc_pointers[pars_counter]=&sample_adc;   // sine
-	 			if (note[pars_counter].osc==6) osc_pointers[pars_counter]=&ram_temp ;   // sine
+	 			if (note[pars_counter].osc==6) osc_pointers[pars_counter]=&ram_temp ;   // non muted RAM , just loop
 	 			if (note[pars_counter].osc==7) osc_pointers[pars_counter]=&ram_temp ;   // trigger 0-16
 	 			if (note[pars_counter].osc>7) osc_pointers[pars_counter]=&sample_Accu[5];  // zero
 
@@ -141,9 +143,6 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	sampling_position_b=(sampling_position+7)&7;
 	note_plain=seq.notes1[seq.pos & 7 ];
 potValues[i&255]=potSource[i&255]>>4; //just to update values
-
-//tempo_large++;
-//if (tempo_large>=(tempo_mod*4096))  tempo_large=0;     // use it count for lfo long  16*16 notes
 
 if (tempo_count>=tempo_mod) { next_isr=(next_isr+1)& 4095;tempo_count=0;isr_change=next_isr+1;  }  else {tempo_count++;  }  //trigger next note , actual next step for isrCount(future)  8ms,trying to fix slow down here  8000 too  much, adsr clears note info
 // tempo_count is about 1000-400
@@ -299,35 +298,19 @@ uint32_t*  sine_ptr_temp[5];
 	sampler.start=(sampler.start_MSB<<8)+sampler.start_LSB;
 	sampler.end=(sampler.end_MSB<<8)+sampler.end_LSB;
 
-
-/*
-	if ((sampler.one_shot&1) && (sine_counter[4]>(sampler.end-1000)) && (note[0].osc==3))   {note[0].position=0; sine_counter[6] =0;} //stop at the end
-	if ((sampler.one_shot&2) && (sine_counter[7]>(sampler.end-1000))&& (note[1].osc==3))     {note[0].position=0; sine_counter[7] =0;}
-	if ((sampler.one_shot&4) && (sine_counter[11]>(sampler.end-1000))&& (note[2].osc==3))     {note[0].position=0; sine_counter[8] =0;}
-	if ((sampler.one_shot&8) && (sine_counter[14]>(sampler.end-1000))&& (note[3].osc==3))  {note[0].position=0; sine_counter[9] =0;}
-*/
-
 	sine_ptr_temp[0]=&sine_counter[3];
 	sine_ptr_temp[1]=&sine_counter[6];
 	sine_ptr_temp[2]=&sine_counter[9];
 	sine_ptr_temp[3]=&sine_counter[12];
 
-
+	    // does go out of time , likely skipping samples
 	if(sampler.start_MSB>sampler.end_MSB) sampler.start_MSB=0; //flip to 0  for now
 	if (sampler.ram_seq<sampler.start)      sampler.ram_seq=sampler.start;
-	if ((sampler.ram_seq+256)>sampler.end) sampler.ram_seq=sampler.start;     // just for playback counter
+	if ((sampler.ram_seq)>=sampler.end)     {sampler.ram_seq=sampler.start; note[3].position=0;}      // just for playback counter
 
 	sampler.length=sampler.end-sampler.start;
 
-	if(sampler.trigger_position ) { sampler.ram_seq=sampler.start; }   // starts her not perfect , figure out better
-
-	//if(sine_counter[9]<=sampler.start) sine_counter[9]=sampler.start;
-
-
-	//if (sine_counter[9]>((sampler.length+sampler.start+sampler_offset)-256))   {sine_counter[9]=sampler.start+sampler_offset; note[3].position=0;}// jump to start , turn off
-	if (sampler.ram_seq>((sampler.length+sampler.start)-512))   {sampler.ram_seq=sampler.start; note[3].position=0;} // one shot
-
-//	sampler.start_ptr=&RAM[sine_counter[9]];  // this might be obsolete ,or use for testing
+	if(sampler.trigger_position )  { sampler.ram_seq=sampler.start; }   // starts her not perfect , figure out better
 
 
 
@@ -362,15 +345,16 @@ uint8_t send_spi1[4];
 
 	 sample_flash_address=((sampler.sample_select*127)<<8)+(sampler.ram_seq*2);  //let see , limited now with a 1k byte delay
 
-	  sampler_1k_load(sample_flash_address);
+   sampler_1k_load(sample_flash_address);
 	//if((sampler.ram_seq&255)==0)	  sampler_1k_load(sample_flash_address);
 
 	counter_16=counter_16+2;   // jump 512 bytes
-if (sampler.ram_seq>14000) memcpy(&error_data,flash_read_block2,127);
+	//    if (sampler.ram_seq>14000) memcpy(&error_data,flash_read_block2,127);
+
 	uint16_t*   ram_ptr=  &RAM	;  // pointer goes to LSB !!!!
 	uint16_t* sample_ptr= &flash_read_block;
-
-
+	if(RAM_looper>=16127) RAM_looper=0;
+	int32_t   sample_adc_temp;
 //	if ((sampler.ram_seq&255)==0)  ram_ptr=  &flash_read_block[128];
 
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators
@@ -378,19 +362,27 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	sampling_position=(i>>6);
 
 
-	sample_adc=input_holder[i>>1];
-	sample_adc=(sample_adc-2040)<<11;
+	sample_adc_temp=input_holder[i>>1];
+	sample_adc_temp=(sample_adc_temp-32767)<<4;
+	sample_adc=(sample_adc_temp+sample_adc)>>1;
 
-	   ram_temp=*(ram_ptr+(sampler.ram_seq));    // works
+	   ram_temp=*(ram_ptr+RAM_looper);    // works
 
-	    debug_value=ram_temp;
+
+
+	//   sample_loop_input= *(sample_ptr+(RAM_looper&255));
+
+	  // sample_loop_input=  ( sample_loop_input-32767)<<4;
+
+
+	   debug_value=ram_temp;
 	ram_temp=(ram_temp-32767)<<4;
 
 
 	sample_input=*(sample_ptr+(sampler.ram_seq&255));
 	sample_input=(sample_input-32767)<<4;
 
-	if	((i&1)==1)  sampler.ram_seq=sampler.ram_seq+1;  // half speed
+	if	((i&1)==1)  {sampler.ram_seq=sampler.ram_seq+1; RAM_looper++; } // half speed
 
 
 
@@ -435,18 +427,16 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 					sample_temp1=(*osc_pointers[1])*note[1].velocity; // needs cut a bit  ,default 20bit
 					sample_temp3=sample_temp1>>2; // 20+8
 
+
 					sample_temp1=(*osc_pointers[2])*note[2].velocity;      // needs some gain fine tune !
 					sample_temp4 =sample_temp1>>2;    // 64 default 20+8
 
-					if (note[3].position) sample_Accu[9]=sample_input;
+					if (note[3].position) {sample_Accu[9]=sample_input;sample_Accu[8]=sample_input;sample_Accu[7]=sample_input;sample_Accu[6]=sample_input;}
 					//if (note[3].position) sample_Accu[9]=(ram_temp+sample_Accu[9])>>1; // bit hot , also  add avr
 
 					sample_temp1=(*osc_pointers[3])*	note[3].velocity;  // sine out is 16bit, add 4 then 16+8
-
-
-
 					sample_temp5 =sample_temp1>>2;
-					//sample_Accu[3] =sine_out>>4;
+
 	play_holder0[i]=sample_temp2;  // write to bank
 	play_holder1[i]=sample_temp3;
 	play_holder2[i]=sample_temp4;
@@ -777,7 +767,7 @@ uint32_t lfo_accu_temp;
 
 	}
 
-void LFO_source_synced(void){     // lfo , ok
+void LFO_source_synced(void){     // lfo , ok , half phase
 
 
 	float	freq_temp=0;

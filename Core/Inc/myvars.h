@@ -154,6 +154,8 @@ uint8_t  sampler_ram_clear_test(uint16_t sample_number);
 void sample_save(uint16_t sample_number, uint8_t* sample_data ,uint16_t  sample_size);
 void  sampler_1k_load(uint32_t load_address);
 void LCD_Info_feedback(void);
+void RAM_normalise(void);
+
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
 uint8_t NoteC; // second channel note
@@ -428,7 +430,8 @@ struct patch_settings{					// use this instead of lfo  or other modulators
 	uint16_t output[10];  // actual output
 	uint8_t*  out_ptr;  // output target , might change that
 	uint16_t*   in1_ptr;     // use ptr for reading
-    uint8_t limiter;   // output limiter for target  8 bit
+	uint16_t*   in2_ptr;     // use ptr2 for reading
+	uint8_t limiter;   // output limiter for target  8 bit
 };
 struct patch_settings patch[20];    // patch board
 
@@ -448,12 +451,13 @@ struct sampler_settings{
 
 
     uint8_t sample_save;  // location to save to , 32-64kb
+
     uint16_t trigger_position;  // enabled for start with byte position for retirgger  , reset counter to sampler.start  . +1 to enable
     uint8_t record_enable;   //record to ram max 1-2 sec for now
 uint8_t sample_location;   // save location on flash ,preset for now
 uint8_t sample_save_enable ;   // save flag to flash
 uint8_t one_shot; // one shot bit flag , 0-7 notes
-
+uint8_t RAM_free ;  // enables flash playback
 uint16_t  start;    // for trimming  start ,calucalted
  uint16_t end;	// for trimming end ,calculated
 uint16_t length;  // length for looping  ,calucalted
@@ -462,14 +466,19 @@ uint16_t ram_pos;  //record pos
 uint16_t* start_ptr;
 uint16_t ram_seq;   // seq current position
 
-
-
 };
 static struct sampler_settings sampler={.record_enable=0, .sample_location=0,.sample_save_enable=0,.ram_pos=0
-		,.end_MSB=63, .end_LSB=255,.start_MSB=0,.start_LSB=0,.length=1024,.one_shot=255  };                                     // needs to be protected
+		,.end_MSB=63, .end_LSB=255,.start_MSB=0,.start_LSB=0,.length=1024,.one_shot=255,.RAM_free=0  };                                     // needs to be protected
+
+struct sample_info{   // stored in the last 64kb
+    uint8_t sample_record;
+    uint16_t tempo_map[10]; // trigger points
+    char sample_name[16]; //holds sample name
+
+};
 
 
-
+struct sample_info sample_info;
 
 uint16_t string_search=0;   // search position on created menu
 uint16_t string_value=0;  // holds the variable result from the search result
@@ -551,6 +560,8 @@ uint8_t error_data[128]={0};
 uint8_t stop_toggle=0;
 uint32_t  millis_stored=0;
 uint32_t  millis_stored2=0;
+uint16_t record_counter=0;
+uint16_t RAM_looper=0;
 //uint8_t flash_busy=0;
 
 //static uint16_t tuned_list[10];

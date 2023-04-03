@@ -78,6 +78,10 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 57: 	menu_vars_var1=&sampler.trigger_4 ;break;
 	case 58: 	menu_vars_var1=&sampler.repeat  ;break;
 	case 59: 	menu_vars_var1=&sampler.sample_select  ;break;
+	case 60: 	menu_vars_var1=&sampler.sample_save  ;break;
+	case 61: 	menu_vars_var1=&sampler.sample_save_enable  ;break;
+
+
 
 	default :		menu_vars_var1= NULL   ; break;
 
@@ -88,12 +92,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	return menu_vars_var1;
 }
 
-void sampler_ram_record(void) {
 
-memcpy(	&RAM[sampler.ram_pos], input_holder,sizeof(input_holder));
-	sampler.ram_pos =sampler.ram_pos+512;
-if (sampler.ram_pos>16383) { sampler.ram_pos=0; sampler.record_enable=0; } // reset and stop record
-}
 
 
 
@@ -144,7 +143,11 @@ uint8_t skip=0;
 for (counter=0;counter<20;counter++){
 
 			uint16_t* output_hold;
+			uint16_t* output_hold2;
+
+
 			uint8_t input_hold=patch[counter].input1;
+			uint8_t input_hold2=patch[counter].input2;
 			if (patch[counter].input1>=(menu_lookup_count))    patch[counter].input1=0;    // limit
 
 			switch(input_hold&3){     // lfo now , can add adsr later
@@ -155,12 +158,30 @@ for (counter=0;counter<20;counter++){
 						//case 3:   output_hold=&LFO[input_hold>>2].out_tri[0];break;
 						case 3:   output_hold=&LFO_square[input_hold>>2].out[0];break;
 			}
-			if (patch[counter].input1==41) output_hold=&adc_values[1];   // waiting on 8 values
+			if (patch[counter].input2>=(menu_lookup_count))    patch[counter].input2=0;    // limit
+
+			switch(input_hold2&3){     // lfo now , can add adsr later
+
+			case 0:   output_hold2=&LFO[input_hold2>>2].out[0];break;
+			case 1:   output_hold2=&LFO[input_hold2>>2].out_saw[0];break;
+			case 2:   output_hold2=&LFO[input_hold2>>2].out_tri[0];break;
+			//case 3:   output_hold=&LFO[input_hold>>2].out_tri[0];break;
+			case 3:   output_hold2=&LFO_square[input_hold2>>2].out[0];break;
+			}
+
+			if (patch[counter].input1==41) output_hold=&adc_values[1];   // same format as lfo
 			if (patch[counter].input1==42) output_hold=&adc_values[2]; // do this for other single values
 			if (patch[counter].input1==43) output_hold=&adc_values[0];
+			if (patch[counter].input2==41) output_hold2=&adc_values[1];   // waiting on 8 values
+			if (patch[counter].input2==42) output_hold2=&adc_values[2]; // do this for other single values
+			if (patch[counter].input2==43) output_hold2=&adc_values[0];
+
 
 
 			patch[counter].in1_ptr=output_hold;   // sets input pointer to first sample , default is lfo[0].out [0]
+			patch[counter].in2_ptr=output_hold2;
+
+
 			if (patch[counter].target) {  // test if above zero
 				uint8_t target_input=patch[counter].target; // copy to avoid messed up pointer
 			for(skip=target_input ;skip<menu_lookup_count;skip++){
@@ -207,16 +228,29 @@ void patch_target_modify(void){					// modify original value  careful position ,
 	    uint8_t loop_position=sampling_position&7;    // 0-7 , this comes usually from 0-512 loop / 64
 	    uint8_t counter;
 	   uint8_t input_loop_position;
+	   int32_t output_hold;
+	   int32_t output_hold2;
+	   uint8_t input_mix=0;
 
-	    for (counter=0;counter<20;counter++){
+	    for (counter=0;counter<20;counter++){    // single phase inc half sine only !!!
 
 
 
 		    if (patch[counter].target) {         // check first for enable
 
-			if (patch[counter].input1>40) input_loop_position=0;  else input_loop_position=loop_position;// hack
+			if ((patch[counter].input1>40) ||(patch[counter].input2>40) )input_loop_position=0;  else input_loop_position=loop_position;// hack
 
-			patch[counter].output[loop_position]=*(patch[counter].in1_ptr+(input_loop_position));   //write output here
+
+				input_mix=patch[counter].in_mix;
+				output_hold	      =*(patch[counter].in1_ptr+(input_loop_position));   //write output here
+				output_hold2	      =*(patch[counter].in2_ptr+(input_loop_position));   //write output here
+
+				output_hold	=output_hold*(16-input_mix);   // bit messy  might just pre_calc
+				output_hold2	=output_hold2*input_mix;
+
+
+
+				patch[counter].output[loop_position]	=((output_hold+output_hold2)>>4);
 
 
 			    uint8_t  *ptr_to_modify =patch[counter].out_ptr;       // select address , not always 8 bit ,ok
@@ -358,11 +392,7 @@ void main_initial(void){
 
 
 		uint8_t* ram_ptr=&RAM[0];
-	//	 sample_size=16382;
-		//		 ram_ptr=&RAM[16384];
-		// FORMATTING NEEDS TO BE SPOT ON OR THERE IS NO WRITE
 
-	//	byte_swap(ram_ptr,sample_size);    // correct order
 				sample_save(2,ram_ptr, sample_size);  // write sample no 255
 				send_spi1[0]=sampler_ram_clear_test(2);  // test written ok
 
@@ -398,11 +428,11 @@ void main_initial(void){
 
 			memcpy(&LFO[mem_counter],potSource+46+(mem_counter*6),6 );  // + 60 ,ok here
 			memcpy(&ADSR[mem_counter],potSource+106+(mem_counter*5),5 );  // +50  ,
-			memcpy(&patch[mem_counter],potSource+316+(mem_counter*3),3 );
-			memcpy(&patch[mem_counter+10],potSource+346+(mem_counter*3),3 );
+			memcpy(&patch[mem_counter],potSource+316+(mem_counter*6),6 );
+
 			memcpy(&LFO_slave1[mem_counter],potSource+376+(mem_counter*6),6 );  // + 60 ,ok here
 			memcpy(&LFO_square[mem_counter],potSource+436+(mem_counter*4),4 );
-
+			memcpy(&patch[mem_counter+10],potSource+512+(mem_counter*6),6 );
 
 
 	    }
