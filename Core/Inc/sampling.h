@@ -310,7 +310,7 @@ uint32_t*  sine_ptr_temp[5];
 
 	sampler.length=sampler.end-sampler.start;
 
-	if(sampler.trigger_position )  { sampler.ram_seq=sampler.start; }   // starts her not perfect , figure out better
+	if(sampler.trigger_position )  { sampler.ram_seq=sampler.start;note[3].position=1; }   // starts her not perfect , figure out better
 
 
 
@@ -353,9 +353,10 @@ uint8_t send_spi1[4];
 
 	uint16_t*   ram_ptr=  &RAM	;  // pointer goes to LSB !!!!
 	uint16_t* sample_ptr= &flash_read_block;
-	if(RAM_looper>=16127) RAM_looper=0;
+	if(RAM_looper>=16383) RAM_looper=0;
 	int32_t   sample_adc_temp;
 //	if ((sampler.ram_seq&255)==0)  ram_ptr=  &flash_read_block[128];
+	uint16_t looper_point=0;
 
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators
 	i_total=i+sample_pointB;
@@ -365,8 +366,8 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	sample_adc_temp=input_holder[i>>1];
 	sample_adc_temp=(sample_adc_temp-32767)<<4;
 	sample_adc=(sample_adc_temp+sample_adc)>>1;
-
-	   ram_temp=*(ram_ptr+RAM_looper);    // works
+	looper_point=(RAM_looper+(sampler.offset<<11))&16383;
+	   ram_temp=*(ram_ptr+looper_point);    // works
 
 
 
@@ -375,7 +376,7 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	  // sample_loop_input=  ( sample_loop_input-32767)<<4;
 
 
-	   debug_value=ram_temp;
+
 	ram_temp=(ram_temp-32767)<<4;
 
 
@@ -513,6 +514,17 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 				//sample_Accu[0]=(sample_Accu[0]>>2)+(play_holder0[(i+550)&511]>>2);   // just need 7 samples for aphaser at 500 hz
 
 		filter_Accu=filter_Accu2=0;
+		//if  (record_output)  {
+		filter_Accu = (sample_Accu[0]+sample_Accu[1]+sample_Accu[2]+sample_Accu[3] )>>10 ;
+		filter_Accu =filter_Accu+32767;
+
+		  debug_value=filter_Accu;
+		output_mix[(i&510)+1]=(filter_Accu>>8) &255;
+		output_mix[(i&510)]=filter_Accu&255;
+
+
+	//	}
+
 		filter_Accu=(sample_Accu[0]+sample_Accu[1])>>16;
 
 
@@ -540,7 +552,7 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 
 		if (bank_write)   error_count++;  // if bank write is high it means too much stall here
 		time_final[0]=time_proc;
-
+		if  (record_output)  record_output_to_RAM();
 
 		//bank_write=0;   /// total 320 sample time (39khz)
 		}
@@ -672,23 +684,23 @@ void LFO_square_one_pulse(void){   // sends one pulse synced to seq.pos , rate= 
 	uint8_t seq_div=7;
 	uint8_t lfo_c ;
 	//uint16_t pulse_length;     // 1 note -32 ? with fractions  0-8 then 0-16 then 0-32 then 0-64 ,repeat
-	uint8_t delay;
+	uint8_t pulse_high;
 
 	for (lfo_c=0;lfo_c<10;lfo_c++){
 
 	    pulse_low=LFO_square[lfo_c].rate;
 	 //   if (LFO_square[lfo_c].delay<8) delay=LFO_square[lfo_c].delay;  else delay=7;
-	    delay=LFO_square[lfo_c].delay;
+	    pulse_high=LFO_square[lfo_c].delay;
 
-	    if ((pulse_low&32) 	|| 	(delay&32)) 						 {seq_div=63;}  // This is the end
-	    if  ((pulse_low&16) 	|| 	(delay&16)) 								 {seq_div=31;}
-	    if  ((pulse_low&8) 	|| 	(delay&8)) 								{ seq_div=15;}
-	    if  ((pulse_low&7) 	|| 	(delay&7)) 									 {seq_div=7;}
+	    if (pulse_low<64) 						 {seq_div=63;}  // This is the end
+	    if  (pulse_low<32) 								 {seq_div=31;}
+	    if  (pulse_low<16) 								{ seq_div=15;}
+	    if  (pulse_low<8) 									 {seq_div=7;}
 
-	    //delay=(delay*seq_div)>>3;   // this is the start
+	    //pulse_high=(pulse_high*seq_div)>>3;   // this is the start
 
 
-	    if (((seqpos&seq_div)<=pulse_low)  &&	((seqpos&seq_div)>=delay))	LFO_square[lfo_c].out[sampling_position]=((LFO_square[lfo_c].depth))<<8;  // high
+	    if (((seqpos&seq_div)<=pulse_low)  &&	((seqpos&seq_div)>=pulse_high))	LFO_square[lfo_c].out[sampling_position]=((LFO_square[lfo_c].depth))<<8;  // high
 	    else LFO_square[lfo_c].out[sampling_position]=(LFO_square[lfo_c].offset)<<8;		//low
 
 	}

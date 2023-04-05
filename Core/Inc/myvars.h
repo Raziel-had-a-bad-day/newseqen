@@ -64,9 +64,9 @@ uint16_t menu_locA=0;
 uint16_t sample_counts_holder[40];
 uint16_t sample_accu_counter[8]={0};   //holds counter value
 uint8_t noteTiming;  // set timing shift
-uint8_t potValues [512]={0};   //low res values mostly for display
+uint8_t potValues [EPROM_limit ]={0};   //low res values mostly for display
 
-uint8_t potSource[512]={0}; // high res version of potValues used when needed 40-0, gonna change to 160 just o break things, need more res for lfo
+uint8_t potSource[EPROM_limit ]={0}; // high res version of potValues used when needed 40-0, gonna change to 160 just o break things, need more res for lfo
 
 uint32_t sine_counter[24];  // up counter for sine reading
 float sine_counter_float[5];
@@ -155,7 +155,7 @@ void sample_save(uint16_t sample_number, uint8_t* sample_data ,uint16_t  sample_
 void  sampler_1k_load(uint32_t load_address);
 void LCD_Info_feedback(void);
 void RAM_normalise(void);
-
+void record_output_to_RAM (void);
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
 uint8_t NoteC; // second channel note
@@ -432,6 +432,7 @@ struct patch_settings{					// use this instead of lfo  or other modulators
 	uint16_t*   in1_ptr;     // use ptr for reading
 	uint16_t*   in2_ptr;     // use ptr2 for reading
 	uint8_t limiter;   // output limiter for target  8 bit
+	uint8_t divider;
 };
 struct patch_settings patch[20];    // patch board
 
@@ -548,7 +549,7 @@ uint8_t LCD_Info[99]={0};   // lcd_numbers or text  data anywhere on screen
 uint8_t sqr_target_list[20];  // keep record of patch target for LCD_info using  menu_titles_final  as  a list ref
 
 uint16_t seqpos_i;// i+1
-float debug_value;
+int32_t  debug_value;
 uint32_t tempo_large;
  static uint8_t flash_read_block[530]={0};
  static uint8_t flash_read_block2[1030];
@@ -562,7 +563,16 @@ uint32_t  millis_stored=0;
 uint32_t  millis_stored2=0;
 uint16_t record_counter=0;
 uint16_t RAM_looper=0;
+volatile uint8_t page_skip=0;
+volatile uint8_t  record_output=0;
+uint8_t output_mix[1024]={0};  // records total output
+uint16_t record_out_counter=0;
+uint8_t LFO_vars_divider[menu_lookup_count]={0};    // multiply/ divider for LFO output only
+
+
 //uint8_t flash_busy=0;
+
+
 
 //static uint16_t tuned_list[10];
 

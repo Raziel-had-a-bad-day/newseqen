@@ -203,6 +203,17 @@ void RAM_normalise(void){
 	    }
 
 	}
+void record_output_to_RAM(void){
+//	  if (sampler.record_enable)  { return;} // skip if recording already
+    memcpy(	&RAM[record_out_counter], output_mix,512);   // transfer
+    record_out_counter =record_out_counter+512;
+if (record_out_counter>=32767) { record_out_counter=0; record_output=0;
+
+						RAM_normalise();   }  // reset and stop record RAM_normalise();
+
+		     }
+
+
 
 
 

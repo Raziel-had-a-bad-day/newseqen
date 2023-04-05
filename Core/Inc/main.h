@@ -60,6 +60,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define encoder2_Pin GPIO_PIN_11
+#define encoder2_GPIO_Port GPIOA
+#define encoder2_EXTI_IRQn EXTI15_10_IRQn
+#define encoder1_Pin GPIO_PIN_10
+#define encoder1_GPIO_Port GPIOA
+#define encoder1_EXTI_IRQn EXTI15_10_IRQn
 #define LED_Pin GPIO_PIN_13
 #define LED_GPIO_Port GPIOC
 #define record_pin_Pin GPIO_PIN_12

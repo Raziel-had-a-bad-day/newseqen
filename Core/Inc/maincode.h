@@ -197,6 +197,7 @@ for (counter=0;counter<20;counter++){
 			patch[counter].target_index=target_index;
 			uint8_t*  target_out_ptr= menu_vars(menu_titles_final[target_input] , target_index    );
 			if (target_out_ptr)           {patch[counter].out_ptr =target_out_ptr;     // write ptr
+			patch[counter].divider=LFO_vars_divider[menu_vars_ref];
 			patch[counter].limiter=menu_vars_limiter[menu_vars_ref]; }      // writes limiter value for particular patch , deosnt save
 				}
 				else patch[counter].target=0;  // write back 0 if failed
@@ -257,7 +258,7 @@ void patch_target_modify(void){					// modify original value  careful position ,
 			    uint16_t lfo_out_temp=  (patch[counter].output [loop_position])>>8;  // 0-256,
 			    uint8_t lfo_mod1=ptr_to_modify; //ok
 
-			    uint8_t  var_replaced =  lfo_out_temp &255 ;   // grab lfo out *    data to be modfied
+			    uint8_t  var_replaced =  lfo_out_temp >>patch[counter].divider;   // grab lfo out *    data to be modfied
 
 			    if (var_replaced>patch[counter].limiter) var_replaced=patch[counter].limiter;  // limit lfo output
 
@@ -341,8 +342,9 @@ void note_reset (void){          // reset deafult values before modulation , in 
 	note[0].velocity=255;note[1].velocity=255;note[2].velocity=255;note[3].velocity=255;note[4].velocity=255;note[5].velocity=255;note[6].velocity=255
 																;note[0].detune=0;note[1].detune=0;note[2].detune=0;note[3].detune=0;note[4].detune=0;
 	note[5].detune=0;note[6].detune=0;
-
-
+	filter[0].cutoff_1=0;filter[1].cutoff_1=0;filter[2].cutoff_1=0;filter[4].cutoff_1=0;
+	filter[0].resonance=0;filter[1].resonance=0;filter[2].resonance=0;filter[3].resonance=0;
+	note[0].position=1;note[1].position=1;note[2].position=1;note[3].position=1;
 }
 
 void main_initial(void){
@@ -495,6 +497,18 @@ void main_initial(void){
 			for (pars_counter=0;pars_counter<menu_title_count;pars_counter++)	default_menu3 [menu_title_lut[pars_counter]&1023]=48;
 			note_reset();
 
+
+			uint8_t find_set=0;
+			uint8_t var_hold=0;
+			for (pars_counter=0;pars_counter<menu_lookup_count;pars_counter++){
+			   var_hold=menu_vars_limiter[pars_counter];
+			    find_set=0;
+			   while ( var_hold >>= 1) {
+			       find_set++;
+			    }
+
+			    LFO_vars_divider[pars_counter]= 7-find_set;    // high set bit , use it to shift left from 255
+			}
 
 			menuSelect=0;
 	// fill up sample

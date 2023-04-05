@@ -71,7 +71,6 @@ TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim10;
 
 UART_HandleTypeDef huart1;
-UART_HandleTypeDef huart6;
 
 /* USER CODE BEGIN PV */
 #include "maincode.h"			// void
@@ -94,7 +93,6 @@ static void MX_TIM4_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
-static void MX_USART6_UART_Init(void);
 static void MX_TIM10_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
@@ -142,7 +140,6 @@ int main(void)
   MX_I2C2_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
-  MX_USART6_UART_Init();
   MX_TIM10_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
@@ -847,39 +844,6 @@ static void MX_USART1_UART_Init(void)
 }
 
 /**
-  * @brief USART6 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART6_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART6_Init 0 */
-
-  /* USER CODE END USART6_Init 0 */
-
-  /* USER CODE BEGIN USART6_Init 1 */
-
-  /* USER CODE END USART6_Init 1 */
-  huart6.Instance = USART6;
-  huart6.Init.BaudRate = 115200;
-  huart6.Init.WordLength = UART_WORDLENGTH_8B;
-  huart6.Init.StopBits = UART_STOPBITS_1;
-  huart6.Init.Parity = UART_PARITY_NONE;
-  huart6.Init.Mode = UART_MODE_TX_RX;
-  huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart6.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_HalfDuplex_Init(&huart6) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART6_Init 2 */
-
-  /* USER CODE END USART6_Init 2 */
-
-}
-
-/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -925,6 +889,12 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET);
 
+  /*Configure GPIO pins : encoder2_Pin encoder1_Pin */
+  GPIO_InitStruct.Pin = encoder2_Pin|encoder1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pin : LED_Pin */
   GPIO_InitStruct.Pin = LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -932,11 +902,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : record_pin_Pin */
-  GPIO_InitStruct.Pin = record_pin_Pin;
+  /*Configure GPIO pins : record_pin_Pin PB2 */
+  GPIO_InitStruct.Pin = record_pin_Pin|GPIO_PIN_2;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(record_pin_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : CS1_Pin */
   GPIO_InitStruct.Pin = CS1_Pin;
@@ -1021,7 +991,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   if(GPIO_Pin == record_pin_Pin) {
    sampler.record_enable=1;
   }
+
+  if(GPIO_Pin == encoder1_Pin) {
+  //page_skip=1;
+  record_output=1;
+  }
+  if(GPIO_Pin == encoder2_Pin) {
+  //record_output=1;
+  }
+
+
 }
+
+
+
 //NVIC_DisableIRQ(TIM3_IRQn);   //  disables all tim irq
 void stop_start	(void)             {
   //  if (TIM3==htim ->Instance)

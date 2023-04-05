@@ -337,7 +337,9 @@ void encoder2(void){  // encoder pos and data input
 	   	    if ((enc2_dir<enc2_mem_dir))		enc_out1--;
 
 	   	    }
-	   	   if (enc_out1>menu_title_count) enc_out1=0;
+
+	    if (page_skip)  {enc_out1=enc_out1+10; page_skip=0; }
+	    if (enc_out1>menu_title_count) enc_out1=0;
 	   	 if (enc_out1<0) enc_out1=menu_title_count;
 
 	    enc2_mem_dir=enc2_dir;
