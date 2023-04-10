@@ -338,7 +338,7 @@ void encoder2(void){  // encoder pos and data input
 
 	   	    }
 
-	    if (page_skip)  {enc_out1=enc_out1+10; page_skip=0; }
+	    if (page_skip)  {enc_out1=enc_out1+20; page_skip=0; }
 	    if (enc_out1>menu_title_count) enc_out1=0;
 	   	 if (enc_out1<0) enc_out1=menu_title_count;
 
@@ -403,5 +403,21 @@ void encoder2(void){  // encoder pos and data input
 
 
     }
+void LCD_Info_notes(void){
+uint8_t counter=0;
+
+for (counter=0;counter<8;counter++){
+
+  LCD_Info[20+counter]=major_notes[notes_joined[counter+note[0].timeshift]];
+  LCD_Info[28+counter]=major_notes[notes_joined[counter+note[1].timeshift]];
+  LCD_Info[36+counter]=major_notes[notes_joined[counter+note[2].timeshift]];
+  LCD_Info[44+counter]=major_notes[notes_joined[counter+note[3].timeshift]];
+}
+
+
+
+
+}
+
 
 

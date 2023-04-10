@@ -80,7 +80,7 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 59: 	menu_vars_var1=&sampler.sample_select  ;break;
 	case 60: 	menu_vars_var1=&sampler.sample_save  ;break;
 	case 61: 	menu_vars_var1=&sampler.sample_save_enable  ;break;
-
+	case 62:     menu_vars_var1= &note[var_index].slide_length    ; break;
 
 
 	default :		menu_vars_var1= NULL   ; break;

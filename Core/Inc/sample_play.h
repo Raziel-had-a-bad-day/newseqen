@@ -173,7 +173,7 @@
 		    flash_flag=0;  }
 
 	}
-	void sampler_ram_record(void) {
+void sampler_ram_record(void) {
 	  if (!record_counter) {stop_toggle=1;  stop_start();}   // halt
 	    memcpy(	&RAM[record_counter], input_holder,1024);   // transfer
 	record_counter =record_counter+1024;

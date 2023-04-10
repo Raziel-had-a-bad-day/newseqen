@@ -23,14 +23,18 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
+
 #include "luts.h"    // big tables
 #include "myvars.h"			// variables
 
 #include <stdlib.h>
 #include "string.h"
 #include "arm_math.h"
-#include"math.h"
+//#include"math.h"
 
+//#include  "interpolation_functions.h"
+
+// try adding source as well  file when  undefined reference
 
 //#define __FPU_PRESENT   1
 
@@ -78,6 +82,7 @@ UART_HandleTypeDef huart1;
 #include "display.h"
 #include "flash.h"
 #include"sample_play.h"     // needs to be after private variables
+#include "sampling_extra.h"
 
 
 /* USER CODE END PV */
@@ -168,7 +173,7 @@ main_initial();   // initial setup
 
 	if (loop_counter2==9024) {    //   4096=1min=32bytes so 4mins per 128 bank or 15 writes/hour , no freeze here
 
-		    if (mem_count>EPROM_limit) mem_count=0; else mem_count++;
+		    if (mem_count>(EPROM_limit-2)) mem_count=0; else mem_count++;
 		    if (mem_count>(EPROM_limit-50)) mem_count=461;  // this might feedback
 		   // write to first this was moved for no logical reason ?
 
@@ -179,15 +184,15 @@ main_initial();   // initial setup
 			memcpy(potSource,&seq,46); // about 35
 			memcpy(potSource+476,&sampler,11);
 			for(i=0;i<10;i++){
-					memcpy(potSource+156+(i*14),&note[i],14 );  //grab note settings ,112 total , works
+					memcpy(potSource+156+(i*16),&note[i],16 );  //grab note settings ,112 total , works
 
 				memcpy(potSource+46+(i*6),&LFO[i],6 );  // + 60  ,ok
 				memcpy(potSource+106+(i*5),&ADSR[i],5 );  // +50  ,
 				memcpy(potSource+316+(i*6),&patch[i],6 );
-				memcpy(potSource+512+(i*6),&patch[i+10],6 );
+
 				memcpy(potSource+376+(i*6),&LFO_slave1[i],6 ); // ext llof settings
 				memcpy(potSource+436+(i*4),&LFO_square[i],4 );
-				 //
+				memcpy(potSource+512+(i*6),&patch[i+10],6 );
 
 			}	// copy vars into potSource
 
@@ -309,10 +314,13 @@ main_initial();   // initial setup
 	//	adc_flag=0;
 		if (adc_flag) {     //  only for sending out  , poor quality
 
+		    if (adc_playback_position>1020) adc_playback_position=0;  // nudge
 
+		//    adc_playback_position=(adc_playback_position+512)&1023;
 			uint16_t    adc_page=0; ;
 			if		(adc_flag==1)	  	{	adc_page=0;			}	//dma start ,needs this and adc start ,set sampling time
-			if		(adc_flag==2)	  	{	adc_page=1536;  }
+			if		(adc_flag==2)	  	{	adc_page=1536; }
+
 
 
 			uint16_t    adc_convert_count;
@@ -323,7 +331,7 @@ main_initial();   // initial setup
 				adc_convert_temp=adc_source[adc_convert_count]+adc_source[adc_convert_count+1]+adc_source[adc_convert_count+2]; //  17 470 khz  ~
 				adc_convert_temp=(adc_convert_temp/3);   // dc offset nearly spot on
 				input_holder[i]=adc_convert_temp<<4;
-
+				// maybe start with signed
 
 				//	input_holder[i]=adc_source[(i*3)+adc_page];
 
@@ -675,7 +683,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 2800;
+  htim3.Init.Period = 2808;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -998,6 +1006,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   }
   if(GPIO_Pin == encoder2_Pin) {
   //record_output=1;
+ //     page_skip=1;
   }
 
 

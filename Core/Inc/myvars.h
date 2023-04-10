@@ -156,6 +156,9 @@ void  sampler_1k_load(uint32_t load_address);
 void LCD_Info_feedback(void);
 void RAM_normalise(void);
 void record_output_to_RAM (void);
+void LCD_Info_notes(void);
+void sine_count_sample(void);
+void ADSR_loop(void);
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
 uint8_t NoteC; // second channel note
@@ -354,21 +357,25 @@ struct LFO_square_settings LFO_square[10];
 
 
 
+
 struct ADSR_settings{   // use initial 5*10  , leave rest
-	uint8_t attack;   // presets
-	uint8_t decay;
-	uint8_t sustain;
-	uint8_t release;
+	uint8_t attack;   // presets,  0-15  , simply  time multiplied related to next isr
+	uint8_t decay;		//	 time
+	uint8_t sustain; 		// level  after decay
+	uint8_t release;		// time  for sustain+ release  50/50
+
 	uint8_t attack_trigger;    // start adsr
-	float attack_data;        // processing data
-	float decay_data;
-	float sustain_data;
-	float release_data;
-    float buffer_temp;  // temp hold
-	uint16_t buffer[256];  //this holds the actual envelope  for ADSR for later processing
+
+	int16_t attack_data;        // processing data   , counts down to 0 when complete
+	int16_t  decay_data;
+	int16_t sustain_data;
+	int16_t release_data;
+ //   float  buffer_temp;  // this is bad here
+	int16_t buffer[8];  //this holds the actual envelope  for ADSR for later processing
 
 };
-struct ADSR_settings ADSR[5]={0};   // adsr data
+struct ADSR_settings ADSR[5];   // adsr data
+
 
 
 
@@ -382,6 +389,9 @@ struct note_settings{								//default note/osc/patch settings  14*8 bytes (112)
 	uint8_t timeshift; // shift position left or right in seuqence for 8 note looper   (pvalues 32,33) ,slide
 	uint8_t velocity;				// gain level or output mod
 	uint8_t detune; 					// finetune maybe for lfos or some default tune
+	uint8_t slide_length;
+	uint8_t not_used;
+
 	uint16_t osc_add;   // this is the add value hold for sine/wav/saw etc depends on wave form,calculated
 	uint16_t tuned;   // final output after note detune and osc_add calculation , drives the oscillators ,calculated
 
@@ -473,6 +483,7 @@ static struct sampler_settings sampler={.record_enable=0, .sample_location=0,.sa
 
 struct sample_info{   // stored in the last 64kb
     uint8_t sample_record;
+    uint8_t sampler_options[10];   //various option array
     uint16_t tempo_map[10]; // trigger points
     char sample_name[16]; //holds sample name
 
@@ -568,9 +579,9 @@ volatile uint8_t  record_output=0;
 uint8_t output_mix[1024]={0};  // records total output
 uint16_t record_out_counter=0;
 uint8_t LFO_vars_divider[menu_lookup_count]={0};    // multiply/ divider for LFO output only
-
-
-//uint8_t flash_busy=0;
+uint16_t adc_playback_position=0;
+float float_table[256]={0};
+uint8_t zero_cross[4]={0};
 
 
 
