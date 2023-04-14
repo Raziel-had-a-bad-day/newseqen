@@ -29,7 +29,7 @@ uint32_t y;
 //uint16_t pwmVelB;
 //const uint8_t tempoLUT[];  // lookup table for tempo instead of calculate
 
-const char major_notes[]={"cdefgahCDEFGAHcdefgahCDEFGAHcdefgahCDEFGAHcdefgahCDEFGAHcdefgah"};
+const char major_notes[]={" cdefgahCDEFGAHcdefgahCDEFGAHcdefgahCDEFGAHcdefgahCDEFGAHcdefgah"};
 const uint8_t MajorNote[30]= { 0,2,4,5,7,9,11,12,14,16,17,19,21,23,24,26,28,29,31,33,35,36,38,40,41,43,45,47,48,50} ;  // major
 const uint8_t MinorNote[30]={ 0,2,3,5,7,8,10,12,14,15,17,19,20,22,24,26,27,29,31,32,34,36,38,39,41,43,44,46,48,49}; // minor
 const uint8_t ChromNote[]={0,2,3,5,6,8,9,11,12,14,15,17,18,20,21}; //chromatic, diminished
@@ -159,6 +159,9 @@ void record_output_to_RAM (void);
 void LCD_Info_notes(void);
 void sine_count_sample(void);
 void ADSR_loop(void);
+void  sample_to_RAM_load(uint8_t sample);
+
+
 
  uint16_t noteBar[257]={0,12,12,12,12,12,12,12,12,12,1,22,1};  //   8 bar data , start , end ,vel,wave * 8  3*wave note length cant be uint32_ter than next start
 uint8_t NoteC; // second channel note
@@ -408,13 +411,13 @@ struct seq_settings {				// 46 bytes need all
 	uint8_t pos;    // actual position of the sequencer atm ,calculated
 	uint8_t tempo; // (p109)
 	uint8_t notes1[17];    // all the notes for loop 1  (pvalues 0)
-	uint8_t notes2[17];    // all the notes for loop 2  (pvalues 80)
+	uint8_t notes2[17];    // all the notes for loop 2  (pvalues 80) might use this for sampler
 	uint8_t loop[10];    // looping start point in a sequence   0-15
-
+	uint8_t swing;
 
 };
 
-struct seq_settings seq;                       // sequencer data (46 bytes)
+struct seq_settings seq;                  // sequencer data (46 bytes)
 struct filter_settings{
 	uint8_t cutoff_1;					//basic cutoff  0-159 prolly lut
 	uint8_t cutoff_2;   // extra bits for cutoff  159
@@ -448,18 +451,21 @@ struct patch_settings patch[20];    // patch board
 
 struct sampler_settings{
 
-    uint8_t start_MSB;
-    uint8_t start_LSB;
-    uint8_t end_MSB;
-    uint8_t end_LSB;
-    uint8_t trigger_1;   // uses +1 to enable
-    uint8_t trigger_2;
-    uint8_t trigger_3;
-    uint8_t trigger_4;
-    uint8_t repeat;
-    uint8_t offset;  // offset to seq.pos or to start of sample ?
-    uint8_t sample_select;    // sample to play 0-255 for now , maybe starting from 0 mem
+    uint8_t offset[8];  // offset from start
+    uint8_t sample_select[8];    // sample to play 0-255 for now , maybe starting from 0 mem
+    uint8_t offset2[8];  // offset from end
 
+    uint8_t trigger_1;   // uses +1 to enable  , might  drop it
+        uint8_t trigger_2;
+        uint8_t trigger_3;
+        uint8_t trigger_4;
+    uint8_t repeat;
+    uint8_t RAM_offset;
+
+    uint8_t start_MSB;  // not really needed
+      uint8_t start_LSB;
+      uint8_t end_MSB;
+      uint8_t end_LSB;
 
     uint8_t sample_save;  // location to save to , 32-64kb
 
@@ -472,11 +478,16 @@ uint8_t RAM_free ;  // enables flash playback
 uint16_t  start;    // for trimming  start ,calucalted
  uint16_t end;	// for trimming end ,calculated
 uint16_t length;  // length for looping  ,calucalted
-uint16_t ram_pos;  //record pos
-
+int16_t ram_pos;  //record pos
+uint8_t Snotes1[16];   // stored in seq.notes2  0-16
+uint8_t Snotes2[16];   // stored in seq.notes2  0-16
 uint16_t* start_ptr;
-uint16_t ram_seq;   // seq current position
+uint16_t ram_seq;   // seq current position , negative for pre roll
+uint16_t ram_seq2;
 
+uint8_t acurrent_sample;
+uint16_t start_current;
+uint16_t end_current;
 };
 static struct sampler_settings sampler={.record_enable=0, .sample_location=0,.sample_save_enable=0,.ram_pos=0
 		,.end_MSB=63, .end_LSB=255,.start_MSB=0,.start_LSB=0,.length=1024,.one_shot=255,.RAM_free=0  };                                     // needs to be protected
@@ -527,6 +538,7 @@ int32_t play_holder1[512];    // data banks
 int32_t play_holder2[512];
 int32_t play_holder3[512];    // data banks
 int32_t play_holder0[512];
+int32_t play_holder4[512];
 uint8_t clipping=0;
 uint8_t notes_joined[33];
 uint8_t menu_vars_ref=0;  // menu vars search reference , used for divider
@@ -562,8 +574,8 @@ uint8_t sqr_target_list[20];  // keep record of patch target for LCD_info using 
 uint16_t seqpos_i;// i+1
 int32_t  debug_value;
 uint32_t tempo_large;
- static uint8_t flash_read_block[530]={0};
- static uint8_t flash_read_block2[1030];
+ static uint8_t flash_read_block[1024]={0};
+ static uint8_t flash_read_block2[1028];
 volatile uint8_t flash_flag=4;
 uint8_t  flash_bank_read=0;   // switch fifo for playback
 uint16_t counter_16=0;
@@ -582,7 +594,12 @@ uint8_t LFO_vars_divider[menu_lookup_count]={0};    // multiply/ divider for LFO
 uint16_t adc_playback_position=0;
 float float_table[256]={0};
 uint8_t zero_cross[4]={0};
+uint8_t restart_sample_flag=0;
+uint8_t sampler_mute=0;
+uint8_t  ram_sync_swap=0;
 
+
+//uint8_t acurrent_sample=0; // returns current sample being p[layed
 
 
 //static uint16_t tuned_list[10];

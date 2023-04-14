@@ -1,36 +1,44 @@
 
 #define RAM_size 16384
-#define menu_lookup_count    64     // size of the look up variables processor
+#define menu_lookup_count    66     // size of the look up variables processor
 #define   seq_sample_rate  35625   // use it for period and tempo calcualtions
 #define pitch_limit 60
 #define EPROM_limit   614   //me used in eeprom for now
 
 
-#define menu_parser_limit 1300   // search limits
+#define menu_parser_limit 1400   // search limits
 
-const char default_menu[] ={"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 00Tempo      15LCD_Info 16LCD_Info 17LCD_Info 18LCD_Info"  // make sure first line uses last char
-
+const char default_menu[] ={"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 15LCD_Info16LCD_Info17LCD_Info 00Tempo    04Slide     04Sliderep "  // make sure first line uses last char
+	"                "
   // was getting corrupted then screwed everything
 
-	"20LCD_Info21LCD_Info22LCD_Info23LCD_Info24LCD_Info25LCD_Info26LCD_Info27LCD_Info        "
-	"28LCD_Info29LCD_Info30LCD_Info31LCD_Info32LCD_Info33LCD_Info34LCD_Info35LCD_Info        "
-	"36LCD_Info37LCD_Info38LCD_Info39LCD_Info40LCD_Info41LCD_Info42LCD_Info43LCD_Info        "
-	"44LCD_Info45LCD_Info46LCD_Info47LCD_Info48LCD_Info49LCD_Info50LCD_Info51LCD_Info        "
+	//"20LCD_Info21LCD_Info22LCD_Info23LCD_Info24LCD_Info25LCD_Info26LCD_Info27LCD_Info        "
+	//"28LCD_Info29LCD_Info30LCD_Info31LCD_Info32LCD_Info33LCD_Info34LCD_Info35LCD_Info        "
+	//"36LCD_Info37LCD_Info38LCD_Info39LCD_Info40LCD_Info41LCD_Info42LCD_Info43LCD_Info        "
+	//"44LCD_Info45LCD_Info46LCD_Info47LCD_Info48LCD_Info49LCD_Info50LCD_Info51LCD_Info        "
+"00SNotes_101SNotes_102SNotes_103SNotes_104SNotes_105SNotes_106SNotes_107SNotes_108SNotes_109SNotes_110SNotes_111SNotes_112SNotes_113SNotes_114SNotes_115SNotes_1"
+	"00SNotes_201SNotes_202SNotes_203SNotes_204SNotes_205SNotes_206SNotes_207SNotes_208SNotes_209SNotes_210SNotes_211SNotes_212SNotes_213SNotes_214SNotes_215SNotes_2"
+"00S_Select 01S_Select 02S_Select 03S_Select 04S_Select 05S_Select 06S_Select 07S_Select "
+	"00SMoffset 01SMoffset 02SMoffset 03SMoffset 04SMoffset 05SMoffset 06SMoffset 07SMoffset "
+	"00SEndofst 01SEndofst 02SEndofst 03SEndofst 04SEndofst 05SEndofst 06SEndofst 07SEndofst "
 
 	//	"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "   //gaps cause it skip at end
 	//	"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
 	//	"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes2  "
-	"00Transpos 01Transpos 02Transpos 03Transpos     05Transpos06Transpos07Transpos08Transpos"
-	"00Slide    01Slide    02Slide    03Slide    00Sliderep 01Sliderep 02Sliderep 03Sliderep "
+	"                "
 
-		"                "
-		"00Rate     00Depth    00Offset   00Delay    01Rate     01Depth    01Offset   01Delay    "
-		"02Rate     02Depth    02Offset   02Delay    03Rate     03Depth    03Offset   03Delay    "
-		"04Rate     04Depth    04Offset      05Rate     05Depth    05Offset    "
-		"06Rate     06Depth    06Offset      07Rate     07Depth    07Offset    "
-		"08Rate     08Depth    08Offset      09Rate     09Depth    09Offset    "
-		    "                "
-		    "                "
+
+
+
+		"00Rate     00Depth    00Offset   00Delay     01Rate     01Depth    01Offset   01Delay   "
+		"02Rate     02Depth    02Offset   02Delay     03Rate     03Depth    03Offset   03Delay   "
+	    "                "
+		"04Rate     04Depth    04Offset   04Delay     05Rate     05Depth    05Offset   05Delay   "
+		"06Rate     06Depth    06Offset   06Delay     07Rate     07Depth    07Offset   07Delay   "
+	  "                "
+		"08Rate     08Depth    08Offset   08Delay     09Rate     09Depth    09Offset   09Delay   "
+
+
 		    "                "
 
 	"00Input__100Input__200Inputmix00Target  00Tg_ndx      01Input__101Input__201Inputmix01Target  01Tg_ndx    "
@@ -42,59 +50,63 @@ const char default_menu[] ={"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 00Tempo   
 	"10Input__110Input__210Inputmix10Target  10Tg_ndx      11Input__111Input__211Inputmix11Target  11Tg_ndx    "
 	"12Input__112Input__212Inputmix12Target  12Tg_ndx      13Input__113Input__213Inputmix13Target  13Tg_ndx    "
 
+	"00S_Rate   00S_Depth  00S_Offset  01S_Rate   01S_Depth  01S_Offset 00LCD_Info01LCD_Info02LCD_Info"
 
-	"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 03LCD_Info04LCD_Info05LCD_Info06LCD_Info07LCD_Info08LCD_Info09LCD_Info10LCD_Info   "
-	"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  "   //gaps cause it skip at end
-	"14Notes1  15Notes1  00Notes2  01Notes2  02Notes2  03Notes2  04Notes2  05Notes2  "
-	"06Notes2  07Notes2  08Notes2  09Notes2  10Notes2  11Notes2  12Notes2  13Notes2  14Notes2  15Notes2  "
+		"02S_Rate   02S_Depth  02S_Offset  03S_Rate   03S_Depth  03S_Offset    "
+		"04S_Rate   04S_Depth  04S_Offset  05S_Rate   05S_Depth  05S_Offset    "
+
 	"60LCD_Info00SQ_Start00SQ___End 00SQ_Depth 00SQOffset  01SQ_Start 01SQ___End 01SQ_Depth 01SQOffset"
 	"62LCD_Info02SQ_Start02SQ___End 02SQ_Depth 02SQOffset  03SQ_Start 03SQ___End 03SQ_Depth 03SQOffset"
 	"64LCD_Info04SQ_Start04SQ___End 04SQ_Depth 04SQOffset  05SQ_Start 05SQ___End 05SQ_Depth 05SQOffset"
 	"66LCD_Info06SQ_Start06SQ___End 06SQ_Depth 06SQOffset  07SQ_Start 07SQ___End 07SQ_Depth 07SQOffset"
 
-	"00S_Rate   00S_Depth  00S_Offset  01S_Rate   01S_Depth  01S_Offset 00LCD_Info01LCD_Info02LCD_Info"
 
-	"02S_Rate   02S_Depth  02S_Offset  03S_Rate   03S_Depth  03S_Offset    "
-	"04S_Rate   04S_Depth  04S_Offset  05S_Rate   05S_Depth  05S_Offset    "
+	"                "
+
+//	"00StartMSB 00StartLSB  00EndMSB   00EndLSB   00SMoffset   00Resnance   "
+	"00S_Select  00Trigger1 00Trigger2 00Trigger3 00Trigger4  00S_Repeat  "
+	" 00SmplSave   Save_nbl     00RAMoffst       "
 	"                "
 	"00Attack__ 00Decay___ 00Sustain_ 00Release_  01Attack__ 01Decay___ 01Sustain_ 01Release_"
 	"02Attack__ 02Decay___ 02Sustain_ 02Release_  03Attack__ 03Decay___ 03Sustain_ 03Release_"
-
 	"                "
-	" 00OSC1     01OSC1     02OSC1     03OSC1     06OSC1     07OSC1     08OSC1     09OSC1    "
-	" 00Velocity 01Velocity 02Velocity 03Velocity 06Velocity 07Velocity 08Velocity 09Velocity "
-	"00StartMSB 00StartLSB  00EndMSB   00EndLSB   00SMoffset   00Resnance   "
-	"00S_Select  00Trigger1 00Trigger2 00Trigger3 00Trigger4  00S_Repeat  "
-	"00SmplSave   Save_nbl           "
+	"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 03LCD_Info04LCD_Info05LCD_Info06LCD_Info07LCD_Info08LCD_Info09LCD_Info10LCD_Info   "
+			"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  14Notes1  15Notes1  "   //gaps cause it skip at end
+			"70LCD_Info71LCD_Info72LCD_Info73LCD_Info74LCD_Info75LCD_Info76LCD_Info77LCD_Info78LCD_Info79LCD_Info80LCD_Info81LCD_Info82LCD_Info83LCD_Info84LCD_Info85LCD_Info"
+	" 00OSC1     01OSC1     02OSC1     03OSC1     04OSC1     06OSC1    07OSC1    08OSC1    09OSC1     "
+	" 00Velocity 01Velocity 02Velocity 03Velocity 04Velocity 06Velocity07Velocity08Velocity09Velocity "
+	" 00Transpos 01Transpos 02Transpos 03Transpos   05Transpos06Transpos07Transpos08Transpos"
+	"  00Slide    01Slide    02Slide    03Slide    00Sliderep 01Sliderep 02Sliderep 03Sliderep"
+
 
 
 };   // just for testing text memory , will be modifiable ,  lut
 //  BEWARE OF TAB , CHECK SPACING !     , should ok once auto generated
 
 char default_menu3[1024]={0}; // hold all string for output  128 per page , needs to resize
-const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,19,0,3,3,3      // add + 1 to menu lookup count !!!
-		,3,0,9,9,9,9,9,9,9,9
-		,9,0,0,0,15,15,9,3,3
-		,3,3,3,3,3,3,19,19,19,19
-		,9,9,9,9,0,0,0,0,0,9
-		,9,9,9,9,99,0,0,0,0,0
-		,0,0,0,3
+const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,19,0,4,4,4      // add + 1 to menu lookup count !!!
+		,4,0,9,9,9,9,9,9,9,9
+		,9,0,0,0,15,15,9,3,3,3
+		,3,3,3,3,3,19,19,19,19,9
+		,9,9,9,0,7,0,0,0,9,9
+		,9,9,9,99,0,0,0,0,0,7
+		,0,0,4,15,15
 							    } ; // index number limiter ,fixed IMPORTANT!
 
-const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,10,255,15,255,43,0,15,15,127,   // patch[x].limiter
+const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,10,255,15,255,43,0,15,8,127,   // patch[x].limiter
 																				15,0,8,6,60,16,31,60,31,255,
-																				60,0,255,255,31,31,27,255,255 ,31,
+																				60,0,255,255,31,8,27,255,255 ,31,
 																				10,255,255,255,31,43,43,43,16,0 ,
-																				255,255,255,255,63,255,63,255,15,63,
+																				255,255,255,255,15,15,63,255,15,63,
 																				255,255,63,255	,17,17,17,17,4,255,
-																				255,255.255,7			    };   // right shift divider mainly for LFO  , maybe for lcd too
+																				255,255.255,15,8,8			    };   // right shift divider mainly for LFO  , maybe for lcd too
 
 	const char* menu_titles_final[menu_lookup_count]= {"LFO     ", "Rate    ","Depth   " ,"Delay   ", "Offset  ", "Target  ","ADSR    ",
 			"Attack__", "Decay___","Sustain_","Release_",
 			"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",
 			"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    ","Cutoff_1","Cutoff_2","Resnance","Q_level ","Level   ","Feedback","Out_mix ","Poles   ",
-			"Tg_ndx  ","Input__1","Input__2","Inputmix","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset","StartMSB","StartLSB","EndMSB  ","EndLSB  ","SMoffset","SQ___End","SQ_Depth ","SQOffset","SQ_Start","LCD_Info"
-			,"Trigger1","Trigger2","Trigger3","Trigger4","S_Repeat","S_Select","SmplSave","Save_nbl","Sliderep"
+			"Tg_ndx  ","Input__1","Input__2","Inputmix","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset","SEndofst","RAMoffst","EndMSB  ","EndLSB  ","SMoffset","SQ___End","SQ_Depth ","SQOffset","SQ_Start","LCD_Info"
+			,"Trigger1","Trigger2","Trigger3","Trigger4","S_Repeat","S_Select","SmplSave","Save_nbl","Sliderep","SNotes_1","SNotes_2"
 
 	};   // 40 *8
 
@@ -104,7 +116,7 @@ const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,10,255,15,255,43,0,15,1
 			1,1,1,1,1,1,1,1,1,1,
 			1,1,1,1,1,1,1,1,1,1,
 			1,1,1,1,1,1,1,1,1,1,
-			1,1,1};  // skip most of it for now
+			1,1,1,1,1};  // skip most of it for now
  const char* patch_inputs[]={
 		"LFO0 sin","LFO0 saw","LFO0 tri","LFO0 sqr" ,"LFO1 sin","LFO1 saw","LFO1 tri","LFO1 sqr" ,"LFO2 sin","LFO2 saw","LFO2 tri","LFO2 sqr" ,
 		"LFO3 sin","LFO3 saw","LFO3 tri","LFO3 sqr" ,"LFO4 sin","LFO4 saw","LFO4 tri","LFO4 sqr" ,"LFO5 sin","LFO5 saw","LFO5 tri","LFO5 sqr" ,

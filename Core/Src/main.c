@@ -79,10 +79,11 @@ UART_HandleTypeDef huart1;
 /* USER CODE BEGIN PV */
 #include "maincode.h"			// void
 #include "sampling.h"     // audio process
+#include "sampling_extra.h"
 #include "display.h"
 #include "flash.h"
 #include"sample_play.h"     // needs to be after private variables
-#include "sampling_extra.h"
+
 
 
 /* USER CODE END PV */
@@ -182,7 +183,7 @@ main_initial();   // initial setup
 
 
 			memcpy(potSource,&seq,46); // about 35
-			memcpy(potSource+476,&sampler,11);
+			memcpy(potSource+476,&sampler,21);
 			for(i=0;i<10;i++){
 					memcpy(potSource+156+(i*16),&note[i],16 );  //grab note settings ,112 total , works
 
@@ -949,10 +950,10 @@ static void MX_GPIO_Init(void)
 
 	    if (SPI1==hspi->Instance) {
 
-				if  ((flash_read_block2[10]+   flash_read_block2[11]+  flash_read_block2[12]+  flash_read_block2[13])== 1020                  )
+		//		if  ((flash_read_block2[10]+   flash_read_block2[11]+  flash_read_block2[12]+  flash_read_block2[13])== 1020                  )
 
 				    {
-				    error_count++;
+			//	    error_count++;
 		//	memcpy(&error_data,flash_read_block2,127);  // maybe skipping address,, yup idiot Internet advice
 
 						flash_flag=1;}

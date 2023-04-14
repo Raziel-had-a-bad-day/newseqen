@@ -14,39 +14,42 @@ void sampling(void){						// 330 atm or 8.5ms
 //	if (time_proc>580) time_final=time_proc;
 
 //time_proc=0;
-
+	seq.swing=0;
 	time_proc=0;
 	int32_t sample_accus[10] ={0,0,0,0,0,0,0,0,0,0};
 uint8_t mask_i;
 int32_t sample_Accu[10] ={0,0,0,0,0,0,0,0,0,0};   // accu for sample output or lookup
-uint16_t tuned_list[10];
+
 int32_t sample_adc=0;
 int32_t ram_temp=0;
 uint16_t sample_counts_temp[40]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
-uint8_t flash_result;
+
 int32_t sample_input=0;
 tempo_lut[131]=1023;   // force to an even count on samples
-int32_t sample_loop_input=0;
+
+int32_t ram_synced=0;   // ram synced to sampler.seq_pos
+uint8_t soft_mute=0;
 //if ((sampler.record_enable==0) && (flash_flag))   {  flash_page_read ((sampler.ram_seq)<<1 ); flash_flag=0;}
 
 if (bank_write==2)  {sample_pointD=512;}  else sample_pointD=0;
 
 bank_write=0;
 memcpy(notes_joined,seq.notes1,16);
-memcpy(notes_joined+16,seq.notes2,16);
+memcpy(notes_joined+16,seq.notes1,16);  //  only use notes 1
 sample_pointB=sample_pointD;
 unsigned short tempo_start=0;  // enabled when i=isrMask;
 
 LCD_Info_notes();
 
+uint8_t counter;
+for (counter=0;counter<16;counter++){				// notes for sampler
+seq.notes2[counter]= (sampler.Snotes1[counter]&15)+ (sampler.Snotes2[counter]<<4);
+
+}
 
 
 uint16_t i_total;
 uint16_t tempo_mod=tempo_lut[seq.tempo];  // set tempo,speed from lut 40-200bpm  ,changed to 4x for note lenght
-//if (seq.tempo<40)  tempo_mod=511;  // syncs to main loop
-uint8_t l;			// 35.002khz(0.02857ms) sample, 1 sample is temp count (16x=0.00045712) , *16=1 note ,at 300 (437bpm),(1/(0.00002857*tempo count*16)=1beat in s
-
-
 
 tempo_sync=16384/((tempo_mod*16)/512) ; // 8000 at slowest 15.625 updates to lfo at 1 note 16384/15.625=1048.576+ per update  at setting 80
 tempo_sync=tempo_sync/80;  // bit weird her , this is adsr !
@@ -56,26 +59,19 @@ if ((tempo_mod==511 )   && (sampler.ram_seq<=256)    && (seq.pos>>4)      )   { 
 seqpos_i=0; //reset
 	sampler.trigger_position=0;     // reset sample start here
 
-
-
-
 uint8_t looper_dat[8]={1,3,7,15};
 uint32_t lfo_tempo_hold;
 
 if (tempo_mod_hold!=tempo_mod){					// lfo lut calculate only when changes tempo
-
 		float lfo_tempo_calc=((1647099*4)/(tempo_mod)); // deafualt 1 note    12867  at 512
-
-
 						for (i=0;i<256;i++){								// 128 is 1 note
 	lfo_tempo_hold=(((i+1)*lfo_tempo_calc))/16;               //  at 64 its 12867
 	lfo_tempo_lut[i]= lfo_tempo_hold;
-
 }}
 tempo_mod_hold=tempo_mod;   // for lfo
 
-uint32_t  note_toggler[17]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  //records note position on 0-512   using a bit
-for (i=0;i<16;i++) {  note_toggler[i]=0; }
+
+//for (i=0;i<16;i++) {  note_toggler[i]=0; }
 	//potSource[150]=(freq_point[0])*100; //0-2
 
 
@@ -85,7 +81,7 @@ uint8_t pars_counter;
 
 //if (sampler.ram_seq>15871)  sampler.ram_seq=0;  //else sampler.ram_seq=sampler.ram_seq+1024;
 //setup pointers for osc options
- for (pars_counter=0;pars_counter<4;pars_counter++)	{   // fill up pointers and reload vars
+ for (pars_counter=0;pars_counter<5;pars_counter++)	{   // fill up pointers and reload vars
 
 
 		sample_accus[pars_counter]=sample_accus_hold[pars_counter];
@@ -96,7 +92,7 @@ uint8_t pars_counter;
 	 			if (note[pars_counter].osc==4) { osc_pointers[pars_counter]=&sample_input;}  // sampleinput
 	 			if (note[pars_counter].osc==5) osc_pointers[pars_counter]=&sample_adc;   // sine
 	 			if (note[pars_counter].osc==6) osc_pointers[pars_counter]=&ram_temp ;   // non muted RAM , just loop
-	 			if (note[pars_counter].osc==7) osc_pointers[pars_counter]=&ram_temp ;   // trigger 0-16
+	 			if (note[pars_counter].osc==7) osc_pointers[pars_counter]=&ram_synced;   // trigger 0-16
 	 			if (note[pars_counter].osc>7) osc_pointers[pars_counter]=&sample_Accu[5];  // zero
 
 
@@ -112,29 +108,7 @@ uint8_t fader[17]={0,1,5,11,19,28,39,51,64,76,88,99,108,116,122,126,127}; // sin
 
 // doing lfo calc here as it is slow only for now
 ////////////////////adsr/////////////////////////////////////////
-/*
-if	 (ADSR[0].attack_trigger==0) {		adsr_att=(161-ADSR[0].attack ) *0.02 ; // for now all of them from this only , speed , 0-16  // rarely read
-ADSR[0].sustain_data=((161-ADSR[0].decay)*0.01);  // length and level this is ok is running 1/16 ish				ADSR[0].attack_data=ADSR[0].attack_data-ADSR[0].sustain_data;
-adsr_att=adsr_att*adsr_att;
-ADSR[0].sustain_data=ADSR[0].sustain_data*ADSR[0].sustain_data;
 
-ADSR[0].attack_trigger=1;
-ADSR[0].attack_data=0;
-}
-
-//float ADSR[0].buffer_temp;    // adsr
-
-
-for (i=0;i<256;i++) {
-
-	if     (ADSR[0].attack_data<1000)    																		{ADSR[0].attack_data=ADSR[0].attack_data+adsr_att;					ADSR[0].buffer_temp=ADSR[0].attack_data; } //0-1000
-	 if  ((ADSR[0].attack_data<1500)  && (ADSR[0].attack_data>999))  					{ADSR[0].attack_data=ADSR[0].attack_data+adsr_att;					ADSR[0].buffer_temp=1500-(ADSR[0].attack_data-500);  }  // 1000-500
-	 if ((ADSR[0].attack_data>1499)   && 		(ADSR[0].attack_data<2000)) 			{		ADSR[0].buffer_temp=500; 	ADSR[0].attack_data=ADSR[0].attack_data+ADSR[0].sustain_data;}
-	if ((ADSR[0].attack_data>1999)  &&  (ADSR[0].attack_data<2500)	)					{ADSR[0].attack_data=ADSR[0].attack_data+ADSR[0].sustain_data	;	ADSR[0].buffer_temp=2500-ADSR[0].attack_data; } //500-0;
-	if (ADSR[0].attack_data>3000)   																			{ADSR[0].buffer_temp=1; ADSR[0].attack_data=4000; }     // THE END
-
-adsr_lut[i]= ADSR[0].buffer_temp*0.001;
-}*/
 isr_change=0;
 uint8_t seq_dat=(1<<(((adc_values[0]>>3))+1))-1;
 ///////////////////////////////////////////////////////////////
@@ -147,21 +121,21 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	sampling_position=i>>6;   //   0-8 steps
 	sampling_position_b=(sampling_position+7)&7;
 	note_plain=seq.notes1[seq.pos & 7 ];
-potValues[i&255]=potSource[i&255]>>4; //just to update values
+//potValues[i&255]=potSource[i&255]>>4; //just to update values
 
 if (tempo_count>=tempo_mod) { next_isr=(next_isr+1)& 4095;tempo_count=0;isr_change=next_isr+1;  }  else {tempo_count++;  }  //trigger next note , actual next step for isrCount(future)  8ms,trying to fix slow down here  8000 too  much, adsr clears note info
 // tempo_count is about 1000-400
 	tempo_start=0;
+
+
 	if ((next_isr>>4) != (seq.pos)) { 					//     min 6400 cycles per seq.pos ,         next note step 140ms
 		seq.pos=(next_isr>>4); // seq pos =256 max , isr = 1/16 of a note, note lenght is 1-4
-		tempo_start=1;
-// record note triggers or seq_changes position ,NEEDS TO BE OFF FOR NOTE 0
-}
-
-	//if ((next_isr&7)==0+(sampler.offset&7))	note[3].position=1;  // for sample     run always
+		 tempo_start=1;
+		    }
 
 
-	if(tempo_start  )    // Calculates only on note change, gotta change seq.pos somehow  , only activates when change in seq pos ie once in ten bankwrites ,rare
+if (seq.tempo<60) {tempo_start=0; seq.pos=0;sampler.acurrent_sample=1;} // loop on single sample
+ 	if(tempo_start  )    // Calculates only on note change, gotta change seq.pos somehow  , only activates when change in seq pos ie once in ten bankwrites ,rare
 	{
 		serial_tosend=1;
 		//note_reset();
@@ -183,16 +157,18 @@ if (tempo_count>=tempo_mod) { next_isr=(next_isr+1)& 4095;tempo_count=0;isr_chan
 		seq.loop[1]=(note[1].timeshift+(seq.pos&note[1].slide_length))&31;
 		seq.loop[2]=(note[2].timeshift+(seq.pos&note[2].slide_length))&31; // this is really handy with sync to notes
 		seq.loop[3]=(note[3].timeshift+(seq.pos&note[3].slide_length))&31;
+		seq.loop[4]=(note[4].timeshift+(seq.pos&note[4].slide_length))&15;  // use this for sample
 
 
-
+		sampler.acurrent_sample=sampler.Snotes1 [seq.loop[4]]; // 0 is none
+		soft_mute=1;  // fade out  start on note change
 			note[0].pitch=(notes_joined[seq.loop[0]])+(note[0].transpose);    // maybe join 1 and 2
 			//note[0].pitch=note[1].pitch+(note[0].transpose); // just double
 			note[1].pitch=(notes_joined[seq.loop[1]])+(note[1].transpose);  //loop 8 notes from pos and x times
 			note[2].pitch=(notes_joined[seq.loop[2]])+(note[2].transpose);  //loop 8 notes from pos and x times
 
 		note[3].pitch=(notes_joined[seq.loop[3]])+(note[3].transpose); ;  //loop 8 notes from pos and x times ,might disable normal adsr completely
-
+		note[4].position=1;    // should trigger always
 		// --------------------- sampler
 		uint8_t pos_divide=15;
 		if (sampler.repeat) pos_divide=15>>sampler.repeat;
@@ -201,7 +177,7 @@ if (tempo_count>=tempo_mod) { next_isr=(next_isr+1)& 4095;tempo_count=0;isr_chan
 		if (sampler.trigger_2==((seq.pos&pos_divide)+1))  sampler.trigger_position=1;
 		if (sampler.trigger_3==((seq.pos&pos_divide)+1))  sampler.trigger_position=1;
 		if (sampler.trigger_4==((seq.pos&pos_divide)+1))  sampler.trigger_position=1;
-		if(sampler.trigger_position) note[3].position=sampling_position+1;
+	//	if(sampler.trigger_position) note[3].position=sampling_position+1;
 
 		patch_target_replace();
 		uint8_t detune_temp=0;
@@ -213,49 +189,28 @@ if (tempo_count>=tempo_mod) { next_isr=(next_isr+1)& 4095;tempo_count=0;isr_chan
 //	note[3].tuned= (note[3].tuned*1200)>>10;  // modify different sample size , just need single cycle length and thats it
 		mask_result =0;
 		uint8_t note_number;
-		for (mask_i=0;mask_i<5;mask_i++)	{							// calc detune , slow ,also creates notes
+		for (mask_i=0;mask_i<4;mask_i++)	{							// calc detune , slow ,also creates notes
 
-			if  (note[mask_i].osc<3)  { if (seq.loop[mask_i]==0)  {note[mask_i].position=0;   zero_cross[mask_i]=0;} else  note[mask_i].position=sampling_position+1;    }
-
+			if  (note[mask_i].osc<3)  { if (seq.loop[mask_i]==0)  {note[mask_i].position=0;   } else  note[mask_i].position=sampling_position+1;    }   // disables trigger ?
 
 			// disable note on lowest , optional
 
 		    detune_temp=note[mask_i].pitch+note[mask_i].detune;
 
-	//if	   (detune_temp>=30) detune_temp=30;
-	//note[mask_i].tuned=(sample_Noteadd[MajorNote[detune_temp]]);   // put unit tune here
 
-		        if (detune_temp>pitch_limit ) detune_temp=pitch_limit;
+		    if (detune_temp>pitch_limit ) detune_temp=pitch_limit;
 		    if (detune_temp>30 )   note_number=MinorNote[detune_temp-31];    // for now
-	else note_number=MajorNote[detune_temp];
-		    note[mask_i].tuned=sample_Noteadd[note_number];
-	if ((note[mask_i].velocity)&&(note[mask_i].osc))	    LCD_Info[15+mask_i]=major_notes[note_number]; else LCD_Info[15+mask_i]=95;
-	//note[mask_i].tuned=sample_Noteadd[MajorNote[detune_temp]];   // put unit tune here
-
-		float tune_temp=note[mask_i].tuned;
-		note[mask_i].tuned=tune_temp*0.99;	// this works
+		    else note_number=MajorNote[detune_temp];
+		    float tune_temp=sample_Noteadd[note_number];
+		    if ((note[mask_i].velocity)&&(note[mask_i].osc))	    LCD_Info[15+mask_i]=major_notes[note_number]; else LCD_Info[15+mask_i]=95;
+		    //note[mask_i].tuned=sample_Noteadd[MajorNote[detune_temp]];   // put unit tune here
 
 
-//	sample_counts_holder[mask_i+10]=(sample_counts[MajorNote[note[mask_i].pitch]]);   // add +10 so update only on zero cross
-
-
-	//note[mask_i].tuned=sample_Noteadd[MajorNote[note[mask_i].pitch]];   // put unit tune here
-	//	note[mask_i].tuned=sample_Noteadd[MajorNote[12]];
-		//tuned_list[mask_i]=note[mask_i].tuned;
-	//	if (note[mask_i].osc>=3)  note[mask_i].tuned=note[mask_i].tuned>>1;
-
-
-
-	//	if (sampler.one_shot &(1<<mask_i))  sine_counter[4+(mask_i*3)]=0;  // clear if one shto enabled
+		    if (notes_joined[seq.loop[mask_i]] )		note[mask_i].tuned=tune_temp*0.99;	// this works
+		    else note[mask_i].position=0;  // no retrigger on off note
 
 
 		    //    6 HZ JUMP REGARDLESS OF FREQ
-
-
-
-		//if (note[mask_i].osc==3)	{	note[mask_i].tuned=sine_lut[MajorNote[detune_temp]];	//sets freq ,1.0594  * 16536 =17518  ,
-	//		note[mask_i].tuned= (note[mask_i].tuned*1200)>>10; } //calc sampler
-		//
 
 
 //	} // relies on note channel clear , not good , clear not channel straight after
@@ -270,7 +225,7 @@ if (tempo_count>=tempo_mod) { next_isr=(next_isr+1)& 4095;tempo_count=0;isr_chan
 	if ((i&63)==0)
 	{
 	    LFO_square_one_pulse();
-
+	    ADSR_loop();   // change to sound instead of channel  , use 4 for sample
 		LFO_source_synced();
 	}
 
@@ -284,7 +239,7 @@ int32_t  sample_temp1;
 int32_t  sample_temp3;
 int32_t  sample_temp4;
 int32_t  sample_temp5;
-
+int32_t  sample_temp6;
 
 memcpy(&sample_counts_temp,sample_counts_holder,80);
 
@@ -295,23 +250,6 @@ sample_counts_temp[33]=note[3].tuned;
 
 
 uint32_t*  sine_ptr_temp[5];
-	sampler.start=(sampler.start_MSB<<8)+sampler.start_LSB;
-	sampler.end=(sampler.end_MSB<<8)+sampler.end_LSB;
-
-//	sine_ptr_temp[0]=&sine_counter[3];
-//	sine_ptr_temp[1]=&sine_counter[6];
-//	sine_ptr_temp[2]=&sine_counter[9];
-//	sine_ptr_temp[3]=&sine_counter[12];
-
-	    // does go out of time , likely skipping samples
-	if(sampler.start_MSB>sampler.end_MSB) sampler.start_MSB=0; //flip to 0  for now
-	if (sampler.ram_seq<sampler.start)      sampler.ram_seq=sampler.start;
-	//if ((sampler.ram_seq)>=sampler.end)     {sampler.ram_seq=sampler.start; note[3].position=0;}      // just for playback counter
-	if ((sampler.ram_seq)>=sampler.end)     {sampler.ram_seq=sampler.start; }      // just for playback counter
-	sampler.length=sampler.end-sampler.start;
-
-	if(sampler.trigger_position )  { sampler.ram_seq=sampler.start;note[3].position=1; }   // starts here not perfect , figure out better
-
 
 
 //tuned_list[0]=6397;
@@ -323,25 +261,15 @@ memcpy(&sample_accus,sample_accus_hold,16);    // this is good
 
 uint8_t*  sample_block_ptr=&flash_read_block ;    // temporary only
 
-	if(counter_16>127) counter_16=0;
 
-	  uint32_t sample_flash_address=((sampler.sample_select*128)<<8)+((counter_16) <<8);  // change this soemthing mroe friendly , also keep last 64k for menus ,wavs maybe just before as well
-
-
-	 sample_flash_address=((sampler.sample_select*128)<<8)+((sampler.ram_seq&15872)*2);  //let see , limited now with a 1k jumps or 31
-
-
-
-
-	 sampler_1k_load(sample_flash_address);
 	//if((sampler.ram_seq&255)==0)	  sampler_1k_load(sample_flash_address);
 
 	counter_16=counter_16+2;   // jump 512 bytes
 	//    if (sampler.ram_seq>14000) memcpy(&error_data,flash_read_block2,127);
 
 	uint16_t*   ram_ptr=  &RAM	;  // pointer goes to LSB !!!!
-	uint16_t* sample_ptr= &flash_read_block;
-
+	//uint16_t* sample_ptr= &flash_read_block;
+	uint16_t* sample_ptr2= &flash_read_block2[4];
 
 
 	if(RAM_looper>=16383) RAM_looper=0;  // with 256 we have every 64 points along the sample for position
@@ -354,10 +282,10 @@ uint8_t*  sample_block_ptr=&flash_read_block ;    // temporary only
 
 	int16_t  flash_read_a=0;
 
-	for (i=0;i<256;i++){    // convert to signed
+	for (i=0;i<512;i++){    // convert to signed , also use this for double buffer (no bank switch) 512 *16 is enough
 
-					flash_read_a= *(sample_ptr+i) - 32767;
-				//	float_table[i]=flash_read_a;
+					flash_read_a= *(sample_ptr2+i) - 32767;
+					if ((flash_read_a==32767)   ||  (flash_read_a==-32767))   flash_read_a=0;    // stop clicks from FF bytes
 					memcpy(&flash_read_block[i*2],&flash_read_a,2);   //
 
 	}
@@ -367,36 +295,44 @@ uint8_t*  sample_block_ptr=&flash_read_block ;    // temporary only
 	int16_t* signed_ptr=&flash_read_block;
 	 if (LFO_square[0].out[0]>10) LCD_Info[60]=94  ;  else LCD_Info[60]=95;
 	 if (LFO_square[2].out[0]>10) LCD_Info[60]=94  ;  else LCD_Info[62]=95;
-
+	 uint8_t sampler_adder_enable=1;
 
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators
 	i_total=i+sample_pointB;
 	sampling_position=(i>>6);
-
+	sampler_adder_enable=1;
 
 	sample_adc_temp=input_holder[((adc_playback_position++)&1023)>>1];
 	sample_adc_temp=(sample_adc_temp-32767)<<4;
 	sample_adc=(sample_adc_temp+sample_adc)>>1;
-	looper_point=(RAM_looper+(sampler.offset<<11))&16383;
+	looper_point=(RAM_looper+(sampler.RAM_offset<<10))&16383;  // will use different data here
 	   ram_temp=*(ram_ptr+looper_point);    // works
 
 	ram_temp=(ram_temp-32767)<<4;
 
-
-//	sample_input=*(sample_ptr+(sampler.ram_seq&255));
-//	sample_input=(sample_input-32767)<<4;
-//	sample_input=(sample_input)<<4;
-	//int_float= (i/2);
-
-	//arm_float_to_q31(&ram_float,&inter_float,1);    // q31 is different here
-	//sample_input=	arm_linear_interp_q15(signed_ptr,int_float,256.);
-	sample_input=*(signed_ptr+(sampler.ram_seq&255));
-
-	    sample_input=sample_input<<4;
+	//ram_synced= *(ram_ptr+sampler.ram_seq);
 
 
-	if	((i&1)==1)  {sampler.ram_seq=sampler.ram_seq+1; RAM_looper++; } // half speed
 
+	if (sampler.ram_seq<sampler.start_current) {sample_input=0;  ram_synced=32767;}
+	else 	{sample_input=*(signed_ptr+(sampler.ram_seq&255));ram_synced= *(ram_ptr+sampler.ram_seq);}
+	ram_synced=(ram_synced-32767)<<4;
+
+
+	sample_input=sample_input<<4;
+	if (ram_sync_swap) sample_input=ram_synced;
+	if  (sampler_mute)  sample_input=0;    // mute   , stops click on start
+
+	//	if	(((i&1)==1) &&  sampler.ram_seq)    sampler.ram_seq=sampler.ram_seq+1;   // count while started
+	//	if	(((i&1)==1) &&   (sampler.ram_seq) && (ADSR[4].buffer[sampling_position]==0) )   sampler.ram_seq=0;  // stops
+
+
+	//    if (sampler.ram_seq<(sampler.start+255))     {   if     (seq_pos>=i)   { sampler_adder_enable=0;sample_input=0; }}   // stop and mute
+	//	if	(((i&1)==1) && sampler_adder_enable)  {  RAM_looper++;sampler.ram_seq=sampler.ram_seq+1;  } // half speed
+		if	((i&1)==1)   {  RAM_looper++;sampler.ram_seq=sampler.ram_seq+1;  }
+
+	//	if	((i&1)==1)  {  RAM_looper++; } // half speed
+//	if	(((i&1)==1) &&   (sampler.ram_seq==0) && (ADSR[4].buffer[sampling_position]) )    sampler.ram_seq=1;   // trigger by velocity
 
 
 	if (i==seqpos_i) {sample_counts_temp[20]=sample_counts_temp[30]; 		//delay tuned changed till correct time
@@ -406,7 +342,7 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	}
 
 	if ((i&63)==0)	{
-	    ADSR_loop();
+
 	    //  LFO_source_new(); // calculate lfo maybe 8 times for now
 	   patch_target_replace();    // update values , not too bad
 float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for useful filter
@@ -420,10 +356,12 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 
 	}
 
-	note[0].velocity=ADSR[0].buffer[sampling_position]>>3;
-	note[1].velocity=ADSR[1].buffer[sampling_position]>>3;
-	note[2].velocity=ADSR[2].buffer[sampling_position]>>3;
-	note[3].velocity=ADSR[3].buffer[sampling_position]>>3;
+	if(ADSR[0].release)       note[0].velocity=ADSR[0].buffer[sampling_position]>>2;   // disables LFO on release set to 0
+	if(ADSR[1].release)       note[1].velocity=ADSR[1].buffer[sampling_position]>>2;
+	if(ADSR[2].release)       note[2].velocity=ADSR[2].buffer[sampling_position]>>2;
+	if(ADSR[3].release)       note[3].velocity=ADSR[3].buffer[sampling_position]>>2;
+	//if(ADSR[4].release)       note[4].velocity=ADSR[4].buffer[sampling_position]>>2;
+
 
 	if (note[0].velocity)   sample_accus[0] = sample_accus[0] + sample_counts_temp[20];  else sample_accus[0]=200000;// normal adder full volume
 		sample_accus[1] = sample_accus[1] + sample_counts_temp[21];
@@ -462,16 +400,20 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 							sample_temp1=(*osc_pointers[2])*note[2].velocity;      // needs some gain fine tune !
 					sample_temp4 =sample_temp1>>2;    // 64 default 20+8
 
-					if (note[3].position) {sample_Accu[9]=sample_input;sample_Accu[8]=sample_input;sample_Accu[7]=sample_input;sample_Accu[6]=sample_input;}
+		//	{sample_Accu[9]=sample_input;sample_Accu[8]=sample_input;sample_Accu[7]=sample_input;sample_Accu[6]=sample_input;}
 					//if (note[3].position) sample_Accu[9]=(ram_temp+sample_Accu[9])>>1; // bit hot , also  add avr
 
 					sample_temp1=(*osc_pointers[3])*	note[3].velocity;  // sine out is 16bit, add 4 then 16+8
+					   // no envelope for smple
+					if (soft_mute)  sample_temp6=(*osc_pointers[4])* (256-(i>>1));  else     sample_temp6=(*osc_pointers[4])*note[4].velocity;   // not heavy
+
 					sample_temp5 =sample_temp1>>2;
 
 	play_holder0[i]=sample_temp2;  // write to bank
 	play_holder1[i]=sample_temp3;
 	play_holder2[i]=sample_temp4;
 	play_holder3[i]=sample_temp5;
+	play_holder4[i]=sample_temp6;  // clean output , samples
 	} // end of osc , doing some sound
 
 				//		    if(note[3].position)		sine_counter[9]=sine_counter[9]+256;  // count up when on
@@ -496,7 +438,7 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 			phase_bank1[i&31]=sample_Accu[1]=play_holder1[i] ; // saw
 			phase_bank2[i&31]=sample_Accu[2]=play_holder2[i];  // sine input
 			phase_bank3[i&31]=sample_Accu[3]=play_holder3[i] ;
-
+			sample_Accu[4]=play_holder4[i];
 
 	if (filter[0].resonance)	sample_Accu[0]=(sample_Accu[0]>>1)+(phase_bank0[  ((i&31)+(31-(filter[0].resonance&31)))&31]>>1); // PHASER
 	if (filter[1].resonance)	sample_Accu[1]=(sample_Accu[1]>>1)+(phase_bank1[  ((i&31)+(31-(filter[1].resonance&31)))&31]>>1);
@@ -545,7 +487,7 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 
 		filter_Accu=filter_Accu2=0;
 		//if  (record_output)  {
-		filter_Accu = (sample_Accu[0]+sample_Accu[1]+sample_Accu[2]+sample_Accu[3] )>>10 ;
+		filter_Accu = (sample_Accu[0]+sample_Accu[1]+sample_Accu[2]+sample_Accu[3] +sample_Accu[4])>>10 ;
 		filter_Accu =filter_Accu+32767;
 
 		  debug_value=filter_Accu;
@@ -559,7 +501,7 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 
 
 
-		filter_Accu2=(sample_Accu[2]+sample_Accu[3])>>16; //filter + drum out
+		filter_Accu2=(sample_Accu[2]+sample_Accu[3]+sample_Accu[4])>>16; //filter + drum out
 		//filter_Accu=play_holder0[i];
 
 
@@ -584,6 +526,35 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 		time_final[0]=time_proc;
 		if  (record_output)  record_output_to_RAM();
 
+		  ram_sync_swap=0;
+
+		if     (sampler.acurrent_sample)  {sampler.start=(sampler.offset[sampler.acurrent_sample-1])<<10;  sampler.start_current=sampler.start;}		 // this works , start is always off by 256 from note start
+
+
+
+		    if (note[4].position) {sampler.ram_seq=sampler.start-(seq_pos>>1); note[4].position=0;	}  // start from note offset
+
+
+		    if     (sampler.acurrent_sample==0)  sampler_mute=1;    else sampler_mute=0;
+
+		if ((sampler.ram_seq)>=16128)     {sampler.ram_seq=sampler.start; }      // just for playback counter , maybe finishing early will cause it to stop
+	//	sampler.length=sampler.end-sampler.start;
+		if  ((sampler.acurrent_sample)    &&  (sampler.sample_select[sampler.acurrent_sample-1]==0)   )     ram_sync_swap=1;   // swap to RAM  from sample on 0 select  ,this should be started after last
+	//	if(sampler.trigger_position )  { sampler.ram_seq=sampler.start;note[3].position=1; }   // starts here not perfect , figure out better
+
+
+
+		if(counter_16>127) counter_16=0;
+
+			  uint32_t sample_flash_address=((sampler.sample_select[sampler.acurrent_sample] *128)<<8)+((counter_16) <<8);  // change this soemthing mroe friendly , also keep last 64k for menus ,wavs maybe just before as well
+
+
+			  if  (sampler.acurrent_sample)    sample_flash_address=((sampler.sample_select[sampler.acurrent_sample-1] *128)<<8)+((sampler.ram_seq>>8)<<9);  //let see , limited now with a 1k jumps or 31
+		//	  else  sample_flash_address=((sampler.sample_select[0] *128)<<8)+((sampler.ram_seq>>8)<<9);
+
+			  sampler_1k_load(sample_flash_address);
+
+			//if ((restart_sample_flag==0 ) || (restart_sample_flag==1))		  sampler_1k_load(sample_flash_address);   // needs to be set to start bank after restart
 		//bank_write=0;   /// total 320 sample time (39khz)
 		}
 

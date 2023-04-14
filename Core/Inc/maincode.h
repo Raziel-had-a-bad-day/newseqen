@@ -62,11 +62,11 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 41:     menu_vars_var1= &LFO_slave1[var_index].depth    ; break;
 	case 42:     menu_vars_var1= &LFO_slave1[var_index].delay    ; break;
 	case 43:     menu_vars_var1= &LFO_slave1[var_index].offset    ; break;
-	case 44: 	menu_vars_var1=&sampler.start_MSB ;break;
-	case 45: 	menu_vars_var1=&sampler.start_LSB ;break;
+	case 44: 	menu_vars_var1=&sampler.offset2[var_index] ;break;
+	case 45: 	menu_vars_var1=&sampler.RAM_offset ;break;
 	case 46: 	menu_vars_var1=&sampler.end_MSB ;break;
 	case 47: 	menu_vars_var1=&sampler.end_LSB ;break;
-	case 48: 	menu_vars_var1=&sampler.offset ;break;
+	case 48: 	menu_vars_var1=&sampler.offset[var_index] ;break;
 	case 49:     menu_vars_var1= &LFO_square[var_index].rate   ; break;
 	case 50:     menu_vars_var1= &LFO_square[var_index].depth    ; break;
 	case 51:     menu_vars_var1= &LFO_square[var_index].offset    ; break;
@@ -77,11 +77,12 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 56: 	menu_vars_var1=&sampler.trigger_3 ;break;
 	case 57: 	menu_vars_var1=&sampler.trigger_4 ;break;
 	case 58: 	menu_vars_var1=&sampler.repeat  ;break;
-	case 59: 	menu_vars_var1=&sampler.sample_select  ;break;
+	case 59: 	menu_vars_var1=&sampler.sample_select[var_index]  ;break;
 	case 60: 	menu_vars_var1=&sampler.sample_save  ;break;
 	case 61: 	menu_vars_var1=&sampler.sample_save_enable  ;break;
 	case 62:     menu_vars_var1= &note[var_index].slide_length    ; break;
-
+	case 63: 	menu_vars_var1=&sampler.Snotes1[var_index]  ;break;
+	case 64: 	menu_vars_var1=&sampler.Snotes2[var_index]  ;break;
 
 	default :		menu_vars_var1= NULL   ; break;
 
@@ -424,7 +425,7 @@ void main_initial(void){
 
 		memcpy(&seq,potSource,46 );  // load from potSource  ,, causes problems with memory ,NEEDS TO BE CONTINUOS OR  WILL  GET CORRUPT
 	    memcpy(&note,potSource+156,160 );   // this works but keep checking for fragmentation
-	    memcpy(&sampler,potSource+476,11 );
+	    memcpy(&sampler,potSource+476,21 );
 
 	    for(mem_counter=0;mem_counter<10;mem_counter++){
 
@@ -451,6 +452,12 @@ void main_initial(void){
 
 		}
 	seq.pos=0;
+	uint8_t counter;
+	for (counter=0;counter<16;counter++){     // notes for sampler
+
+	sampler.Snotes1[counter]=seq.notes2[counter]&15;
+	sampler.Snotes2[counter]=(seq.notes2[counter]>>4)&15;
+	}
 
 
 	uint32_t  tempo_hold=1;  // calculate tempo look up

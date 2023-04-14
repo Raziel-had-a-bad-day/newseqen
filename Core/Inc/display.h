@@ -28,7 +28,7 @@ void display_process(void){							// keep data processing here
 	     memcpy(default_menu3+feedback_loc+5,temp_char,2);
 
 	     if (menu_vars_ref==5) target_display=1;
-	     if (menu_vars_ref==36) target_display=2;
+	     if ((menu_vars_ref==36)|| (menu_vars_ref==37)) target_display=2;
 	     if((48<menu_vars_ref)    && (menu_vars_ref<53)) target_display=3;
 	 //    if((48<menu_vars_ref)    && (menu_vars_ref<53)) memcpy(LCD_Info+3, *(menu_titles_final+(*menu_vars_var)),8);  // send target for LFO_sqr  to LCD_Info
 
@@ -380,7 +380,7 @@ void encoder2(void){  // encoder pos and data input
 				default_menu3[crap8]=div_limit+48;
 				if (menu_vars_ref==53)  default_menu3[crap8]=lcd_out3;   // keep in char , ok
 
-				if ((menu_vars_ref==24) | (menu_vars_ref==25))  default_menu3[crap8]=major_notes[lcd_out3&31];
+				if ((menu_vars_ref==24))  default_menu3[crap8]=major_notes[lcd_out3&31];
 				disp_up_counter++;
 				if(disp_up_counter>menu_title_count) disp_up_counter=0;  // just auto scans lcd_data , can be an issue
 
@@ -400,6 +400,9 @@ void encoder2(void){  // encoder pos and data input
 			    LCD_Info[13]  =( (((seq.pos&15)+1)%100)/10)+48 ;
 			    LCD_Info[14]  =( ((seq.pos&15)+1)%10)+48 ;
 
+			    LCD_Info[15]= ( seq.tempo/100) +48;
+			    LCD_Info[16]  =( (seq.tempo%100) /10)+48;
+			    LCD_Info[17]  =( seq.tempo%10)+48 ;
 
 
     }
@@ -413,10 +416,11 @@ for (counter=0;counter<8;counter++){
   LCD_Info[36+counter]=major_notes[notes_joined[counter+note[2].timeshift]];
   LCD_Info[44+counter]=major_notes[notes_joined[counter+note[3].timeshift]];
 }
+for (counter=0;counter<16;counter++){
+   if  ((seq.pos &15)==counter)   LCD_Info[70+counter]=94;
+   else LCD_Info[70+counter]=47;
 
-
-
-
+}
 }
 
 

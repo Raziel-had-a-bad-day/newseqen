@@ -382,7 +382,7 @@ void ADSR_loop(void){
       ok=0;
 	}
 	if ( ADSR[counter].buffer[position]<0)    ADSR[counter].buffer[position]=0;     // 0-127
-	if ( ADSR[counter].buffer[position]>1000)    ADSR[counter].buffer[position]=1000;
+	if ( ADSR[counter].buffer[position]>1023)    ADSR[counter].buffer[position]=1023;
 
   }
 

@@ -156,21 +156,23 @@
 	    send_spi2[1]=load_address>>16;			// last patch for now
 	    send_spi2[2]=(load_address>>8)&255;    //
 	    send_spi2[3]=load_address&255;     // can start anywhere*/    // usally 0 padded when written
-
+	    send_spi2[3]=0;
 	    current_spi[0]=send_spi2[0];   // to track  later
 	    current_spi[1]=send_spi2[1];
 	    current_spi[2]=send_spi2[2];
 	    current_spi[3]=send_spi2[3];
+	    //   read , copy  bank 1 , copy bank 0
+	//    if ((flash_flag==3)&&(flash_bank_read==0))  {   memcpy( &flash_read_block, flash_read_block2+516,1024); flash_flag=4; }  //  2+3 second half   , extra for spilling over
+	//    if ((flash_flag==2)&&(flash_bank_read==1))   {   memcpy( &flash_read_block, flash_read_block2+4,1024);   flash_flag=3;           }  // 1+2  second half
+	//    flash_bank_read=!flash_bank_read;
 
-	    if ((flash_flag==3)&&(flash_bank_read==0))  {   memcpy( &flash_read_block, flash_read_block2+516,512); flash_flag=4; }  // second half
-	    if ((flash_flag==2)&&(flash_bank_read==1))   {   memcpy( &flash_read_block, flash_read_block2+4,512);   flash_flag=3;           }  // second half
-	    flash_bank_read=!flash_bank_read;
+	 //   if ((flash_flag==3)&&(flash_bank_read==0)) memcpy( &flash_read_block, flash_read_block2+4,1024);   flash_flag=3;
 
-		    if ((flash_flag==4)&&  (flash_bank_read==1) )    {
+	//    if ((flash_flag==4)&&  (flash_bank_read==1) )    {
 
 			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);HAL_SPI_TransmitReceive_DMA(&hspi1, send_spi2,flash_read_block2,1028);
-		    //HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  //  terrible internet advice , put cs low before not after  !
-		    flash_flag=0;  }
+		    //HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  //  terrible Internet advice , put cs low before not after  !
+		    flash_flag=0; // }
 
 	}
 void sampler_ram_record(void) {
@@ -186,17 +188,24 @@ void RAM_normalise(void){
 	    uint16_t peak=0;
 	    uint16_t*   ram_ptr=  &RAM;
 	    float process1=32767 ;
+	    uint16_t mute=1;  // mute by default
 	   int32_t incoming;
 	    for (counter=0;counter<16384;counter++){
 
 		incoming= *(ram_ptr+counter);
 		if (incoming>peak ) peak=incoming;
 	    }
-	    process1=(32767/(peak-process1))*0.9;
+	    process1=(32767/(peak-process1))*0.8;
 
 	    for (counter=0;counter<16384;counter++){
 		incoming= (*(ram_ptr+counter))-32767;
+		if (incoming<100) mute=0;  // mute till near zero
+		if ((counter>16200)&& (incoming<200)) mute=1;
+
+
+		if (mute) incoming=0;  //silence near 0 at end til end
 		incoming=(incoming*process1)+32767;
+
 
 		*(ram_ptr+counter)=incoming&65535;
 
@@ -213,7 +222,14 @@ if (record_out_counter>=32767) { record_out_counter=0; record_output=0;
 
 		     }
 
+void  sample_to_RAM_load(uint8_t sample){
 
+
+
+
+
+
+}
 
 
 
