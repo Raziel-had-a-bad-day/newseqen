@@ -240,10 +240,12 @@ void LFO_source_synced(void){     // lfo , ok , half phase
 	for (lfo_c=0;lfo_c<10;lfo_c++){   //current lfo setup , needs sampling position 0-8  and tempo_sync
 
 	rate= LFO[lfo_c].rate;
-	if (rate>10) rate=10;
+	//if (rate>10) rate=10;
 
-	lfo_accu_temp=(next_isr&((1<<rate)-1))*(65535>>rate);   // calculate from next_isr
+	//lfo_accu_temp=(next_isr&((1<<rate)-1))*(65535>>rate);   // calculate from next_isr, do a lut here  , 20 bit    8bit  *12 bit     20bit-8bit
 
+
+	lfo_accu_temp=next_isr*lfo_table[rate];   // calculate from next_isr, do a lut here  , lfo table neds to be min 16
 	// if (lfo_c==0)     debug_value=lfo_accu_temp;
 
 	 delay_value=8192*(LFO[lfo_c].delay&7);  //not ok
@@ -288,26 +290,33 @@ void LFO_source_synced(void){     // lfo , ok , half phase
 
 
 void  frq_point(void){
-	freq_point[0]=freq_pointer[0] [sampling_position];; // load up coeffs
 
-			freq_point[2]=freq_pointer[1] [sampling_position];  // ok , array was too short
-			freq_point[4]=freq_pointer[2] [sampling_position];  // ok , array was too short
-			freq_point[6]=freq_pointer[3] [sampling_position];  // ok , array was too short
+		float freq_temp;
 
-			if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;// just in case
-			if (freq_point[4]>1) freq_point[4]=1; else if (freq_point[4]<0) freq_point[4]=0;// just in case
-			if (freq_point[2]>1) freq_point[2]=1; else if (freq_point[2]<0) freq_point[2]=0;// just in case
-			if (freq_point[6]>1) freq_point[6]=1; else if (freq_point[6]<0) freq_point[6]=0;// just in case
 
-			freq_point[1]=1-freq_point[0];
-			freq_point[3]=1-freq_point[2];
-			freq_point[5]=1-freq_point[4];
-			freq_point[7]=1-freq_point[6];
 
-			filter_res[0]=freq_point[0]*0.2;
-			filter_res[1]=freq_point[1]*0.2;
-			filter_res[2]=freq_point[2]*0.2;
-			filter_res[3]=freq_point[3]*0.2;
+		freq_temp=freq_pointer[0] [sampling_position]*65536;; // load up coeffs
+			freq_point[0]=freq_temp;
+			freq_temp=freq_pointer[1] [sampling_position]*65536;  // ok , array was too short
+			freq_point[2]=freq_temp;
+			freq_temp=freq_pointer[2] [sampling_position]*65536;  // ok , array was too short
+			freq_point[4]=freq_temp;
+			freq_temp=freq_pointer[3] [sampling_position]*65536;  // ok , array was too short
+			freq_point[6]=freq_temp;
+	//		if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;// just in case
+		//	if (freq_point[4]>1) freq_point[4]=1; else if (freq_point[4]<0) freq_point[4]=0;// just in case
+		//	if (freq_point[2]>1) freq_point[2]=1; else if (freq_point[2]<0) freq_point[2]=0;// just in case
+		//	if (freq_point[6]>1) freq_point[6]=1; else if (freq_point[6]<0) freq_point[6]=0;// just in case
+
+			freq_point[1]=65535-freq_point[0];
+			freq_point[3]=65535-freq_point[2];
+		freq_point[5]=65535-freq_point[4];
+			freq_point[7]=65535-freq_point[6];
+
+		//	filter_res[0]=freq_point[0]*0.2;
+		//	filter_res[1]=freq_point[1]*0.2;
+		//	filter_res[2]=freq_point[2]*0.2;
+		//	filter_res[3]=freq_point[3]*0.2;
 
 }
 

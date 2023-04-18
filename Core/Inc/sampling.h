@@ -13,16 +13,40 @@ void sampling(void){						// 330 atm or 8.5ms
 
 //	if (time_proc>580) time_final=time_proc;
 
+	  time_proc=0;
+    static 	int16_t* sample_ptr2= &flash_read_block2[4];   // DMA load
+ 	int16_t* sample_ptr3= &flash_read_block3;   // DMA load
+    int16_t* signed_ptr=&flash_read_block;
+    uint32_t sample_flash_address;
+    int16_t  flash_read_a=0;
+
+
+
+
 //time_proc=0;
+
+
 	seq.swing=0;
-	time_proc=0;
-	int32_t sample_accus[10] ={0,0,0,0,0,0,0,0,0,0};
+
+static	int32_t sample_accus[10] ={0,0,0,0,0,0,0,0,0,0}; // all these should be static but ok otherwise
 uint8_t mask_i;
-int32_t sample_Accu[10] ={0,0,0,0,0,0,0,0,0,0};   // accu for sample output or lookup
+ int32_t sample_Accu[10] ={0,0,0,0,0,0,0,0,0,0};   // accu for sample output or lookup , not static !
 
 int32_t sample_adc=0;
 int32_t ram_temp=0;
 uint16_t sample_counts_temp[40]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+//static  float  filter_accus[36]={0};   // make sure its static here
+
+static  int32_t  filter_accus[36]={0};
+static int32_t play_holder1[512];    // data banks
+static int32_t play_holder2[512];
+static int32_t play_holder3[512];    // data alignment > type
+static  int32_t play_holder4[512];
+static int32_t play_holder0[512];
+static int32_t phase_bank0[32];
+static int32_t phase_bank1[32];
+static int32_t phase_bank2[32];
+static int32_t phase_bank3[32];
 
 int32_t sample_input=0;
 tempo_lut[131]=1023;   // force to an even count on samples
@@ -39,14 +63,14 @@ memcpy(notes_joined+16,seq.notes1,16);  //  only use notes 1
 sample_pointB=sample_pointD;
 unsigned short tempo_start=0;  // enabled when i=isrMask;
 
-LCD_Info_notes();
+LCD_Info_notes(seq.loop[4]);
 
 uint8_t counter;
 for (counter=0;counter<16;counter++){				// notes for sampler
 seq.notes2[counter]= (sampler.Snotes1[counter]&15)+ (sampler.Snotes2[counter]<<4);
 
 }
-
+uint8_t sound_enable[8]={0,0,0,0,0,0,0,0};  // better here
 
 uint16_t i_total;
 uint16_t tempo_mod=tempo_lut[seq.tempo];  // set tempo,speed from lut 40-200bpm  ,changed to 4x for note lenght
@@ -76,7 +100,7 @@ tempo_mod_hold=tempo_mod;   // for lfo
 
 
 patch_lists();
-int32_t* osc_pointers[10];   // sample outs
+static int32_t* osc_pointers[10];   // sample outs
 uint8_t pars_counter;
 
 //if (sampler.ram_seq>15871)  sampler.ram_seq=0;  //else sampler.ram_seq=sampler.ram_seq+1024;
@@ -85,15 +109,15 @@ uint8_t pars_counter;
 
 
 		sample_accus[pars_counter]=sample_accus_hold[pars_counter];
-	 if (note[pars_counter].osc==0) osc_pointers[pars_counter]=&sample_Accu[5];  // zero
-	 	 	 	 if (note[pars_counter].osc==1) osc_pointers[pars_counter]=&sample_accus[pars_counter];   // saw
-	 			if (note[pars_counter].osc==2) osc_pointers[pars_counter]=&sample_Accu[pars_counter];		// tri
-	 			if (note[pars_counter].osc==3) { osc_pointers[pars_counter]=&sample_Accu[pars_counter+6];}   // sample_input
-	 			if (note[pars_counter].osc==4) { osc_pointers[pars_counter]=&sample_input;}  // sampleinput
-	 			if (note[pars_counter].osc==5) osc_pointers[pars_counter]=&sample_adc;   // sine
-	 			if (note[pars_counter].osc==6) osc_pointers[pars_counter]=&ram_temp ;   // non muted RAM , just loop
-	 			if (note[pars_counter].osc==7) osc_pointers[pars_counter]=&ram_synced;   // trigger 0-16
-	 			if (note[pars_counter].osc>7) osc_pointers[pars_counter]=&sample_Accu[5];  // zero
+	 if (note[pars_counter].osc==0) {osc_pointers[pars_counter]=&sample_Accu[5];  sound_enable[pars_counter]=0;} // zero
+	 	 	 	 if (note[pars_counter].osc==1) {osc_pointers[pars_counter]=&sample_accus[pars_counter];  sound_enable[pars_counter]=1;} 						// saw
+	 			if (note[pars_counter].osc==2){ osc_pointers[pars_counter]=&sample_Accu[pars_counter];sound_enable[pars_counter]=2;} 		// tri
+	 			if (note[pars_counter].osc==3) { osc_pointers[pars_counter]=&sample_Accu[pars_counter+6];sound_enable[3]=3;}   // sample_input
+	 			if (note[pars_counter].osc==4) { osc_pointers[pars_counter]=&sample_input;sound_enable[4]=4;}  // sampleinput
+	 			if (note[pars_counter].osc==5) {osc_pointers[pars_counter]=&sample_adc;sound_enable[5]=5;}    // sine
+	 			if (note[pars_counter].osc==6) {osc_pointers[pars_counter]=&ram_temp ; sound_enable[6]=6;}   // non muted RAM , just loop
+	 			if (note[pars_counter].osc==7) {osc_pointers[pars_counter]=&ram_synced; sound_enable[7]=7;}   // trigger 0-16
+	 			if (note[pars_counter].osc>7) {osc_pointers[pars_counter]=&sample_Accu[5]; sound_enable[pars_counter]=0;}  // zero
 
 
  }
@@ -112,7 +136,16 @@ uint8_t fader[17]={0,1,5,11,19,28,39,51,64,76,88,99,108,116,122,126,127}; // sin
 isr_change=0;
 uint8_t seq_dat=(1<<(((adc_values[0]>>3))+1))-1;
 ///////////////////////////////////////////////////////////////
-uint8_t note_plain;
+
+	for (i=0;i<512;i++){    // convert to signed , also use this for double buffer (no bank switch) 512 *16 is enough
+
+	    flash_read_a= *(sample_ptr2+i) - 32767;
+	    if ((flash_read_a==32767)   ||  (flash_read_a==-32767))   flash_read_a=0;    // stop clicks from FF bytes
+	    memcpy(&flash_read_block[i*2],&flash_read_a,2);   // load first set
+	}
+	if (sampler.acurrent_sample2)     sample_flash_address=((sampler.sample_select[sampler.acurrent_sample2-1] *128)<<8)+((sampler.ram_seq2>>8)<<9);
+	sampler_1k_load(sample_flash_address);
+
 
 
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,works fine, too much scope
@@ -120,7 +153,7 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	i_total=i+sample_pointB;
 	sampling_position=i>>6;   //   0-8 steps
 	sampling_position_b=(sampling_position+7)&7;
-	note_plain=seq.notes1[seq.pos & 7 ];
+
 //potValues[i&255]=potSource[i&255]>>4; //just to update values
 
 if (tempo_count>=tempo_mod) { next_isr=(next_isr+1)& 4095;tempo_count=0;isr_change=next_isr+1;  }  else {tempo_count++;  }  //trigger next note , actual next step for isrCount(future)  8ms,trying to fix slow down here  8000 too  much, adsr clears note info
@@ -146,12 +179,6 @@ if (seq.tempo<60) {tempo_start=0; seq.pos=0;sampler.acurrent_sample=1;} // loop 
 	//	note[2].timeshift=note[1].timeshift=note[3].timeshift=note[4].timeshift;
 		uint8_t   loop_temp1[4];
 		loop_temp1[0]=seq.pos&7;
-	//	loop_temp1[1]=adc_values[1]>>2;
-	//	loop_temp1[2]=adc_values[2]>>2;
-	//	loop_temp1[3]=adc_values[0]>>2;
-
-
-
 
 		seq.loop[0]=(note[0].timeshift+(seq.pos&note[0].slide_length))&31;
 		seq.loop[1]=(note[1].timeshift+(seq.pos&note[1].slide_length))&31;
@@ -161,6 +188,8 @@ if (seq.tempo<60) {tempo_start=0; seq.pos=0;sampler.acurrent_sample=1;} // loop 
 
 
 		sampler.acurrent_sample=sampler.Snotes1 [seq.loop[4]]; // 0 is none
+		sampler.acurrent_sample2=sampler.Snotes2 [seq.loop[4]]; // 0 is none
+
 		soft_mute=1;  // fade out  start on note change
 			note[0].pitch=(notes_joined[seq.loop[0]])+(note[0].transpose);    // maybe join 1 and 2
 			//note[0].pitch=note[1].pitch+(note[0].transpose); // just double
@@ -240,6 +269,7 @@ int32_t  sample_temp3;
 int32_t  sample_temp4;
 int32_t  sample_temp5;
 int32_t  sample_temp6;
+int32_t  sample_temp7=0;
 
 memcpy(&sample_counts_temp,sample_counts_holder,80);
 
@@ -249,7 +279,7 @@ sample_counts_temp[32]=note[2].tuned;
 sample_counts_temp[33]=note[3].tuned;
 
 
-uint32_t*  sine_ptr_temp[5];
+static uint32_t*  sine_ptr_temp[5];
 
 
 //tuned_list[0]=6397;
@@ -259,7 +289,7 @@ memcpy(&accu_count,sample_accu_counter,8);  // copy counters
 memcpy(&sample_accus,sample_accus_hold,16);    // this is good
 
 
-uint8_t*  sample_block_ptr=&flash_read_block ;    // temporary only
+
 
 
 	//if((sampler.ram_seq&255)==0)	  sampler_1k_load(sample_flash_address);
@@ -269,7 +299,7 @@ uint8_t*  sample_block_ptr=&flash_read_block ;    // temporary only
 
 	uint16_t*   ram_ptr=  &RAM	;  // pointer goes to LSB !!!!
 	//uint16_t* sample_ptr= &flash_read_block;
-	uint16_t* sample_ptr2= &flash_read_block2[4];
+
 
 
 	if(RAM_looper>=16383) RAM_looper=0;  // with 256 we have every 64 points along the sample for position
@@ -280,36 +310,40 @@ uint8_t*  sample_block_ptr=&flash_read_block ;    // temporary only
 
 //	ram_float=(1<<20) /(1.059463*ram_float);
 
-	int16_t  flash_read_a=0;
+  flash_read_a=0;
 
 	for (i=0;i<512;i++){    // convert to signed , also use this for double buffer (no bank switch) 512 *16 is enough
 
-					flash_read_a= *(sample_ptr2+i) - 32767;
+	 //   flash_read_a= *(sample_ptr2+i);
+	    flash_read_a= *(sample_ptr2+i) - 32767;
 					if ((flash_read_a==32767)   ||  (flash_read_a==-32767))   flash_read_a=0;    // stop clicks from FF bytes
-					memcpy(&flash_read_block[i*2],&flash_read_a,2);   //
+					memcpy(&flash_read_block3[i*2],&flash_read_a,2);   // load second set ,hopefully
 
 	}
 
 ///    downsample  is a no go without playback from RAM , leave it , work on loops etc
 //	sine_count_sample();   //change playback rate
-	int16_t* signed_ptr=&flash_read_block;
+
 	 if (LFO_square[0].out[0]>10) LCD_Info[60]=94  ;  else LCD_Info[60]=95;
 	 if (LFO_square[2].out[0]>10) LCD_Info[60]=94  ;  else LCD_Info[62]=95;
 	 uint8_t sampler_adder_enable=1;
 
+		// TIME FINAL IS 68 UP TO HERE ATM
 for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators
 	i_total=i+sample_pointB;
 	sampling_position=(i>>6);
 	sampler_adder_enable=1;
-
+	if (sound_enable[5]) 		 {
 	sample_adc_temp=input_holder[((adc_playback_position++)&1023)>>1];
 	sample_adc_temp=(sample_adc_temp-32767)<<4;
-	sample_adc=(sample_adc_temp+sample_adc)>>1;
+	sample_adc=(sample_adc_temp+sample_adc)>>1;}
+
+	if (sound_enable[6]) 		 {
 	looper_point=(RAM_looper+(sampler.RAM_offset<<10))&16383;  // will use different data here
 	   ram_temp=*(ram_ptr+looper_point);    // works
 
 	ram_temp=(ram_temp-32767)<<4;
-
+	}
 	//ram_synced= *(ram_ptr+sampler.ram_seq);
 
 
@@ -318,21 +352,17 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	else 	{sample_input=*(signed_ptr+(sampler.ram_seq&255));ram_synced= *(ram_ptr+sampler.ram_seq);}
 	ram_synced=(ram_synced-32767)<<4;
 
+	if (sampler.ram_seq2<sampler.start_current2)  sample_temp7=0; else
+	sample_temp7=*(sample_ptr3+(sampler.ram_seq2&255));
 
-	sample_input=sample_input<<4;
+
 	if (ram_sync_swap) sample_input=ram_synced;
-	if  (sampler_mute)  sample_input=0;    // mute   , stops click on start
+	if  (sampler_mute[0])  sample_input=0;    // mute   , stops click on start
+	if  (sampler_mute[1])  sample_temp7=0;
 
-	//	if	(((i&1)==1) &&  sampler.ram_seq)    sampler.ram_seq=sampler.ram_seq+1;   // count while started
-	//	if	(((i&1)==1) &&   (sampler.ram_seq) && (ADSR[4].buffer[sampling_position]==0) )   sampler.ram_seq=0;  // stops
-
-
-	//    if (sampler.ram_seq<(sampler.start+255))     {   if     (seq_pos>=i)   { sampler_adder_enable=0;sample_input=0; }}   // stop and mute
-	//	if	(((i&1)==1) && sampler_adder_enable)  {  RAM_looper++;sampler.ram_seq=sampler.ram_seq+1;  } // half speed
-		if	((i&1)==1)   {  RAM_looper++;sampler.ram_seq=sampler.ram_seq+1;  }
-
-	//	if	((i&1)==1)  {  RAM_looper++; } // half speed
-//	if	(((i&1)==1) &&   (sampler.ram_seq==0) && (ADSR[4].buffer[sampling_position]) )    sampler.ram_seq=1;   // trigger by velocity
+	//sample_input=sample_input<<3;
+//	sample_temp7=sample_temp7<<3;
+		if	((i&1)==1)   {  RAM_looper++;sampler.ram_seq++; sampler.ram_seq2++; }
 
 
 	if (i==seqpos_i) {sample_counts_temp[20]=sample_counts_temp[30]; 		//delay tuned changed till correct time
@@ -363,58 +393,53 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 	//if(ADSR[4].release)       note[4].velocity=ADSR[4].buffer[sampling_position]>>2;
 
 
-	if (note[0].velocity)   sample_accus[0] = sample_accus[0] + sample_counts_temp[20];  else sample_accus[0]=200000;// normal adder full volume
-		sample_accus[1] = sample_accus[1] + sample_counts_temp[21];
-		sample_accus[2] = sample_accus[2] + sample_counts_temp[22]; // bouncing somewhere
-		sample_accus[3] = sample_accus[3] + sample_counts_temp[23];  // 6 cycles
+	{	  sample_accus[0] = sample_accus[0] + sample_counts_temp[20];}  // normal adder full volume   ,11 inst
+	{	sample_accus[1] = sample_accus[1] + sample_counts_temp[21];}
+	{	sample_accus[2] = sample_accus[2] + sample_counts_temp[22]; }// bouncing somewhere
+	{	sample_accus[3] = sample_accus[3] + sample_counts_temp[23]; } // 6 cycles
 
 			if (sample_accus[0]>524287) {sample_accus[0] =-0-sample_accus[0] ; } // faster >  than &  ,strange,  or is even worse
-			if (sample_accus[1]>524287) {sample_accus[1] =-0-sample_accus[1] ;}// faster >  than &  ,strange
+			if (sample_accus[1]>524287) {sample_accus[1] =-0-sample_accus[1] ;}// faster >  than &  ,conditional statement has no ' & '  in assy
 			if (sample_accus[2]>524287) {sample_accus[2] =-0-sample_accus[2] ;} //
 			if (sample_accus[3]>524287) {sample_accus[3] =-0-sample_accus[3] ;} //  6 cycles
 
 
-
-		//	if (note[0].velocity==0) sample_accus[0]=200000;
-
-
-
-			sample_Accu[0]=(abs(sample_accus[0])-262144)<<1;
-			sample_Accu[1]=(abs(sample_accus[1])-262144)<<1;
-			sample_Accu[2]=(abs(sample_accus[2])-262144)<<1;
-			sample_Accu[3]=(abs(sample_accus[3])-262144)<<1;
-
-
-
-
+			if (sound_enable[0]==2)    	{sample_Accu[0]=(abs(sample_accus[0])-262144)<<1;	}  // not much help at all
+			if (sound_enable[1]==2)		 	{	sample_Accu[1]=(abs(sample_accus[1])-262144)<<1;}
+			if (sound_enable[2]==2)		 	{sample_Accu[2]=(abs(sample_accus[2])-262144)<<1;}
+			if (sound_enable[3]==2) 				{sample_Accu[3]=(abs(sample_accus[3])-262144)<<1;}
 
 
 			sample_temp1=(*osc_pointers[0])*note[0].velocity;
-		//	sample_temp1=(*osc_pointers[0])*note[0].velocity;// needs cut a bit  maybe some diff vol settings
-					sample_temp2=(sample_temp1)>>2;
 
-							sample_temp1=(*osc_pointers[1])*note[1].velocity; // needs cut a bit  ,default 20bit
-					sample_temp3=sample_temp1>>2; // 20+8
+			sample_temp2=(sample_temp1)>>12;
+
+			sample_temp1=(*osc_pointers[1])*note[1].velocity; // needs cut a bit  ,default 20bit
+			sample_temp3=sample_temp1>>12; // 20+8
 
 
-							sample_temp1=(*osc_pointers[2])*note[2].velocity;      // needs some gain fine tune !
-					sample_temp4 =sample_temp1>>2;    // 64 default 20+8
+			sample_temp1=(*osc_pointers[2])*note[2].velocity;      // needs some gain fine tune !
+			sample_temp4 =sample_temp1>>12;    // 64 default 20+8
 
 		//	{sample_Accu[9]=sample_input;sample_Accu[8]=sample_input;sample_Accu[7]=sample_input;sample_Accu[6]=sample_input;}
 					//if (note[3].position) sample_Accu[9]=(ram_temp+sample_Accu[9])>>1; // bit hot , also  add avr
 
 					sample_temp1=(*osc_pointers[3])*	note[3].velocity;  // sine out is 16bit, add 4 then 16+8
 					   // no envelope for smple
-					if (soft_mute)  sample_temp6=(*osc_pointers[4])* (256-(i>>1));  else     sample_temp6=(*osc_pointers[4])*note[4].velocity;   // not heavy
+				//	if (soft_mute)  sample_temp6=(*osc_pointers[4])* (256-(i>>1));  else     sample_temp6=(*osc_pointers[4])*note[4].velocity;   // not heavy
+					sample_temp6=((*osc_pointers[4])*note[4].velocity)+(sample_temp7*note[5].velocity);
 
-					sample_temp5 =sample_temp1>>2;
+					sample_temp5 =sample_temp1>>11;
 
 	play_holder0[i]=sample_temp2;  // write to bank
 	play_holder1[i]=sample_temp3;
 	play_holder2[i]=sample_temp4;
 	play_holder3[i]=sample_temp5;
-	play_holder4[i]=sample_temp6;  // clean output , samples
-	} // end of osc , doing some sound
+	play_holder4[i]=(sample_temp6)>>9;  // clean output , samples
+	//play_holder4[i]=sample_temp7;
+
+
+} // end of osc , doing some sound
 
 				//		    if(note[3].position)		sine_counter[9]=sine_counter[9]+256;  // count up when on
 
@@ -423,89 +448,113 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
     memcpy(&sample_counts_holder,sample_counts_temp,80);
     int32_t filter_Accu;
     int32_t filter_Accu2;
+    uint8_t i_31;
 
-    //uint16_t* click=&input_holder[0];
+   static uint8_t phaser[4];
+ // memcpy(&filter_accus,filter_accus_hold,60);    doesnt help here
 
 
-			for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,oscillators , filters and final out ,slow 133
+   //uint16_t* click=&input_holder[0];
+
+			//   TIME FINAL IS 188 UP TO HERE ATM
+			for (i=0;i<512;i++) {    //  SLOW USES UP ABOUT 140
 				i_total=i+sample_pointB;
-
+				i_31=i&31;
 			sampling_position=(i>>6);
-			// filter 1
+
+			if ((i&63)==0){
+						phaser[0]=31-(filter[0].resonance);
+						phaser[1]=-31-(filter[1].resonance);
+						phaser[2]=31-(filter[2].resonance);
+						phaser[3]=31-(filter[3].resonance);
+						frq_point();
+			}
 
 
-			phase_bank0[i&31]= sample_Accu[0]=play_holder0[i];
-			phase_bank1[i&31]=sample_Accu[1]=play_holder1[i] ; // saw
-			phase_bank2[i&31]=sample_Accu[2]=play_holder2[i];  // sine input
-			phase_bank3[i&31]=sample_Accu[3]=play_holder3[i] ;
+			phase_bank0[i_31]= sample_Accu[0]=play_holder0[i];
+			phase_bank1[i_31]=sample_Accu[1]=play_holder1[i] ; // saw
+			phase_bank2[i_31]=sample_Accu[2]=play_holder2[i];  // sine input
+			phase_bank3[i_31]=sample_Accu[3]=play_holder3[i] ;
+
 			sample_Accu[4]=play_holder4[i];
 
-	if (filter[0].resonance)	sample_Accu[0]=(sample_Accu[0]>>1)+(phase_bank0[  ((i&31)+(31-(filter[0].resonance&31)))&31]>>1); // PHASER
-	if (filter[1].resonance)	sample_Accu[1]=(sample_Accu[1]>>1)+(phase_bank1[  ((i&31)+(31-(filter[1].resonance&31)))&31]>>1);
-	if (filter[2].resonance)	sample_Accu[2]=(sample_Accu[2]>>1)+(phase_bank2[  ((i&31)+(31-(filter[2].resonance&31)))&31]>>1);
-	if (filter[3].resonance)	sample_Accu[3]=(sample_Accu[3]>>1)+(phase_bank3[  ((i&31)+(31-(filter[3].resonance&31)))&31]>>1);
-	// this section is about 100 tmr cycles
-			if ((i&63)==0){frq_point();
-		}
+	if (phaser[0])	sample_Accu[0]=(sample_Accu[0]>>1)+(phase_bank0[ ( i_31+phaser[0])&31	]>>1); // PHASER
+	if (phaser[1])	sample_Accu[1]=(sample_Accu[1]>>1)+(phase_bank1[( i_31+phaser[0])&31	]>>1);
+	if (phaser[2])	sample_Accu[2]=(sample_Accu[2]>>1)+(phase_bank2[  ( i_31+phaser[0])&31	]>>1);
+	if (phaser[3])	sample_Accu[3]=(sample_Accu[3]>>1)+(phase_bank3[  ( i_31+phaser[0])&31	]>>1);
 
 
-   // vol lfo
+
+		    filter_Accu=sample_Accu[0]-filter_accus[3];
+		//    filter_Accu2=filter_accus[2]-filter_accus[3];
+		//filter_accus[2]=(filter_accus[2] + (freq_point[0]*    (filter_Accu+  filter_Accu2) ))>>16;     //short=fast , adding makes it slower
 
 
-		filter_accus[1]=sample_Accu[0]; // saw
-		filter_accus[1]=filter_accus[1]-(filter_accus[3]*filter_res[0]);
+		    filter_accus[2]=((sample_Accu[0]*freq_point[0])+(filter_accus[2]*freq_point[1]))>>16;
+		    filter_accus[3]=(((filter_accus[2]*freq_point[0])+(filter_accus[3]*freq_point[1]))>>16); //1
+		//filter_accus[3]=(((filter_accus[2]-filter_accus[3])*freq_point[1])+filter_accus[3])>>16; //1
+		//filter_accus[3]=(((  ((sample_Accu[0]*freq_point[0])+(filter_accus[2]*freq_point[1]))>>16  )*freq_point[0])+(filter_accus[3]*freq_point[1]))>>16; //1
 
-		filter_accus[2]=(filter_accus[1]*freq_point[0])+(filter_accus[2]*freq_point[1]);      //short=fast , adding makes it slower
-		filter_accus[3]=(filter_accus[2]*freq_point[0])+(filter_accus[3]*freq_point[1]);			// int32 after conversions is no quicker
+		filter_accus[5]=((sample_Accu[1]*freq_point[2])+(filter_accus[5]*freq_point[3]))>>16; // down to 12 cycles per 2 filters
+		filter_accus[6]=((filter_accus[5]*freq_point[2])+(filter_accus[6]*freq_point[3]))>>16;// 13 instructions in assy
+
+
+		filter_accus[8]=((sample_Accu[2]*freq_point[4])+(filter_accus[8]*freq_point[5]))>>16;		// external loop is slower
+		filter_accus[9]=((filter_accus[8]*freq_point[4])+(filter_accus[9]*freq_point[5]))>>16;
+
+		filter_accus[11]=((sample_Accu[3]*freq_point[6])+(filter_accus[11]*freq_point[7]))>>16;
+		filter_accus[12]=((filter_accus[11]*freq_point[6])+(filter_accus[12]*freq_point[7]))>>16;
+
+
+		  debug_value=filter_accus[9];
+	//	filter_accus[3]=filter_accus[3]+filter_accus[23];
+		//	filter_accus[6]=filter_accus[6]+filter_accus[26];
+		//	filter_accus[9]=filter_accus[9]+filter_accus[29];
+		//	filter_accus[12]=filter_accus[12]+filter_accus[32];
+
 		sample_Accu[0]=filter_accus[3];
 
-	//	sample_Accu[3]=play_holder2[i] >>5;
-		filter_accus[4]=sample_Accu[1];
-		filter_accus[4]=filter_accus[4]-(filter_accus[6]*filter_res[1]);
-		filter_accus[5]=(filter_accus[4]*freq_point[2])+(filter_accus[5]*freq_point[3]);   // 30 cyles for 2 poles
-		filter_accus[6]=(filter_accus[5]*freq_point[2])+(filter_accus[6]*freq_point[3]);
+		//	if (sound_enable[1]) {  // need better
+
+	//	filter_accus[4]=filter_accus[4]-(filter_accus[6]*filter_res[1]);
+
 		sample_Accu[1]=filter_accus[6];
+	//		}
 
-		filter_accus[7]=sample_Accu[2];
-		filter_accus[7]=filter_accus[7]-(filter_accus[9]*filter_res[2]);  // resonance
-				filter_accus[8]=(filter_accus[7]*freq_point[4])+(filter_accus[8]*freq_point[5]);   // 30 cyles for 2 poles
-				filter_accus[9]=(filter_accus[8]*freq_point[4])+(filter_accus[9]*freq_point[5]);
+
+	//		if (sound_enable[2]) {			//filter_accus[7]=sample_Accu[2];
+		//filter_accus[7]=filter_accus[7]-(filter_accus[9]*filter_res[2]);  // resonance
+			   // 30 cyles for 2 poles
+
 				sample_Accu[2]=filter_accus[9];
+			//}
 
-				filter_accus[10]=sample_Accu[3];
-				filter_accus[10]=filter_accus[10]-(filter_accus[12]*filter_res[3]);
-						filter_accus[11]=(filter_accus[10]*freq_point[6])+(filter_accus[11]*freq_point[7]);   // 30 cyles for 2 poles
-						filter_accus[12]=(filter_accus[11]*freq_point[6])+(filter_accus[12]*freq_point[7]);
+	//		if (sound_enable[3]  ||  sound_enable[4] ) {			//filter_accus[10]=sample_Accu[3];
+				//filter_accus[10]=filter_accus[10]-(filter_accus[12]*filter_res[3]);
+					 // 30 cyles for 2 poles
 						sample_Accu[3]=filter_accus[12];
-
-	//	filter_hold[0]=(filter_accus[5]+filter_accus[11])*0.5; //half sample , nice
-	//	sample_Accu[0] =filter_accus[5]; // out
-	//	filter_accus[11]=filter_accus[5]; //write back new value
-		//sample_Accu[0] =sample_Accu[1];
-
-				//sample_Accu[0]=(sample_Accu[0]>>2)+(play_holder0[(i+550)&511]>>2);   // just need 7 samples for aphaser at 500 hz
 
 		filter_Accu=filter_Accu2=0;
 		//if  (record_output)  {
 		filter_Accu = (sample_Accu[0]+sample_Accu[1]+sample_Accu[2]+sample_Accu[3] +sample_Accu[4])>>10 ;
 		filter_Accu =filter_Accu+32767;
 
-		  debug_value=filter_Accu;
+
 		output_mix[(i&510)+1]=(filter_Accu>>8) &255;
 		output_mix[(i&510)]=filter_Accu&255;
 
 
 	//	}
 
-		filter_Accu=(sample_Accu[0]+sample_Accu[1])>>16;
+		filter_Accu=(sample_Accu[0]+sample_Accu[1])>>6;
 
 
 
-		filter_Accu2=(sample_Accu[2]+sample_Accu[3]+sample_Accu[4])>>16; //filter + drum out
+		filter_Accu2=(sample_Accu[2]+sample_Accu[3]+sample_Accu[4])>>6; //filter + drum out
 		//filter_Accu=play_holder0[i];
 
 
-		 if (one_shot!=199)   one_shot++;  //play one attack then stop
+	//	 if (one_shot!=199)   one_shot++;  //play one attack then stop
 
 		 //if (filter_Accu>0xFFFF) {filter_Accu=0xFFFF;clipping++;} else if (filter_Accu<-65535) filter_Accu=-65535;  // limiter to 16 bits
 		 if (filter_Accu>0x3FF) {filter_Accu=0x3FF;clipping++;} else if (filter_Accu<-1023) filter_Accu=-1023;  // limiter to 11 bits
@@ -517,28 +566,32 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 		 play_sample[(i_total<<1)+1]=(filter_Accu2)+1023;
 		 //play_sample[i_total]=(input_holder[i]);  // works good
 
-		} // end of filer
+		} //  TIME FINAL IS 330 ATM  ... down to 312  ish now
 
+		//	  memcpy(&filter_accus_hold,filter_accus,60);
 
 		//time_final=time_proc;   // in samples
 
 		if (bank_write)   error_count++;  // if bank write is high it means too much stall here
-		time_final[0]=time_proc;
+
 		if  (record_output)  record_output_to_RAM();
 
 		  ram_sync_swap=0;
 
 		if     (sampler.acurrent_sample)  {sampler.start=(sampler.offset[sampler.acurrent_sample-1])<<10;  sampler.start_current=sampler.start;}		 // this works , start is always off by 256 from note start
 
+		if     (sampler.acurrent_sample2)  {sampler.start2=(sampler.offset[sampler.acurrent_sample2-1])<<10;  sampler.start_current2=sampler.start2;}
+
+		    if (note[4].position) {sampler.ram_seq=sampler.start-(seq_pos>>1);sampler.ram_seq2=sampler.start2-(seq_pos>>1); note[4].position=0;	}  // start from note offset
 
 
-		    if (note[4].position) {sampler.ram_seq=sampler.start-(seq_pos>>1); note[4].position=0;	}  // start from note offset
-
-
-		    if     (sampler.acurrent_sample==0)  sampler_mute=1;    else sampler_mute=0;
-
+		    if     (sampler.acurrent_sample==0)  sampler_mute[0]=1;    else sampler_mute[0]=0;
+		    if     (sampler.acurrent_sample2==0)  sampler_mute[1]=1;    else sampler_mute[1]=0;
 		if ((sampler.ram_seq)>=16128)     {sampler.ram_seq=sampler.start; }      // just for playback counter , maybe finishing early will cause it to stop
-	//	sampler.length=sampler.end-sampler.start;
+		if ((sampler.ram_seq2)>=16128)     {sampler.ram_seq2=sampler.start2; }
+
+
+		//	sampler.length=sampler.end-sampler.start;
 		if  ((sampler.acurrent_sample)    &&  (sampler.sample_select[sampler.acurrent_sample-1]==0)   )     ram_sync_swap=1;   // swap to RAM  from sample on 0 select  ,this should be started after last
 	//	if(sampler.trigger_position )  { sampler.ram_seq=sampler.start;note[3].position=1; }   // starts here not perfect , figure out better
 
@@ -546,15 +599,21 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 
 		if(counter_16>127) counter_16=0;
 
-			  uint32_t sample_flash_address=((sampler.sample_select[sampler.acurrent_sample] *128)<<8)+((counter_16) <<8);  // change this soemthing mroe friendly , also keep last 64k for menus ,wavs maybe just before as well
+//	sample_flash_address=((sampler.sample_select[sampler.acurrent_sample] *128)<<8)+((counter_16) <<8);  // change this soemthing mroe friendly , also keep last 64k for menus ,wavs maybe just before as well
 
 
 			  if  (sampler.acurrent_sample)    sample_flash_address=((sampler.sample_select[sampler.acurrent_sample-1] *128)<<8)+((sampler.ram_seq>>8)<<9);  //let see , limited now with a 1k jumps or 31
 		//	  else  sample_flash_address=((sampler.sample_select[0] *128)<<8)+((sampler.ram_seq>>8)<<9);
 
-			  sampler_1k_load(sample_flash_address);
+			  sampler_1k_load(sample_flash_address);   // about 12 cycles  from send to receive
 
-			//if ((restart_sample_flag==0 ) || (restart_sample_flag==1))		  sampler_1k_load(sample_flash_address);   // needs to be set to start bank after restart
-		//bank_write=0;   /// total 320 sample time (39khz)
-		}
 
+
+
+
+			     time_final[0]=time_proc;
+
+
+
+
+		}  // TOTAL IS ABOUT 330 ATM  , 260 with no filters

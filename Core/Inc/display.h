@@ -403,21 +403,21 @@ void encoder2(void){  // encoder pos and data input
 			    LCD_Info[15]= ( seq.tempo/100) +48;
 			    LCD_Info[16]  =( (seq.tempo%100) /10)+48;
 			    LCD_Info[17]  =( seq.tempo%10)+48 ;
-
+if (sampler.sample_status){  if (sampler.sample_status==1) memcpy(&LCD_Info[22],"clear",5);  else  memcpy(&LCD_Info[22],"busy ",5);  }
 
     }
-void LCD_Info_notes(void){
+void LCD_Info_notes(uint8_t value ){
 uint8_t counter=0;
 
 for (counter=0;counter<8;counter++){
 
-  LCD_Info[20+counter]=major_notes[notes_joined[counter+note[0].timeshift]];
-  LCD_Info[28+counter]=major_notes[notes_joined[counter+note[1].timeshift]];
-  LCD_Info[36+counter]=major_notes[notes_joined[counter+note[2].timeshift]];
-  LCD_Info[44+counter]=major_notes[notes_joined[counter+note[3].timeshift]];
+//  LCD_Info[20+counter]=major_notes[notes_joined[counter+note[0].timeshift]];
+//  LCD_Info[28+counter]=major_notes[notes_joined[counter+note[1].timeshift]];
+//  LCD_Info[36+counter]=major_notes[notes_joined[counter+note[2].timeshift]];
+//  LCD_Info[44+counter]=major_notes[notes_joined[counter+note[3].timeshift]];
 }
 for (counter=0;counter<16;counter++){
-   if  ((seq.pos &15)==counter)   LCD_Info[70+counter]=94;
+   if  ((value &15)==counter)   LCD_Info[70+counter]=61;
    else LCD_Info[70+counter]=47;
 
 }

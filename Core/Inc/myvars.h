@@ -156,7 +156,7 @@ void  sampler_1k_load(uint32_t load_address);
 void LCD_Info_feedback(void);
 void RAM_normalise(void);
 void record_output_to_RAM (void);
-void LCD_Info_notes(void);
+void LCD_Info_notes(uint8_t value );
 void sine_count_sample(void);
 void ADSR_loop(void);
 void  sample_to_RAM_load(uint8_t sample);
@@ -264,12 +264,13 @@ uint32_t loop_counter2; //long counter
 uint8_t mem_buf;
 uint16_t menu_page[3]; // switch between pages, keep track when flipping
 uint8_t seq_loop[7]; //loop positions
-
+//float  filter_accus[15]={0};  // hold floats for filter  , better here
 //new stuff///////////////////////////////////////////////////////////////////////////////////////////////////////
 float filter_res[5];
-float  filter_accus[15];  // hold floats for filter
+float  filter_accus_hold[15];  // hold floats for filter
 float filter_hold[5];  //holds some feedback related stuff
-float freq_point[8]={0,0,0,0,0,0,0,0} ; // multiplier coeff holder temp
+//float freq_point[8]={0,0,0,0,0,0,0,0} ; // multiplier coeff holder temp
+static uint16_t freq_point[8]={0,0,0,0,0,0,0,0} ; // multiplier coeff holder temp
 float freq_pointer[4] [9];  // multiplier coeff holder
 uint8_t i_frac;  // divide i/64
 uint8_t seq_store;  // just an seq_pos holder for adsr
@@ -454,6 +455,8 @@ struct sampler_settings{
     uint8_t offset[8];  // offset from start
     uint8_t sample_select[8];    // sample to play 0-255 for now , maybe starting from 0 mem
     uint8_t offset2[8];  // offset from end
+    uint32_t recorded[8];   //keeps tab of written samples per bitfield , 32 bytes
+
 
     uint8_t trigger_1;   // uses +1 to enable  , might  drop it
         uint8_t trigger_2;
@@ -476,7 +479,8 @@ uint8_t sample_save_enable ;   // save flag to flash
 uint8_t one_shot; // one shot bit flag , 0-7 notes
 uint8_t RAM_free ;  // enables flash playback
 uint16_t  start;    // for trimming  start ,calucalted
- uint16_t end;	// for trimming end ,calculated
+uint16_t  start2;
+uint16_t end;	// for trimming end ,calculated
 uint16_t length;  // length for looping  ,calucalted
 int16_t ram_pos;  //record pos
 uint8_t Snotes1[16];   // stored in seq.notes2  0-16
@@ -484,10 +488,13 @@ uint8_t Snotes2[16];   // stored in seq.notes2  0-16
 uint16_t* start_ptr;
 uint16_t ram_seq;   // seq current position , negative for pre roll
 uint16_t ram_seq2;
-
+uint8_t sample_status; // state if sample is already recorded 1=clear 2 =busy
 uint8_t acurrent_sample;
+uint8_t acurrent_sample2;  // select snotes2
 uint16_t start_current;
+uint16_t start_current2;
 uint16_t end_current;
+uint16_t end_current2;
 };
 static struct sampler_settings sampler={.record_enable=0, .sample_location=0,.sample_save_enable=0,.ram_pos=0
 		,.end_MSB=63, .end_LSB=255,.start_MSB=0,.start_LSB=0,.length=1024,.one_shot=255,.RAM_free=0  };                                     // needs to be protected
@@ -534,11 +541,7 @@ uint8_t sampling_position_b=0;    //previous step
 uint8_t gfx_clear_flag=0;    // important for clearing screen
 uint8_t mem_errors=0;   // eeprom error count
 uint8_t mem_verify=0;
-int32_t play_holder1[512];    // data banks
-int32_t play_holder2[512];
-int32_t play_holder3[512];    // data banks
-int32_t play_holder0[512];
-int32_t play_holder4[512];
+
 uint8_t clipping=0;
 uint8_t notes_joined[33];
 uint8_t menu_vars_ref=0;  // menu vars search reference , used for divider
@@ -564,10 +567,7 @@ static uint8_t spi_tx_block[4096]={0};  // tx store for dma
 static uint16_t block_counter=0;
 uint16_t lfo_tempo_synced[256];     // tempo lut table duplicate every 16 steps
 uint8_t LFO_sqr_list[10];
-int32_t phase_bank0[32];
-int32_t phase_bank1[32];
-int32_t phase_bank2[32];
-int32_t phase_bank3[32];
+
 uint8_t LCD_Info[99]={0};   // lcd_numbers or text  data anywhere on screen
 uint8_t sqr_target_list[20];  // keep record of patch target for LCD_info using  menu_titles_final  as  a list ref
 
@@ -576,7 +576,9 @@ int32_t  debug_value;
 uint32_t tempo_large;
  static uint8_t flash_read_block[1024]={0};
  static uint8_t flash_read_block2[1028];
-volatile uint8_t flash_flag=4;
+ static uint8_t flash_read_block3[1024]={0};
+
+ volatile uint8_t flash_flag=4;
 uint8_t  flash_bank_read=0;   // switch fifo for playback
 uint16_t counter_16=0;
 uint8_t current_spi[4];
@@ -595,10 +597,11 @@ uint16_t adc_playback_position=0;
 float float_table[256]={0};
 uint8_t zero_cross[4]={0};
 uint8_t restart_sample_flag=0;
-uint8_t sampler_mute=0;
+uint8_t sampler_mute[2]={0};
 uint8_t  ram_sync_swap=0;
-
-
+uint16_t lfo_table[20];
+uint8_t i_31=0;
+uint8_t disable_eeprom=0;
 //uint8_t acurrent_sample=0; // returns current sample being p[layed
 
 

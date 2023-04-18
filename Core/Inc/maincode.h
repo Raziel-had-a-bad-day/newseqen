@@ -420,12 +420,15 @@ void main_initial(void){
 
 
 
-	HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, 512,1000); //ok
+	HAL_I2C_Mem_Read (&hi2c2,160,64, 2 , potSource, EPROM_limit,1000); //ok
 
 
 		memcpy(&seq,potSource,46 );  // load from potSource  ,, causes problems with memory ,NEEDS TO BE CONTINUOS OR  WILL  GET CORRUPT
 	    memcpy(&note,potSource+156,160 );   // this works but keep checking for fragmentation
-	    memcpy(&sampler,potSource+476,21 );
+	    memcpy(&sampler,potSource+476,36 );
+	    memcpy(&sampler+36,potSource+572,20 );
+
+
 
 	    for(mem_counter=0;mem_counter<10;mem_counter++){
 
@@ -440,10 +443,19 @@ void main_initial(void){
 
 	    }
 
+	    uint32_t test_eeprom=0;
+	    for(i=0;i<16;i++){
 
-		for(i=0;i<64;i++){       //   fill with characters also add lcd command ,ok
+	    test_eeprom=seq.notes1[i]+test_eeprom;
+	    test_eeprom=seq.notes2[i]+test_eeprom;
+		}
+	//   if (test_eeprom==0)  disable_eeprom=1;  // if eeprom didn't load , disable writes  , usually zeros when load fails
+
+
+	    for(i=0;i<64;i++){       //   fill with characters also add lcd command ,ok
 
 		for 	(n=0;n<18;n++){					// this is ok
+
 			if (n==0) gfx_ram[(i*18)+n] = 128+(i&31);   // half page
 			if (n==1) gfx_ram[(i*18)+n] = 128+((i>>5)*8);    // change x to 8
 			if (n>1)  gfx_ram[(i*18)+n] = 255;
@@ -458,6 +470,21 @@ void main_initial(void){
 	sampler.Snotes1[counter]=seq.notes2[counter]&15;
 	sampler.Snotes2[counter]=(seq.notes2[counter]>>4)&15;
 	}
+
+	uint16_t lfo_list[24]= {1,2,3,4,8,12,16,24,32,48,64,96,128,156,228,256,512,768,1024,2048,4096,9196,16384,32768};
+
+	    for (counter=0;counter<20;counter++){
+	//	lfo_table[counter]=    (counter*counter*((counter>>5)+1))<<((counter>>2)+1);
+	//	lfo_table[counter]=   (lfo_list[counter]*16) <<(counter>>15);
+	//	lfo_table[counter]= (((counter>>2)+1)*16)<<(((counter>>2)+1)<<1);
+	//lfo_list[counter	lfo_table[counter-1]=(( (counter-1)&3)+1)*counter*counter;
+		lfo_table[counter]=lfo_list[counter]*16;
+
+
+
+		if (lfo_table[counter]<17) lfo_table[counter]=16;
+	    }
+
 
 
 	uint32_t  tempo_hold=1;  // calculate tempo look up
@@ -541,5 +568,20 @@ void patch_lists(void){   //   ok
 
     }
 
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

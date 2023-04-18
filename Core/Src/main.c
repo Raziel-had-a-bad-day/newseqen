@@ -183,13 +183,15 @@ main_initial();   // initial setup
 
 
 			memcpy(potSource,&seq,46); // about 35
-			memcpy(potSource+476,&sampler,21);
+			memcpy(potSource+476,&sampler,36);
+			memcpy(potSource+572,&sampler+36,20);
+
 			for(i=0;i<10;i++){
 					memcpy(potSource+156+(i*16),&note[i],16 );  //grab note settings ,112 total , works
 
 				memcpy(potSource+46+(i*6),&LFO[i],6 );  // + 60  ,ok
 				memcpy(potSource+106+(i*5),&ADSR[i],5 );  // +50  ,
-				memcpy(potSource+316+(i*6),&patch[i],6 );
+				memcpy(potSource+316+(i*6),&patch[i],6 );   // not writing ?
 
 				memcpy(potSource+376+(i*6),&LFO_slave1[i],6 ); // ext llof settings
 				memcpy(potSource+436+(i*4),&LFO_square[i],4 );
@@ -221,7 +223,7 @@ main_initial();   // initial setup
 						 mem_buf=potSource[mem_count];
 						 mem_count2=((1+(mem_count>>6))<<6)+(mem_count&63);
 
-						HAL_I2C_Mem_Write(&hi2c2, 160,mem_count2 , 2, &mem_buf, 1, 100);   // write changed
+			if (disable_eeprom==0)	HAL_I2C_Mem_Write(&hi2c2, 160,mem_count2 , 2, &mem_buf, 1, 100);   // write changed
 
 			 // "&hi2c2"  actual register address  , write only when needed
 
@@ -265,7 +267,11 @@ main_initial();   // initial setup
 		}
 
 		if (init > 5) {    //  around 3 cycles per single transmit  , plenty quick as is , spi lcd can really slow things down
-
+			if (sampler.sample_save) {
+			if (sampler.recorded[sampler.sample_save>>5]&(1<<(sampler.sample_save&31)))
+			{sampler.sample_status=2;}  // feedback on sample status
+			else sampler.sample_status=1;
+			}
 			if(sampler.sample_save_enable>10){
 
 			    uint16_t sample_size=sizeof(RAM);
@@ -970,8 +976,10 @@ static void MX_GPIO_Init(void)
 		   if (SPI1==hspi->Instance) {
 
 
-		       flash_flag=2;
+
 		       HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  //  end
+
+		       flash_flag=2;
 		   }
 		}
 

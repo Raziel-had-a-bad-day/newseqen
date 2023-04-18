@@ -65,7 +65,7 @@
 		uint8_t spi_test[270]={0};
 		if (sample_number>509) return ;
 
-
+		sampler.recorded[sample_number>>5]=sampler.recorded[sample_number>>5]^(1<<(sample_number&31));   //record to eeprom
 
 			spi_test[1]=sample_number>>1; //24bit address msb
 			spi_test[2]=(sample_number&1)<<7; //24bit address

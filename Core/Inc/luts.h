@@ -9,9 +9,9 @@
 #define menu_parser_limit 1400   // search limits
 
 const char default_menu[] ={"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 15LCD_Info16LCD_Info17LCD_Info 00Tempo    04Slide     04Sliderep "  // make sure first line uses last char
-	"                "
+	//"                "
   // was getting corrupted then screwed everything
-
+	"70LCD_Info71LCD_Info72LCD_Info73LCD_Info74LCD_Info75LCD_Info76LCD_Info77LCD_Info78LCD_Info79LCD_Info80LCD_Info81LCD_Info82LCD_Info83LCD_Info84LCD_Info85LCD_Info"
 	//"20LCD_Info21LCD_Info22LCD_Info23LCD_Info24LCD_Info25LCD_Info26LCD_Info27LCD_Info        "
 	//"28LCD_Info29LCD_Info30LCD_Info31LCD_Info32LCD_Info33LCD_Info34LCD_Info35LCD_Info        "
 	//"36LCD_Info37LCD_Info38LCD_Info39LCD_Info40LCD_Info41LCD_Info42LCD_Info43LCD_Info        "
@@ -65,7 +65,7 @@ const char default_menu[] ={"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 15LCD_Info
 
 //	"00StartMSB 00StartLSB  00EndMSB   00EndLSB   00SMoffset   00Resnance   "
 	"00S_Select  00Trigger1 00Trigger2 00Trigger3 00Trigger4  00S_Repeat  "
-	" 00SmplSave   Save_nbl     00RAMoffst       "
+	" 00SmplSave   Save_nbl     22LCD_Info23LCD_Info24LCD_Info25LCD_Info26LCD_Info   "
 	"                "
 	"00Attack__ 00Decay___ 00Sustain_ 00Release_  01Attack__ 01Decay___ 01Sustain_ 01Release_"
 	"02Attack__ 02Decay___ 02Sustain_ 02Release_  03Attack__ 03Decay___ 03Sustain_ 03Release_"
@@ -74,7 +74,7 @@ const char default_menu[] ={"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 15LCD_Info
 			"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  14Notes1  15Notes1  "   //gaps cause it skip at end
 			"70LCD_Info71LCD_Info72LCD_Info73LCD_Info74LCD_Info75LCD_Info76LCD_Info77LCD_Info78LCD_Info79LCD_Info80LCD_Info81LCD_Info82LCD_Info83LCD_Info84LCD_Info85LCD_Info"
 	" 00OSC1     01OSC1     02OSC1     03OSC1     04OSC1     06OSC1    07OSC1    08OSC1    09OSC1     "
-	" 00Velocity 01Velocity 02Velocity 03Velocity 04Velocity 06Velocity07Velocity08Velocity09Velocity "
+	" 00Velocity 01Velocity 02Velocity 03Velocity 04Velocity05Velocity06Velocity07Velocity08Velocity09Velocity "
 	" 00Transpos 01Transpos 02Transpos 03Transpos   05Transpos06Transpos07Transpos08Transpos"
 	"  00Slide    01Slide    02Slide    03Slide    00Sliderep 01Sliderep 02Sliderep 03Sliderep"
 
@@ -93,7 +93,7 @@ const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,19,0,4,4,4  
 		,0,0,4,15,15
 							    } ; // index number limiter ,fixed IMPORTANT!
 
-const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,10,255,15,255,43,0,15,8,127,   // patch[x].limiter
+const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,19,255,15,255,43,0,15,8,127,   // patch[x].limiter
 																				15,0,8,6,60,16,31,60,31,255,
 																				60,0,255,255,31,8,27,255,255 ,31,
 																				10,255,255,255,31,43,43,43,16,0 ,
