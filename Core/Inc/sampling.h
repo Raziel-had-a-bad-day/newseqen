@@ -17,7 +17,7 @@ void sampling(void){						// 330 atm or 8.5ms
     static 	int16_t* sample_ptr2= &flash_read_block2[4];   // DMA load
  	int16_t* sample_ptr3= &flash_read_block3;   // DMA load
     int16_t* signed_ptr=&flash_read_block;
-    uint32_t sample_flash_address;
+
     int16_t  flash_read_a=0;
 
 
@@ -47,7 +47,7 @@ static int32_t phase_bank0[32];
 static int32_t phase_bank1[32];
 static int32_t phase_bank2[32];
 static int32_t phase_bank3[32];
-
+int32_t  sample_temp7=0;
 int32_t sample_input=0;
 tempo_lut[131]=1023;   // force to an even count on samples
 
@@ -110,10 +110,11 @@ uint8_t pars_counter;
 
 		sample_accus[pars_counter]=sample_accus_hold[pars_counter];
 	 if (note[pars_counter].osc==0) {osc_pointers[pars_counter]=&sample_Accu[5];  sound_enable[pars_counter]=0;} // zero
-	 	 	 	 if (note[pars_counter].osc==1) {osc_pointers[pars_counter]=&sample_accus[pars_counter];  sound_enable[pars_counter]=1;} 						// saw
+	 if (note[4].osc==0) osc_pointers[5]=&sample_Accu[5];
+	 if (note[pars_counter].osc==1) {osc_pointers[pars_counter]=&sample_accus[pars_counter];  sound_enable[pars_counter]=1;} 						// saw
 	 			if (note[pars_counter].osc==2){ osc_pointers[pars_counter]=&sample_Accu[pars_counter];sound_enable[pars_counter]=2;} 		// tri
 	 			if (note[pars_counter].osc==3) { osc_pointers[pars_counter]=&sample_Accu[pars_counter+6];sound_enable[3]=3;}   // sample_input
-	 			if (note[pars_counter].osc==4) { osc_pointers[pars_counter]=&sample_input;sound_enable[4]=4;}  // sampleinput
+	 			if (note[pars_counter].osc==4) { osc_pointers[pars_counter]=&sample_input;osc_pointers[5]=&sample_temp7;sound_enable[4]=4;}  // sampleinput
 	 			if (note[pars_counter].osc==5) {osc_pointers[pars_counter]=&sample_adc;sound_enable[5]=5;}    // sine
 	 			if (note[pars_counter].osc==6) {osc_pointers[pars_counter]=&ram_temp ; sound_enable[6]=6;}   // non muted RAM , just loop
 	 			if (note[pars_counter].osc==7) {osc_pointers[pars_counter]=&ram_synced; sound_enable[7]=7;}   // trigger 0-16
@@ -136,15 +137,6 @@ uint8_t fader[17]={0,1,5,11,19,28,39,51,64,76,88,99,108,116,122,126,127}; // sin
 isr_change=0;
 uint8_t seq_dat=(1<<(((adc_values[0]>>3))+1))-1;
 ///////////////////////////////////////////////////////////////
-
-	for (i=0;i<512;i++){    // convert to signed , also use this for double buffer (no bank switch) 512 *16 is enough
-
-	    flash_read_a= *(sample_ptr2+i) - 32767;
-	    if ((flash_read_a==32767)   ||  (flash_read_a==-32767))   flash_read_a=0;    // stop clicks from FF bytes
-	    memcpy(&flash_read_block[i*2],&flash_read_a,2);   // load first set
-	}
-	if (sampler.acurrent_sample2)     sample_flash_address=((sampler.sample_select[sampler.acurrent_sample2-1] *128)<<8)+((sampler.ram_seq2>>8)<<9);
-	sampler_1k_load(sample_flash_address);
 
 
 
@@ -269,7 +261,7 @@ int32_t  sample_temp3;
 int32_t  sample_temp4;
 int32_t  sample_temp5;
 int32_t  sample_temp6;
-int32_t  sample_temp7=0;
+
 
 memcpy(&sample_counts_temp,sample_counts_holder,80);
 
@@ -315,11 +307,18 @@ memcpy(&sample_accus,sample_accus_hold,16);    // this is good
 	for (i=0;i<512;i++){    // convert to signed , also use this for double buffer (no bank switch) 512 *16 is enough
 
 	 //   flash_read_a= *(sample_ptr2+i);
-	    flash_read_a= *(sample_ptr2+i) - 32767;
+	    flash_read_a= *(sample_ptr3+i) - 32767;
 					if ((flash_read_a==32767)   ||  (flash_read_a==-32767))   flash_read_a=0;    // stop clicks from FF bytes
 					memcpy(&flash_read_block3[i*2],&flash_read_a,2);   // load second set ,hopefully
 
 	}
+	for (i=0;i<512;i++){    // convert to signed , also use this for double buffer (no bank switch) 512 *16 is enough
+
+			    flash_read_a= *(signed_ptr+i) - 32767;
+			    if ((flash_read_a==32767)   ||  (flash_read_a==-32767))   flash_read_a=0;    // stop clicks from FF bytes
+			    memcpy(&flash_read_block[i*2],&flash_read_a,2);   // load first set
+			}
+
 
 ///    downsample  is a no go without playback from RAM , leave it , work on loops etc
 //	sine_count_sample();   //change playback rate
@@ -339,8 +338,10 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 	sample_adc=(sample_adc_temp+sample_adc)>>1;}
 
 	if (sound_enable[6]) 		 {
-	looper_point=(RAM_looper+(sampler.RAM_offset<<10))&16383;  // will use different data here
-	   ram_temp=*(ram_ptr+looper_point);    // works
+	//looper_point=(RAM_looper+(sampler.RAM_offset<<10))&16383;  // will use different data here
+
+	looper_point=RAM_looper;
+	ram_temp=*(ram_ptr+looper_point);    // works
 
 	ram_temp=(ram_temp-32767)<<4;
 	}
@@ -349,14 +350,14 @@ for (i=0;i<512;i++) {    // this should write 512 bytes , or about 15ms buffer ,
 
 
 	if (sampler.ram_seq<sampler.start_current) {sample_input=0;  ram_synced=32767;}
-	else 	{sample_input=*(signed_ptr+(sampler.ram_seq&255));ram_synced= *(ram_ptr+sampler.ram_seq);}
+	else 	{sample_input=*(signed_ptr+(sampler.ram_seq&255))<<3;ram_synced= *(ram_ptr+sampler.ram_seq);}
 	ram_synced=(ram_synced-32767)<<4;
 
 	if (sampler.ram_seq2<sampler.start_current2)  sample_temp7=0; else
 	sample_temp7=*(sample_ptr3+(sampler.ram_seq2&255));
 
 
-	if (ram_sync_swap) sample_input=ram_synced;
+//	if (ram_sync_swap) sample_input=ram_synced;  //  good idea but no
 	if  (sampler_mute[0])  sample_input=0;    // mute   , stops click on start
 	if  (sampler_mute[1])  sample_temp7=0;
 
@@ -425,17 +426,17 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 					//if (note[3].position) sample_Accu[9]=(ram_temp+sample_Accu[9])>>1; // bit hot , also  add avr
 
 					sample_temp1=(*osc_pointers[3])*	note[3].velocity;  // sine out is 16bit, add 4 then 16+8
-					   // no envelope for smple
+					sample_temp5 =sample_temp1>>13;
 				//	if (soft_mute)  sample_temp6=(*osc_pointers[4])* (256-(i>>1));  else     sample_temp6=(*osc_pointers[4])*note[4].velocity;   // not heavy
-					sample_temp6=((*osc_pointers[4])*note[4].velocity)+(sample_temp7*note[5].velocity);
+					sample_temp6=((*osc_pointers[4])*note[4].velocity)+((*osc_pointers[5])*note[5].velocity);
 
-					sample_temp5 =sample_temp1>>11;
+
 
 	play_holder0[i]=sample_temp2;  // write to bank
 	play_holder1[i]=sample_temp3;
 	play_holder2[i]=sample_temp4;
-	play_holder3[i]=sample_temp5;
-	play_holder4[i]=(sample_temp6)>>9;  // clean output , samples
+	play_holder3[i]=sample_temp5;  // easy overload
+	play_holder4[i]=(sample_temp6)>>10;  // clean output , samples
 	//play_holder4[i]=sample_temp7;
 
 
@@ -449,6 +450,13 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
     int32_t filter_Accu;
     int32_t filter_Accu2;
     uint8_t i_31;
+    int16_t sample_16[10]={0};    // sample accu 16 signed
+    uint32_t    frq_pkt=0;
+    uint32_t   smp_pkt=0;
+    uint32_t in1_pkt;
+    uint32_t in2_pkt;
+
+
 
    static uint8_t phaser[4];
  // memcpy(&filter_accus,filter_accus_hold,60);    doesnt help here
@@ -461,6 +469,7 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 				i_total=i+sample_pointB;
 				i_31=i&31;
 			sampling_position=(i>>6);
+
 
 			if ((i&63)==0){
 						phaser[0]=31-(filter[0].resonance);
@@ -478,64 +487,95 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 
 			sample_Accu[4]=play_holder4[i];
 
-	if (phaser[0])	sample_Accu[0]=(sample_Accu[0]>>1)+(phase_bank0[ ( i_31+phaser[0])&31	]>>1); // PHASER
-	if (phaser[1])	sample_Accu[1]=(sample_Accu[1]>>1)+(phase_bank1[( i_31+phaser[0])&31	]>>1);
-	if (phaser[2])	sample_Accu[2]=(sample_Accu[2]>>1)+(phase_bank2[  ( i_31+phaser[0])&31	]>>1);
-	if (phaser[3])	sample_Accu[3]=(sample_Accu[3]>>1)+(phase_bank3[  ( i_31+phaser[0])&31	]>>1);
+	if (phaser[0])	sample_Accu[0]=(sample_Accu[0]+phase_bank0[ ( i_31+phaser[0])&31	])>>1; // PHASER
+	if (phaser[1])	sample_Accu[1]=(sample_Accu[1]+phase_bank1[( i_31+phaser[1])&31	])>>1;
+	if (phaser[2])	sample_Accu[2]=(sample_Accu[2]+phase_bank2[  ( i_31+phaser[2])&31	])>>1;
+	if (phaser[3])	sample_Accu[3]=(sample_Accu[3]+phase_bank3[  ( i_31+phaser[3])&31	])>>1;
 
 
+	//sample_Accu[0]= (sample_Accu[0]+delay_buffer[ (delay_cntr+(delay[0].time<<7))&2047])>>1;
+//	delay_buffer[delay_cntr]=(delay_buffer[delay_cntr]+(sample_Accu[0]>>1))>>1;
+	//delay_accu=delay_accu+(sample_Accu[0]);
+	delay_accu=delay_accu+play_holder0[i];
 
-		    filter_Accu=sample_Accu[0]-filter_accus[3];
-		//    filter_Accu2=filter_accus[2]-filter_accus[3];
-		//filter_accus[2]=(filter_accus[2] + (freq_point[0]*    (filter_Accu+  filter_Accu2) ))>>16;     //short=fast , adding makes it slower
+	//if((i&3)==3)	{	delay_cntr=(delay_cntr+1)&2047;  		delay_buffer[delay_cntr]=(delay_accu>>2);	 delay_accu=0;delay_accu2=((delay_accu2*0.5)+	(delay_buffer[ (delay_cntr+(delay[0].time<<6))&2047]*0.5));		} // about 0.5 sec
+
+
+	if((i&3)==3)    {delay_cntr=(delay_cntr+1)&2047;
+
+	    delay_accu2=(delay_buffer[ (delay_cntr+(2047-(delay[0].time<<6)))&2047] * delay[0].mix)>>4;}
+	delay_accu3=(delay_accu2+ delay_accu3)>>1;
+	delay_accu4=(delay_accu3+ delay_accu4)>>1;
+
+	sample_Accu[0]= ((sample_Accu[0])+delay_accu4)>>1;
+	//sample_Accu[0]=delay_accu4;
+	if((i&3)==3) {delay_buffer[delay_cntr]=((delay_accu<<1)+(delay[0].feedback*delay_accu4)		)>>4;								delay_accu=0;	}
 
 
 		    filter_accus[2]=((sample_Accu[0]*freq_point[0])+(filter_accus[2]*freq_point[1]))>>16;
 		    filter_accus[3]=(((filter_accus[2]*freq_point[0])+(filter_accus[3]*freq_point[1]))>>16); //1
 		//filter_accus[3]=(((filter_accus[2]-filter_accus[3])*freq_point[1])+filter_accus[3])>>16; //1
 		//filter_accus[3]=(((  ((sample_Accu[0]*freq_point[0])+(filter_accus[2]*freq_point[1]))>>16  )*freq_point[0])+(filter_accus[3]*freq_point[1]))>>16; //1
+		    sample_Accu[0]=filter_accus[3];
 
-		filter_accus[5]=((sample_Accu[1]*freq_point[2])+(filter_accus[5]*freq_point[3]))>>16; // down to 12 cycles per 2 filters
+		    filter_accus[5]=((sample_Accu[1]*freq_point[2])+(filter_accus[5]*freq_point[3]))>>16; // down to 12 cycles per 2 filters
 		filter_accus[6]=((filter_accus[5]*freq_point[2])+(filter_accus[6]*freq_point[3]))>>16;// 13 instructions in assy
-
+		sample_Accu[1]=filter_accus[6];
 
 		filter_accus[8]=((sample_Accu[2]*freq_point[4])+(filter_accus[8]*freq_point[5]))>>16;		// external loop is slower
 		filter_accus[9]=((filter_accus[8]*freq_point[4])+(filter_accus[9]*freq_point[5]))>>16;
+		sample_Accu[2]=filter_accus[9];
+/*
+
+		in1_pkt=sample_Accu[3];
+		//sample_16[0]=sample_Accu[3];  // input
+		in2_pkt=filter_accus[11];
+		smp_pkt=  __PKHBT	(	in1_pkt,             // pack 16 bit values into 32 ,Halfword packing instruction. Halfword packing instruction. Combines bits[15:0] of val1 with bits[31:16] of val2 levitated with the val3.
+		in2_pkt,
+		16
+		);
+
+		in1_pkt=freq_point[6];
+		in2_pkt=freq_point[7];
+
+		frq_pkt=__PKHBT	(	in1_pkt,             // pack freq_point
+			in2_pkt,
+			16
+			);
+
+
+
+		filter_Accu=   __SMUAD	(	smp_pkt,				// Q setting dual 16-bit signed multiply with single 32-bit accumulator.
+						    frq_pkt
+						);
+
+		filter_accus[11]=filter_Accu>>16;
+
+*/
+
 
 		filter_accus[11]=((sample_Accu[3]*freq_point[6])+(filter_accus[11]*freq_point[7]))>>16;
+
 		filter_accus[12]=((filter_accus[11]*freq_point[6])+(filter_accus[12]*freq_point[7]))>>16;
+		sample_Accu[3]=filter_accus[12];
+
+
+
+
+
 
 
 		  debug_value=filter_accus[9];
-	//	filter_accus[3]=filter_accus[3]+filter_accus[23];
-		//	filter_accus[6]=filter_accus[6]+filter_accus[26];
-		//	filter_accus[9]=filter_accus[9]+filter_accus[29];
-		//	filter_accus[12]=filter_accus[12]+filter_accus[32];
-
-		sample_Accu[0]=filter_accus[3];
-
-		//	if (sound_enable[1]) {  // need better
-
-	//	filter_accus[4]=filter_accus[4]-(filter_accus[6]*filter_res[1]);
-
-		sample_Accu[1]=filter_accus[6];
-	//		}
 
 
-	//		if (sound_enable[2]) {			//filter_accus[7]=sample_Accu[2];
-		//filter_accus[7]=filter_accus[7]-(filter_accus[9]*filter_res[2]);  // resonance
-			   // 30 cyles for 2 poles
-
-				sample_Accu[2]=filter_accus[9];
-			//}
 
 	//		if (sound_enable[3]  ||  sound_enable[4] ) {			//filter_accus[10]=sample_Accu[3];
 				//filter_accus[10]=filter_accus[10]-(filter_accus[12]*filter_res[3]);
 					 // 30 cyles for 2 poles
-						sample_Accu[3]=filter_accus[12];
+
 
 		filter_Accu=filter_Accu2=0;
-		//if  (record_output)  {
+
 		filter_Accu = (sample_Accu[0]+sample_Accu[1]+sample_Accu[2]+sample_Accu[3] +sample_Accu[4])>>10 ;
 		filter_Accu =filter_Accu+32767;
 
@@ -543,12 +583,7 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 		output_mix[(i&510)+1]=(filter_Accu>>8) &255;
 		output_mix[(i&510)]=filter_Accu&255;
 
-
-	//	}
-
 		filter_Accu=(sample_Accu[0]+sample_Accu[1])>>6;
-
-
 
 		filter_Accu2=(sample_Accu[2]+sample_Accu[3]+sample_Accu[4])>>6; //filter + drum out
 		//filter_Accu=play_holder0[i];
@@ -602,16 +637,20 @@ float freq_temp=arm_sin_f32(filter[0].cutoff_1*0.006159)    ;   // need this for
 //	sample_flash_address=((sampler.sample_select[sampler.acurrent_sample] *128)<<8)+((counter_16) <<8);  // change this soemthing mroe friendly , also keep last 64k for menus ,wavs maybe just before as well
 
 
-			  if  (sampler.acurrent_sample)    sample_flash_address=((sampler.sample_select[sampler.acurrent_sample-1] *128)<<8)+((sampler.ram_seq>>8)<<9);  //let see , limited now with a 1k jumps or 31
-		//	  else  sample_flash_address=((sampler.sample_select[0] *128)<<8)+((sampler.ram_seq>>8)<<9);
+			  if  (sampler.acurrent_sample)    sample_flash_address[0]=((sampler.sample_select[sampler.acurrent_sample-1] *128)<<8)+((sampler.ram_seq>>8)<<9);  //let see , limited now with a 1k jumps or 31
+				if (sampler.acurrent_sample2)     sample_flash_address[1]=((sampler.sample_select[sampler.acurrent_sample2-1] *128)<<8)+((sampler.ram_seq2>>8)<<9);
 
-			  sampler_1k_load(sample_flash_address);   // about 12 cycles  from send to receive
+			  sampler_1k_load(sample_flash_address[0]);   // about 12 cycles  from send to receive  , total 25 cycles for 2 sets finished
+			  sample_dma_counter=1;
+
+			  time_final[0]=time_proc;
+			//	sampler_1k_load(sample_flash_address);
 
 
 
 
 
-			     time_final[0]=time_proc;
+
 
 
 

@@ -83,6 +83,11 @@ uint8_t*  menu_vars(char* menu_string,  uint8_t var_index   ){ // in comes name 
 	case 62:     menu_vars_var1= &note[var_index].slide_length    ; break;
 	case 63: 	menu_vars_var1=&sampler.Snotes1[var_index]  ;break;
 	case 64: 	menu_vars_var1=&sampler.Snotes2[var_index]  ;break;
+	case 65:     menu_vars_var1= &delay[var_index].time    ; break;
+	case 66:     menu_vars_var1= &delay[var_index].mix    ; break;
+	case 67:     menu_vars_var1= &delay[var_index].feedback    ; break;
+	case 68:     menu_vars_var1= &delay[var_index].mod_speed   ; break;
+	case 69:     menu_vars_var1= &delay[var_index].mod_depth   ; break;
 
 	default :		menu_vars_var1= NULL   ; break;
 
@@ -426,7 +431,8 @@ void main_initial(void){
 		memcpy(&seq,potSource,46 );  // load from potSource  ,, causes problems with memory ,NEEDS TO BE CONTINUOS OR  WILL  GET CORRUPT
 	    memcpy(&note,potSource+156,160 );   // this works but keep checking for fragmentation
 	    memcpy(&sampler,potSource+476,36 );
-	    memcpy(&sampler+36,potSource+572,20 );
+	    memcpy(&delay,potSource+572,5 );
+	    //    memcpy(&sampler+36,potSource+572,20 );   // not yet
 
 
 

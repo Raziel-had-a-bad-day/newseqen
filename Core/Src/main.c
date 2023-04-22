@@ -26,7 +26,7 @@
 
 #include "luts.h"    // big tables
 #include "myvars.h"			// variables
-
+//#include "core_cm4_simd.h"
 #include <stdlib.h>
 #include "string.h"
 #include "arm_math.h"
@@ -184,7 +184,9 @@ main_initial();   // initial setup
 
 			memcpy(potSource,&seq,46); // about 35
 			memcpy(potSource+476,&sampler,36);
-			memcpy(potSource+572,&sampler+36,20);
+			memcpy(potSource+572,&delay,5);
+
+			//  memcpy(potSource+572,&sampler+36,20);    // not needed yet
 
 			for(i=0;i<10;i++){
 					memcpy(potSource+156+(i*16),&note[i],16 );  //grab note settings ,112 total , works
@@ -978,7 +980,8 @@ static void MX_GPIO_Init(void)
 
 
 		       HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  //  end
-
+		       if (sample_dma_counter==0)		{  memcpy(flash_read_block3,flash_read_block2+4,1024);   }
+			if (sample_dma_counter)   {memcpy(flash_read_block,flash_read_block2+4,1024); sampler_1k_load(sample_flash_address[1]); sample_dma_counter=0;}
 		       flash_flag=2;
 		   }
 		}

@@ -1,6 +1,6 @@
 
 #define RAM_size 16384
-#define menu_lookup_count    66     // size of the look up variables processor
+#define menu_lookup_count    71     // size of the look up variables processor
 #define   seq_sample_rate  35625   // use it for period and tempo calcualtions
 #define pitch_limit 60
 #define EPROM_limit   614   //me used in eeprom for now
@@ -70,6 +70,9 @@ const char default_menu[] ={"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 15LCD_Info
 	"00Attack__ 00Decay___ 00Sustain_ 00Release_  01Attack__ 01Decay___ 01Sustain_ 01Release_"
 	"02Attack__ 02Decay___ 02Sustain_ 02Release_  03Attack__ 03Decay___ 03Sustain_ 03Release_"
 	"                "
+	" 00DelayTme 00DelayMix 00DelayFbk 00ModSpeed 00ModDepth      "
+
+
 	"11LCD_Info12LCD_Info13LCD_Info14LCD_Info 03LCD_Info04LCD_Info05LCD_Info06LCD_Info07LCD_Info08LCD_Info09LCD_Info10LCD_Info   "
 			"00Notes1  01Notes1  02Notes1  03Notes1  04Notes1  05Notes1  06Notes1  07Notes1  08Notes1  09Notes1  10Notes1  11Notes1  12Notes1  13Notes1  14Notes1  15Notes1  "   //gaps cause it skip at end
 			"70LCD_Info71LCD_Info72LCD_Info73LCD_Info74LCD_Info75LCD_Info76LCD_Info77LCD_Info78LCD_Info79LCD_Info80LCD_Info81LCD_Info82LCD_Info83LCD_Info84LCD_Info85LCD_Info"
@@ -90,7 +93,7 @@ const uint8_t  menu_vars_index_limit[menu_lookup_count]= {0,9,9,9,9,19,0,4,4,4  
 		,3,3,3,3,3,19,19,19,19,9
 		,9,9,9,0,7,0,0,0,9,9
 		,9,9,9,99,0,0,0,0,0,7
-		,0,0,4,15,15
+		,0,0,4,15,15,3,3,3,3,3
 							    } ; // index number limiter ,fixed IMPORTANT!
 
 const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,19,255,15,255,43,0,15,8,127,   // patch[x].limiter
@@ -99,14 +102,14 @@ const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,19,255,15,255,43,0,15,8
 																				10,255,255,255,31,43,43,43,16,0 ,
 																				255,255,255,255,15,15,63,255,15,63,
 																				255,255,63,255	,17,17,17,17,4,255,
-																				255,255.255,15,8,8			    };   // right shift divider mainly for LFO  , maybe for lcd too
+																				255,255.255,15,8,8,31,16,15,15,15			    };   // right shift divider mainly for LFO  , maybe for lcd too
 
 	const char* menu_titles_final[menu_lookup_count]= {"LFO     ", "Rate    ","Depth   " ,"Delay   ", "Offset  ", "Target  ","ADSR    ",
 			"Attack__", "Decay___","Sustain_","Release_",
 			"Note    ","OSC1    ","OSC2    ","Pitch   ","Length  ","Note Pos","Transpos","Slide   ","Velocity","Detune  ",
 			"Sequencr", "SeqPos  ","Tempo   " ,"Notes1  ","Notes2  ","Loop    ","Cutoff_1","Cutoff_2","Resnance","Q_level ","Level   ","Feedback","Out_mix ","Poles   ",
 			"Tg_ndx  ","Input__1","Input__2","Inputmix","InOffset","S_Rate  ","S_Depth " ,"S_Delay ", "S_Offset","SEndofst","RAMoffst","EndMSB  ","EndLSB  ","SMoffset","SQ___End","SQ_Depth ","SQOffset","SQ_Start","LCD_Info"
-			,"Trigger1","Trigger2","Trigger3","Trigger4","S_Repeat","S_Select","SmplSave","Save_nbl","Sliderep","SNotes_1","SNotes_2"
+			,"Trigger1","Trigger2","Trigger3","Trigger4","S_Repeat","S_Select","SmplSave","Save_nbl","Sliderep","SNotes_1","SNotes_2","DelayTme","DelayMix","DelayFbk","ModSpeed","ModDepth"
 
 	};   // 40 *8
 
@@ -116,7 +119,7 @@ const uint8_t  menu_vars_limiter[menu_lookup_count] = {0,19,255,15,255,43,0,15,8
 			1,1,1,1,1,1,1,1,1,1,
 			1,1,1,1,1,1,1,1,1,1,
 			1,1,1,1,1,1,1,1,1,1,
-			1,1,1,1,1};  // skip most of it for now
+			1,1,1,1,1,1,1,1,1,1};  // skip most of it for now
  const char* patch_inputs[]={
 		"LFO0 sin","LFO0 saw","LFO0 tri","LFO0 sqr" ,"LFO1 sin","LFO1 saw","LFO1 tri","LFO1 sqr" ,"LFO2 sin","LFO2 saw","LFO2 tri","LFO2 sqr" ,
 		"LFO3 sin","LFO3 saw","LFO3 tri","LFO3 sqr" ,"LFO4 sin","LFO4 saw","LFO4 tri","LFO4 sqr" ,"LFO5 sin","LFO5 saw","LFO5 tri","LFO5 sqr" ,

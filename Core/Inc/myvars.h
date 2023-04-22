@@ -510,6 +510,26 @@ struct sample_info{   // stored in the last 64kb
 
 struct sample_info sample_info;
 
+struct delay_unit{
+    uint8_t time; // lut synced and non synced
+    uint8_t mix; // dry wet
+    uint8_t feedback;
+    uint8_t mod_speed; // type + depth
+    uint8_t mod_depth; // type + depth
+
+
+};
+
+struct delay_unit delay[4];
+
+
+static int16_t delay_buffer[2048]={0};
+int32_t delay_accu=0;
+uint16_t delay_cntr=0;
+int32_t delay_accu2=0;
+int32_t delay_accu3=0;
+int32_t delay_accu4=0;
+
 uint16_t string_search=0;   // search position on created menu
 uint16_t string_value=0;  // holds the variable result from the search result
 uint16_t menu_counter=0;  // 127 per page needs plenty
@@ -602,6 +622,14 @@ uint8_t  ram_sync_swap=0;
 uint16_t lfo_table[20];
 uint8_t i_31=0;
 uint8_t disable_eeprom=0;
+uint32_t sample_flash_address[3]={0};
+uint8_t sample_dma_counter=0; // counts different dma counte
+static uint8_t send_spi2[1030]={0} ;
+
+
+
+
+
 //uint8_t acurrent_sample=0; // returns current sample being p[layed
 
 

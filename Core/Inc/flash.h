@@ -94,7 +94,7 @@ void  flash_block_erase(uint32_t address_erase_b ){      // 24bit address      3
 	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); //enable
 	HAL_SPI_TransmitReceive(&hspi1, send_spi1, status_reg,2, 200);   // check if busy writing
 	HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 1);  //disable
-	if (status_reg[1]&1)   return 1 ;   // quit if busy
+	if (status_reg[1]&1)   return  ;   // quit if busy
 
     send_spi1[0]=0x06; //enable write  , only lasts for single operation
 		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0); // start

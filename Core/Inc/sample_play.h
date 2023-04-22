@@ -148,27 +148,19 @@
 
 	void  sampler_1k_load(uint32_t load_address){   // 24 bit load address , for audio , 1kbyte   in 512 byte  chunks, last 64k off limits
 
-	    uint8_t send_spi2[1030]={0} ;
+
 
 	    load_address=load_address& 16777215; // 24 bit
 	    if (load_address >0xFEBFFF ) return;  // IMPORTANT !
 	    send_spi2[0]=0x03; //read page 1
 	    send_spi2[1]=load_address>>16;			// last patch for now
 	    send_spi2[2]=(load_address>>8)&255;    //
-	    send_spi2[3]=load_address&255;     // can start anywhere*/    // usally 0 padded when written
+	//    send_spi2[3]=load_address&255;     // can start anywhere*/    // usally 0 padded when written
 	    send_spi2[3]=0;
-	    current_spi[0]=send_spi2[0];   // to track  later
-	    current_spi[1]=send_spi2[1];
-	    current_spi[2]=send_spi2[2];
-	    current_spi[3]=send_spi2[3];
-	    //   read , copy  bank 1 , copy bank 0
-	//    if ((flash_flag==3)&&(flash_bank_read==0))  {   memcpy( &flash_read_block, flash_read_block2+516,1024); flash_flag=4; }  //  2+3 second half   , extra for spilling over
-	//    if ((flash_flag==2)&&(flash_bank_read==1))   {   memcpy( &flash_read_block, flash_read_block2+4,1024);   flash_flag=3;           }  // 1+2  second half
-	//    flash_bank_read=!flash_bank_read;
-
-	 //   if ((flash_flag==3)&&(flash_bank_read==0)) memcpy( &flash_read_block, flash_read_block2+4,1024);   flash_flag=3;
-
-	//    if ((flash_flag==4)&&  (flash_bank_read==1) )    {
+	//    current_spi[0]=send_spi2[0];   // to track  later
+	//    current_spi[1]=send_spi2[1];
+	//    current_spi[2]=send_spi2[2];
+	//    current_spi[3]=send_spi2[3];
 
 			HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);HAL_SPI_TransmitReceive_DMA(&hspi1, send_spi2,flash_read_block2,1028);
 		    //HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, 0);  //  terrible Internet advice , put cs low before not after  !

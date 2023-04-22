@@ -295,13 +295,13 @@ void  frq_point(void){
 
 
 
-		freq_temp=freq_pointer[0] [sampling_position]*65536;; // load up coeffs
+		freq_temp=freq_pointer[0] [sampling_position]*65535;; // load up coeffs
 			freq_point[0]=freq_temp;
-			freq_temp=freq_pointer[1] [sampling_position]*65536;  // ok , array was too short
+			freq_temp=freq_pointer[1] [sampling_position]*65535;  // ok , array was too short
 			freq_point[2]=freq_temp;
-			freq_temp=freq_pointer[2] [sampling_position]*65536;  // ok , array was too short
+			freq_temp=freq_pointer[2] [sampling_position]*65535;  // ok , array was too short
 			freq_point[4]=freq_temp;
-			freq_temp=freq_pointer[3] [sampling_position]*65536;  // ok , array was too short
+			freq_temp=freq_pointer[3] [sampling_position]*65535;  // ok , array was too short
 			freq_point[6]=freq_temp;
 	//		if (freq_point[0]>1) freq_point[0]=1; else if (freq_point[0]<0) freq_point[0]=0;// just in case
 		//	if (freq_point[4]>1) freq_point[4]=1; else if (freq_point[4]<0) freq_point[4]=0;// just in case
@@ -333,7 +333,7 @@ void sine_count_sample(void) {      //  signed  , about 10 cycles not bad , only
 
 	int16_t* block_ptr=   &flash_read_block;
 	uint16_t counter;
-	int16_t out_signed;
+	int16_t out_signed=0;
 
 //	sine_tuned=32;
 
